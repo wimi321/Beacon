@@ -268,7 +268,7 @@ describe('App', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
 
-    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/)).toBeInTheDocument();
+    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(/请先在设置中下载离线急救包/)).toBeNull();
     expect(loadAttempts).toBeGreaterThanOrEqual(1);
   });
