@@ -28,7 +28,9 @@
 </p>
 
 <p align="center">
-  <img src="./docs/assets/beacon-home-android.png" alt="Beacon Android home screen" width="290">
+  <a href="./docs/assets/beacon-demo-hero.mp4">
+    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  </a>
 </p>
 
 ## Languages
@@ -65,6 +67,13 @@ App UI locales currently supported:
 | `nl` | Dutch | Nederlands | LTR |
 | `pl` | Polish | Polski | LTR |
 | `uk` | Ukrainian | Українська | LTR |
+
+## Demo
+
+- README hero GIF: [`docs/assets/beacon-demo-hero.gif`](./docs/assets/beacon-demo-hero.gif)
+- Short video: [`docs/assets/beacon-demo-hero.mp4`](./docs/assets/beacon-demo-hero.mp4)
+- Poster frame: [`docs/assets/beacon-demo-hero-poster.png`](./docs/assets/beacon-demo-hero-poster.png)
+- Rebuild command: `npm run readme:demo`
 
 ## Why Beacon
 
@@ -307,6 +316,7 @@ See also:
 - Product concept notes: [`docs/开发文档.txt`](./docs/开发文档.txt)
 - User acceptance checklist: [`docs/User-E2E-Acceptance-Checklist.md`](./docs/User-E2E-Acceptance-Checklist.md)
 - Internationalization notes: [`docs/I18N.md`](./docs/I18N.md)
+- Release history: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 

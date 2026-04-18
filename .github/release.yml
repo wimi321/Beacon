@@ -1,0 +1,33 @@
+changelog:
+  categories:
+    - title: Core Runtime
+      labels:
+        - runtime
+        - android
+        - ios
+    - title: UX And Product
+      labels:
+        - enhancement
+        - ui
+        - i18n
+    - title: Knowledge And Guidance
+      labels:
+        - knowledge-base
+        - medical
+        - survival
+    - title: Docs And Community
+      labels:
+        - documentation
+        - github
+        - community
+    - title: Fixes
+      labels:
+        - bug
+    - title: Other Changes
+      labels:
+        - "*"
+  exclude:
+    labels:
+      - skip-changelog
+    authors:
+      - github-actions[bot]

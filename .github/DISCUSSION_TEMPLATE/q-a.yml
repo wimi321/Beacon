@@ -1,0 +1,32 @@
+title: "[Q&A] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask one concrete question and include enough context for someone else to answer it.
+        一次问一个具体问题，并给出足够背景，方便别人快速回答。
+  - type: textarea
+    id: question
+    attributes:
+      label: Question / 你的问题
+      description: What exactly do you want to know? / 你具体想问什么？
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / 背景
+      description: Device, platform, branch, logs, or related files. / 可写设备、平台、分支、日志或相关文件。
+  - type: dropdown
+    id: type
+    attributes:
+      label: Question type / 问题类型
+      options:
+        - Setup
+        - Build
+        - Runtime behavior
+        - Localization
+        - Knowledge base
+        - GitHub / community
+    validations:
+      required: true

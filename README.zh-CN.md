@@ -12,7 +12,9 @@
 </p>
 
 <p align="center">
-  <img src="./docs/assets/beacon-home-android.png" alt="Beacon 安卓首页" width="290">
+  <a href="./docs/assets/beacon-demo-hero.mp4">
+    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README 演示" width="960">
+  </a>
 </p>
 
 ## 多语言支持
@@ -49,6 +51,13 @@ App 当前已支持以下 20 种语言：
 | `nl` | 荷兰语 | Nederlands | LTR |
 | `pl` | 波兰语 | Polski | LTR |
 | `uk` | 乌克兰语 | Українська | LTR |
+
+## 演示素材
+
+- README 首屏 GIF：[`docs/assets/beacon-demo-hero.gif`](./docs/assets/beacon-demo-hero.gif)
+- 短视频：[`docs/assets/beacon-demo-hero.mp4`](./docs/assets/beacon-demo-hero.mp4)
+- 海报帧：[`docs/assets/beacon-demo-hero-poster.png`](./docs/assets/beacon-demo-hero-poster.png)
+- 重新生成命令：`npm run readme:demo`
 
 ## 它是什么
 
@@ -201,6 +210,7 @@ Beacon 不是医生、医院或专业救援队的替代品。
 - 中文安全策略：[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
 - 国际化说明：[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 - 社区准则：[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
+- 版本记录：[`CHANGELOG.md`](./CHANGELOG.md)
 
 ## 社区协作
 

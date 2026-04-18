@@ -1,0 +1,26 @@
+title: "[Show and tell] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share experiments, prototypes, integrations, screenshots, or benchmarks.
+        欢迎分享实验、原型、接入案例、截图或 benchmark。
+  - type: input
+    id: summary
+    attributes:
+      label: Summary / 一句话总结
+      description: Give your share a short headline. / 用一句话概括你要分享的内容。
+    validations:
+      required: true
+  - type: textarea
+    id: showcase
+    attributes:
+      label: What are you sharing? / 你在展示什么
+      description: Demo, screenshots, links, and what makes it interesting. / 可附 demo、截图、链接，以及它为什么有意思。
+    validations:
+      required: true
+  - type: textarea
+    id: takeaways
+    attributes:
+      label: Takeaways / 结论
+      description: What did you learn, and what should others try next? / 你学到了什么，别人接下来可以试什么？

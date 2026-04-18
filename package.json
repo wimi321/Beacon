@@ -1,11 +1,12 @@
 {
   "name": "beacon-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "knowledge:build": "node scripts/build_offline_knowledge.mjs",
+    "readme:demo": "python3 scripts/build_readme_demo.py",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",

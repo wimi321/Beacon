@@ -1,0 +1,35 @@
+title: "[General] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share context first so other contributors can help quickly.
+        先把背景说清楚，这样社区更容易快速帮到你。
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / 背景
+      description: What are you trying to understand, discuss, or align on? / 你想讨论、确认或了解什么？
+      placeholder: Describe the situation, goal, or open question.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details / 细节
+      description: Add links, screenshots, logs, references, or constraints. / 补充链接、截图、日志、参考资料或约束。
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 模块
+      options:
+        - General / 综合
+        - Product / 产品
+        - Android
+        - iOS
+        - Runtime
+        - Knowledge base
+        - Localization / i18n
+        - GitHub / docs
+    validations:
+      required: true

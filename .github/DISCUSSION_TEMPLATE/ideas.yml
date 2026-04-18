@@ -1,0 +1,36 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Strong ideas usually start with a concrete user problem.
+        好想法最好从一个具体用户问题开始。
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 你想解决的问题
+      description: What user pain point or gap does this idea address? / 这个想法要解决什么痛点或空缺？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / 想法方案
+      description: Describe the idea clearly and simply. / 用清楚直白的话描述你的方案。
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Tradeoffs / 代价与风险
+      description: What are the risks, limitations, or open questions? / 可能的代价、限制或未决问题是什么？
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Expected impact / 预期影响
+      options:
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
