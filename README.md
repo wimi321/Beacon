@@ -13,13 +13,15 @@
 </p>
 
 <p align="center">
-  <img alt="Status" src="https://img.shields.io/badge/status-pre--release-0f172a">
+  <a href="https://github.com/wimi321/Beacon/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/wimi321/Beacon/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/wimi321/Beacon/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/wimi321/Beacon?style=flat"></a>
+  <a href="https://github.com/wimi321/Beacon/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/wimi321/Beacon"></a>
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/github/license/wimi321/Beacon"></a>
   <img alt="Offline First" src="https://img.shields.io/badge/offline-first-111827">
   <img alt="Gemma 4" src="https://img.shields.io/badge/Gemma-4%20E2B-f59e0b">
   <img alt="Android" src="https://img.shields.io/badge/Android-native-16a34a">
   <img alt="iOS" src="https://img.shields.io/badge/iOS-native-111827">
   <img alt="Languages" src="https://img.shields.io/badge/i18n-20%20languages-2563eb">
-  <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-2563eb">
 </p>
 
 <p align="center">
