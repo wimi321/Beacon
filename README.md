@@ -13,6 +13,22 @@
   <a href="./README.md">English</a>
   ·
   <a href="./README.zh-CN.md">简体中文</a>
+  ·
+  <a href="./README.zh-TW.md">繁體中文</a>
+  ·
+  <a href="./README.ja.md">日本語</a>
+  ·
+  <a href="./README.ko.md">한국어</a>
+  ·
+  <a href="./README.es.md">Español</a>
+  ·
+  <a href="./README.fr.md">Français</a>
+  ·
+  <a href="./README.de.md">Deutsch</a>
+  ·
+  <a href="./README.pt.md">Português</a>
+  ·
+  <a href="./README.ar.md">العربية</a>
 </p>
 
 <p align="center">
@@ -25,6 +41,7 @@
   <img alt="Android" src="https://img.shields.io/badge/Android-native-16a34a">
   <img alt="iOS" src="https://img.shields.io/badge/iOS-native-111827">
   <img alt="Languages" src="https://img.shields.io/badge/i18n-20%20languages-2563eb">
+  <img alt="README Locales" src="https://img.shields.io/badge/README-10%20locales-0f766e">
 </p>
 
 <p align="center">
@@ -45,11 +62,12 @@ This release flow mirrors the lightweight official app pattern: ship a small ins
 
 Beacon is a multilingual product and this repository now exposes multilingual project docs as well.
 
-Repository docs:
+Repository documentation coverage:
 
-- English: [`README.md`](./README.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md)
-- 简体中文: [`README.zh-CN.md`](./README.zh-CN.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
-- Full i18n reference: [`docs/I18N.md`](./docs/I18N.md)
+- Localized README landing pages: [`English`](./README.md), [`简体中文`](./README.zh-CN.md), [`繁體中文`](./README.zh-TW.md), [`日本語`](./README.ja.md), [`한국어`](./README.ko.md), [`Español`](./README.es.md), [`Français`](./README.fr.md), [`Deutsch`](./README.de.md), [`Português`](./README.pt.md), [`العربية`](./README.ar.md)
+- Deep collaboration docs currently shipped in English and Simplified Chinese: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md), [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Internationalization references: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+- Dedicated README demo assets currently exist in English and Simplified Chinese; the additional localized README pages intentionally reuse the English hero until more native captures are added
 
 App UI locales currently supported:
 
@@ -79,7 +97,9 @@ App UI locales currently supported:
 ## Demo
 
 - English home screenshot: [`docs/assets/beacon-home-android-en.png`](./docs/assets/beacon-home-android-en.png)
+- Simplified Chinese home screenshot: [`docs/assets/beacon-home-android-zh-CN.png`](./docs/assets/beacon-home-android-zh-CN.png)
 - README hero GIF: [`docs/assets/beacon-demo-hero.gif`](./docs/assets/beacon-demo-hero.gif)
+- Simplified Chinese hero GIF: [`docs/assets/beacon-demo-hero-zh-CN.gif`](./docs/assets/beacon-demo-hero-zh-CN.gif)
 - Short video: [`docs/assets/beacon-demo-hero.mp4`](./docs/assets/beacon-demo-hero.mp4)
 - Poster frame: [`docs/assets/beacon-demo-hero-poster.png`](./docs/assets/beacon-demo-hero-poster.png)
 - Rebuild command: `npm run readme:demo`

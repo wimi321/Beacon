@@ -9,6 +9,22 @@
   <a href="./README.md">English</a>
   ·
   <a href="./README.zh-CN.md">简体中文</a>
+  ·
+  <a href="./README.zh-TW.md">繁體中文</a>
+  ·
+  <a href="./README.ja.md">日本語</a>
+  ·
+  <a href="./README.ko.md">한국어</a>
+  ·
+  <a href="./README.es.md">Español</a>
+  ·
+  <a href="./README.fr.md">Français</a>
+  ·
+  <a href="./README.de.md">Deutsch</a>
+  ·
+  <a href="./README.pt.md">Português</a>
+  ·
+  <a href="./README.ar.md">العربية</a>
 </p>
 
 <p align="center">
@@ -27,13 +43,14 @@
 
 ## 多语言支持
 
-Beacon 不只是 App 本身支持多语言，这个开源仓库也开始同步做双语协作。
+Beacon 不只是 App 本身支持多语言，这个开源仓库现在也扩成了多语种 README 着陆页体系。
 
 仓库文档入口：
 
-- 英文：[`README.md`](./README.md)、[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`SECURITY.md`](./SECURITY.md)
-- 中文：[`README.zh-CN.md`](./README.zh-CN.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
-- 完整 i18n 说明：[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+- 多语言 README 着陆页：[`English`](./README.md)、[`简体中文`](./README.zh-CN.md)、[`繁體中文`](./README.zh-TW.md)、[`日本語`](./README.ja.md)、[`한국어`](./README.ko.md)、[`Español`](./README.es.md)、[`Français`](./README.fr.md)、[`Deutsch`](./README.de.md)、[`Português`](./README.pt.md)、[`العربية`](./README.ar.md)
+- 深度协作文档目前仍以英文和简体中文为主：[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)、[`SECURITY.md`](./SECURITY.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 国际化说明：[`docs/I18N.md`](./docs/I18N.md)、[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+- README 演示素材目前已提供英文和简体中文版，其余语言 README 暂时复用英文首屏演示，后续可继续补本地化截图
 
 App 当前已支持以下 20 种语言：
 
