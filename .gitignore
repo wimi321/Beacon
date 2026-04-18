@@ -1,0 +1,59 @@
+.DS_Store
+
+# Node / web
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Local caches and artifacts
+.artifacts/
+.cache/
+.tmp/
+.npm-cache/
+.playwright-cli/
+output/
+__pycache__/
+scripts/__pycache__/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/keystore.properties
+android/**/*.keystore
+android/**/*.jks
+
+# iOS / Xcode
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/build*/
+ios/derived*/
+ios/archive*/
+ios/export*/
+ios/App/App/public/
+ios/App/Vendor/BeaconLiteRtLm.xcframework/
+ios/App/Vendor/litert_patch/
+ios/App/Vendor/litert_support_build/
+**/xcuserdata/
+**/*.xcuserstate
+**/*.xcscmblueprint
+
+# Environment
+.env
+.env.*
+
+# Large raw source captures used to build the offline bundle
+knowledge/raw/

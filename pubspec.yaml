@@ -1,0 +1,16 @@
+name: beacon_backend
+version: 0.1.0
+publish_to: 'none'
+description: Offline-first backend module for the Beacon emergency rescue app.
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  collection: ^1.18.0
+  crypto: ^3.0.3
+  meta: ^1.12.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.2

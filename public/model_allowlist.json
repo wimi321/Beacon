@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-04-12",
+  "refreshIntervalHours": 12,
+  "remoteUrl": "",
+  "models": [
+    {
+      "id": "gemma-4-e2b",
+      "tier": "e2b",
+      "name": "Gemma 4 E2B",
+      "fileName": "gemma-4-E2B-it.litertlm",
+      "sizeLabel": "2B / Survival Baseline",
+      "downloadUrl": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+      "sizeInBytes": 2583085056,
+      "defaultProfileName": "gemma-4-e2b-balanced",
+      "recommendedFor": "Default offline triage on most phones.",
+      "supportsImageInput": true,
+      "accelerators": [
+        "gpu",
+        "cpu"
+      ]
+    },
+    {
+      "id": "gemma-4-e4b",
+      "tier": "e4b",
+      "name": "Gemma 4 E4B",
+      "fileName": "gemma-4-E4B-it.litertlm",
+      "sizeLabel": "4B / High Precision",
+      "downloadUrl": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+      "sizeInBytes": 3654467584,
+      "defaultProfileName": "gemma-4-e4b-expert",
+      "recommendedFor": "Higher precision when thermal and battery headroom allow.",
+      "supportsImageInput": true,
+      "accelerators": [
+        "gpu",
+        "cpu"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,498 @@
+[
+  {
+    "id": "fm-21-76-survival",
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/FM_3-05.70_%28FM_21-76%29_Survival_-_May_2002.pdf",
+    "authority": "US Army FM 21-76",
+    "title": "FM 21-76 Survival Manual"
+  },
+  {
+    "id": "hf-first-aid-dataset",
+    "url": "https://huggingface.co/datasets/belvisk/First-Aid-Dataset/resolve/main/merged_data.csv",
+    "authority": "HuggingFace",
+    "title": "First Aid Dataset"
+  },
+  {
+    "id": "merck-first-aid-index",
+    "url": "https://www.msdmanuals.com/home/first-aid?media=print",
+    "authority": "MSD Manual",
+    "title": "MSD Manual First Aid"
+  },
+  {
+    "id": "merck-first-aid-intro",
+    "url": "https://www.msdmanuals.com/home/injuries-and-poisoning/first-aid/introduction-to-first-aid?media=print",
+    "authority": "MSD Manual",
+    "title": "Introduction to First Aid"
+  },
+  {
+    "id": "merck-emergency-priorities",
+    "url": "https://www.msdmanuals.com/home/injuries-and-poisoning/first-aid/emergency-first-aid-priorities?media=print",
+    "authority": "MSD Manual",
+    "title": "Emergency First Aid Priorities"
+  },
+  {
+    "id": "merck-choking",
+    "url": "https://www.msdmanuals.com/home/injuries-and-poisoning/first-aid/choking?media=print",
+    "authority": "MSD Manual",
+    "title": "Choking"
+  },
+  {
+    "id": "merck-snakebites",
+    "url": "https://www.msdmanuals.com/home/injuries-and-poisoning/bites-and-stings/snakebites?media=print",
+    "authority": "MSD Manual",
+    "title": "Snakebites"
+  },
+  {
+    "id": "merck-burns",
+    "url": "https://www.msdmanuals.com/home/injuries-and-poisoning/burns/burns?media=print",
+    "authority": "MSD Manual",
+    "title": "Burns"
+  },
+  {
+    "id": "cornell-poisonous-plants",
+    "url": "https://poisonousplants.ansci.cornell.edu/",
+    "authority": "Cornell University",
+    "title": "Poisonous Plants Informational Database"
+  },
+  {
+    "id": "usda-toxic-plants",
+    "url": "https://plants.sc.egov.usda.gov/home/plantProfile?symbol=TOXIC",
+    "authority": "USDA Plants Database",
+    "title": "Toxic Plants Profile"
+  },
+  {
+    "id": "medlineplus-pokeweed-poisoning",
+    "url": "https://medlineplus.gov/ency/article/002874.htm",
+    "authority": "MedlinePlus",
+    "title": "Pokeweed poisoning"
+  },
+  {
+    "id": "ready-wildfires",
+    "url": "https://www.ready.gov/wildfires",
+    "authority": "Ready.gov"
+  },
+  {
+    "id": "ready-earthquakes",
+    "url": "https://www.ready.gov/earthquakes",
+    "authority": "Ready.gov"
+  },
+  {
+    "id": "ready-floods",
+    "url": "https://www.ready.gov/floods",
+    "authority": "Ready.gov"
+  },
+  {
+    "id": "ready-heat",
+    "url": "https://www.ready.gov/heat",
+    "authority": "Ready.gov"
+  },
+  {
+    "id": "ready-thunderstorms-lightning",
+    "url": "https://www.ready.gov/thunderstorms-lightning",
+    "authority": "Ready.gov"
+  },
+  {
+    "id": "nhs-first-aid",
+    "url": "https://www.nhs.uk/tests-and-treatments/first-aid/",
+    "authority": "NHS"
+  },
+  {
+    "id": "nhs-burns-treatment",
+    "url": "https://www.nhs.uk/conditions/burns-and-scalds/treatment/",
+    "authority": "NHS"
+  },
+  {
+    "id": "nhs-poisoning",
+    "url": "https://www.nhs.uk/conditions/poisoning/",
+    "authority": "NHS"
+  },
+  {
+    "id": "medlineplus-first-aid",
+    "url": "https://medlineplus.gov/firstaid.html",
+    "authority": "MedlinePlus"
+  },
+  {
+    "id": "medlineplus-heart-attack-first-aid",
+    "url": "https://medlineplus.gov/ency/article/000063.htm",
+    "authority": "MedlinePlus"
+  },
+  {
+    "id": "medlineplus-snake-bites",
+    "url": "https://medlineplus.gov/ency/article/000031.htm",
+    "authority": "MedlinePlus"
+  },
+  {
+    "id": "medlineplus-poisoning",
+    "url": "https://medlineplus.gov/poisoning.html",
+    "authority": "MedlinePlus"
+  },
+  {
+    "id": "cdc-heat-signs",
+    "url": "https://www.cdc.gov/extreme-heat/signs-symptoms/index.html",
+    "authority": "CDC"
+  },
+  {
+    "id": "cdc-anaphylaxis",
+    "url": "https://www.cdc.gov/vaccines/covid-19/downloads/recognizing-responding-to-anaphylaxis-508.pdf",
+    "authority": "CDC"
+  },
+  {
+    "id": "who-basic-emergency-care",
+    "url": "https://www.who.int/publications-detail-redirect/basic-emergency-care-approach-to-the-acutely-ill-and-injured",
+    "authority": "WHO",
+    "title": "WHO-ICRC Basic Emergency Care"
+  },
+  {
+    "id": "who-community-first-aid",
+    "url": "https://applications.emro.who.int/dsaf/dsa1138.pdf",
+    "authority": "WHO",
+    "title": "WHO Community First Aid Module"
+  },
+  {
+    "id": "who-snakebite-qa",
+    "url": "https://www.who.int/news-room/questions-and-answers/item/snakebite-envenoming",
+    "authority": "WHO",
+    "title": "WHO Snakebite Envenoming Q&A"
+  },
+  {
+    "id": "cdc-carbon-monoxide-basics",
+    "url": "https://www.cdc.gov/carbon-monoxide/about/index.html",
+    "authority": "CDC",
+    "title": "Carbon Monoxide Poisoning Basics"
+  },
+  {
+    "id": "cdc-carbon-monoxide-clinical",
+    "url": "https://www.cdc.gov/carbon-monoxide/hcp/clinical-guidance/index.html",
+    "authority": "CDC",
+    "title": "Clinical Guidance for Carbon Monoxide Poisoning"
+  },
+  {
+    "id": "cdc-hypothermia",
+    "url": "https://www.cdc.gov/winter-weather/prevention/index.html",
+    "authority": "CDC",
+    "title": "Preventing Hypothermia"
+  },
+  {
+    "id": "cdc-frostbite-hypothermia-pdf",
+    "url": "https://www.cdc.gov/winter-weather/media/pdf/avoid-spot-treat-frostbite.pdf",
+    "authority": "CDC",
+    "title": "Avoid, Spot, Treat Frostbite and Hypothermia"
+  },
+  {
+    "id": "cdc-heat-related-illness-pdf",
+    "url": "https://www.cdc.gov/extreme-heat/media/pdf/Heat_Related_Illness.pdf",
+    "authority": "CDC",
+    "title": "Heat Related Illnesses"
+  },
+  {
+    "id": "medlineplus-bleeding",
+    "url": "https://medlineplus.gov/ency/article/000045.htm",
+    "authority": "MedlinePlus",
+    "title": "Bleeding"
+  },
+  {
+    "id": "medlineplus-broken-bone",
+    "url": "https://medlineplus.gov/ency/article/000001.htm",
+    "authority": "MedlinePlus",
+    "title": "Broken bone"
+  },
+  {
+    "id": "medlineplus-head-injury",
+    "url": "https://medlineplus.gov/ency/article/000028.htm",
+    "authority": "MedlinePlus",
+    "title": "Head injury - first aid"
+  },
+  {
+    "id": "medlineplus-unconsciousness",
+    "url": "https://medlineplus.gov/ency/article/000022.htm",
+    "authority": "MedlinePlus",
+    "title": "Unconsciousness - first aid"
+  },
+  {
+    "id": "medlineplus-nonfatal-drowning",
+    "url": "https://medlineplus.gov/ency/article/000046.htm",
+    "authority": "MedlinePlus",
+    "title": "Non-fatal drowning"
+  },
+  {
+    "id": "medlineplus-poisoning-first-aid",
+    "url": "https://medlineplus.gov/ency/article/007579.htm",
+    "authority": "MedlinePlus",
+    "title": "Poisoning first aid"
+  },
+  {
+    "id": "medlineplus-burns",
+    "url": "https://medlineplus.gov/ency/article/000030.htm",
+    "authority": "MedlinePlus",
+    "title": "Burns"
+  },
+  {
+    "id": "medlineplus-electrical-injury",
+    "url": "https://medlineplus.gov/ency/article/000053.htm",
+    "authority": "MedlinePlus",
+    "title": "Electrical injury"
+  },
+  {
+    "id": "medlineplus-shock",
+    "url": "https://medlineplus.gov/ency/article/000039.htm",
+    "authority": "MedlinePlus",
+    "title": "Shock"
+  },
+  {
+    "id": "medlineplus-choking-unconscious",
+    "url": "https://medlineplus.gov/ency/article/000051.htm",
+    "authority": "MedlinePlus",
+    "title": "Choking - unconscious adult or child over 1 year"
+  },
+  {
+    "id": "redcross-severe-bleeding",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/bleeding-life-threatening-external",
+    "authority": "American Red Cross",
+    "title": "Life-Threatening External Bleeding"
+  },
+  {
+    "id": "redcross-tourniquet",
+    "url": "https://www.redcross.org/take-a-class/resources/articles/how-to-apply-a-tourniquet",
+    "authority": "American Red Cross",
+    "title": "How to Apply a Tourniquet"
+  },
+  {
+    "id": "redcross-head-neck-spinal",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/head-neck-spinal-injury",
+    "authority": "American Red Cross",
+    "title": "Head, Neck, and Spinal Injury"
+  },
+  {
+    "id": "redcross-unresponsive-breathing",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/unresponsive-and-breathing-person",
+    "authority": "American Red Cross",
+    "title": "Unresponsive and Breathing"
+  },
+  {
+    "id": "redcross-opioid-overdose",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/opioid-overdose",
+    "authority": "American Red Cross",
+    "title": "Opioid Overdose"
+  },
+  {
+    "id": "redcross-diabetic-emergencies",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/diabetic-emergencies",
+    "authority": "American Red Cross",
+    "title": "Diabetic Emergencies"
+  },
+  {
+    "id": "redcross-seizures",
+    "url": "https://www.redcross.org/take-a-class/resources/learn-first-aid/seizures",
+    "authority": "American Red Cross",
+    "title": "Seizures"
+  },
+  {
+    "id": "ninds-tbi",
+    "url": "https://www.ninds.nih.gov/health-information/disorders/traumatic-brain-injury-tbi",
+    "authority": "NINDS (NIH)",
+    "title": "Traumatic Brain Injury"
+  },
+  {
+    "id": "ninds-stroke-signs",
+    "url": "https://www.ninds.nih.gov/health-information/stroke/signs-and-symptoms",
+    "authority": "NINDS (NIH)",
+    "title": "Stroke Signs and Symptoms"
+  },
+  {
+    "id": "ninds-febrile-seizures",
+    "url": "https://www.ninds.nih.gov/health-information/disorders/febrile-seizures",
+    "authority": "NINDS (NIH)",
+    "title": "Febrile Seizures"
+  },
+  {
+    "id": "niddk-hypoglycemia",
+    "url": "https://www.niddk.nih.gov/health-information/diabetes/overview/preventing-problems/low-blood-glucose-hypoglycemia",
+    "authority": "NIDDK (NIH)",
+    "title": "Low Blood Glucose (Hypoglycemia)"
+  },
+  {
+    "id": "samhsa-first-responders-overdose",
+    "url": "https://store.samhsa.gov/sites/default/files/d7/priv/five-essential-steps-for-first-responders.pdf",
+    "authority": "SAMHSA",
+    "title": "Five Essential Steps for First Responders"
+  },
+  {
+    "id": "cdc-stop-overdose-response",
+    "url": "https://www.cdc.gov/stop-overdose/response/index.html",
+    "authority": "CDC",
+    "title": "Responding to an Overdose"
+  },
+  {
+    "id": "stop-the-bleed-poster",
+    "url": "https://www.stopthebleed.org/media/zocjiwum/stb-poster.pdf",
+    "authority": "Stop the Bleed",
+    "title": "Stop the Bleed Poster"
+  },
+  {
+    "id": "nps-trip-planning-guide",
+    "url": "https://www.nps.gov/subjects/healthandsafety/trip-planning-guide.htm",
+    "authority": "National Park Service",
+    "title": "Trip Planning Guide"
+  },
+  {
+    "id": "nps-outdoor-emergency-plan",
+    "url": "https://www.nps.gov/articles/gtgemergencyplan.htm",
+    "authority": "National Park Service",
+    "title": "Outdoor Emergency Plan"
+  },
+  {
+    "id": "nps-ten-essentials",
+    "url": "https://www.nps.gov/articles/10essentials.htm",
+    "authority": "National Park Service",
+    "title": "Ten Essentials"
+  },
+  {
+    "id": "nps-wilderness-travel-basics",
+    "url": "https://www.nps.gov/olym/planyourvisit/wilderness-travel-basics.htm",
+    "authority": "National Park Service",
+    "title": "Wilderness Travel Basics"
+  },
+  {
+    "id": "nws-lightning-safety",
+    "url": "https://www.weather.gov/safety/lightning",
+    "authority": "National Weather Service / NOAA",
+    "title": "Lightning Safety Tips and Resources"
+  },
+  {
+    "id": "nws-flood-safety",
+    "url": "https://www.weather.gov/safety/flood",
+    "authority": "National Weather Service / NOAA",
+    "title": "Flood Safety Tips and Resources"
+  },
+  {
+    "id": "nws-heat-safety",
+    "url": "https://www.weather.gov/safety/heat",
+    "authority": "National Weather Service / NOAA",
+    "title": "Heat Safety Tips and Resources"
+  },
+  {
+    "id": "nws-cold-safety",
+    "url": "https://www.weather.gov/safety/cold",
+    "authority": "National Weather Service / NOAA",
+    "title": "Cold Weather Safety"
+  },
+  {
+    "id": "cdc-outdoor-workers",
+    "url": "https://www.cdc.gov/niosh/outdoor-workers/about/index.html",
+    "authority": "CDC",
+    "title": "Outdoor Workers"
+  },
+  {
+    "id": "cdc-outdoor-workers-venomous-snakes",
+    "url": "https://www.cdc.gov/niosh/outdoor-workers/about/venomous-snakes.html",
+    "authority": "CDC",
+    "title": "Venomous Snakes at Work"
+  },
+  {
+    "id": "cdc-outdoor-workers-venomous-spiders",
+    "url": "https://www.cdc.gov/niosh/outdoor-workers/about/venomous-spiders.html",
+    "authority": "CDC",
+    "title": "Venomous Spiders at Work"
+  },
+  {
+    "id": "cdc-outdoor-workers-poisonous-plants",
+    "url": "https://www.cdc.gov/niosh/outdoor-workers/about/poisonous-plants.html",
+    "authority": "CDC",
+    "title": "Poisonous Plants and Work"
+  },
+  {
+    "id": "cdc-outdoor-workers-heat-stress",
+    "url": "https://www.cdc.gov/niosh/heat-stress/about/",
+    "authority": "CDC",
+    "title": "Heat Stress and Work"
+  },
+  {
+    "id": "cdc-ticks",
+    "url": "https://www.cdc.gov/ticks/",
+    "authority": "CDC",
+    "title": "Ticks"
+  },
+  {
+    "id": "cdc-radiation-emergencies",
+    "url": "https://www.cdc.gov/radiation-emergencies/about/index.html",
+    "authority": "CDC",
+    "title": "Radiation Emergencies"
+  },
+  {
+    "id": "cdc-radiation-self-decon",
+    "url": "https://www.cdc.gov/radiation-emergencies/prevention/self-decontaminate.html",
+    "authority": "CDC",
+    "title": "How to Self-Decontaminate after a Radiation Emergency"
+  },
+  {
+    "id": "cdc-anthrax-bioterrorism",
+    "url": "https://www.cdc.gov/anthrax/bioterrorism/index.html",
+    "authority": "CDC",
+    "title": "Anthrax as a Bioterrorism Agent"
+  },
+  {
+    "id": "ready-shelter-in-place",
+    "url": "https://www.ready.gov/shelter",
+    "authority": "Ready.gov",
+    "title": "Shelter In Place"
+  },
+  {
+    "id": "ready-explosions",
+    "url": "https://www.ready.gov/explosions",
+    "authority": "Ready.gov",
+    "title": "Explosions"
+  },
+  {
+    "id": "ready-radiation-emergencies",
+    "url": "https://www.ready.gov/radiation-emergencies",
+    "authority": "Ready.gov",
+    "title": "Radiation Emergencies"
+  },
+  {
+    "id": "ready-biohazard",
+    "url": "https://www.ready.gov/biohazard",
+    "authority": "Ready.gov",
+    "title": "Biohazard"
+  },
+  {
+    "id": "ready-hazmat",
+    "url": "https://www.ready.gov/hazmat",
+    "authority": "Ready.gov",
+    "title": "Hazardous Materials Incidents"
+  },
+  {
+    "id": "ready-pandemic",
+    "url": "https://www.ready.gov/pandemic",
+    "authority": "Ready.gov",
+    "title": "Pandemic"
+  },
+  {
+    "id": "ready-cybersecurity",
+    "url": "https://www.ready.gov/cybersecurity",
+    "authority": "Ready.gov",
+    "title": "Cybersecurity"
+  },
+  {
+    "id": "ready-get-tech-ready",
+    "url": "https://www.ready.gov/get-tech-ready",
+    "authority": "Ready.gov",
+    "title": "Get Tech Ready"
+  },
+  {
+    "id": "ready-power-outages",
+    "url": "https://www.ready.gov/power-outages",
+    "authority": "Ready.gov",
+    "title": "Power Outages"
+  },
+  {
+    "id": "ready-public-spaces",
+    "url": "https://www.ready.gov/public-spaces",
+    "authority": "Ready.gov",
+    "title": "Safety in Public Spaces"
+  },
+  {
+    "id": "cdc-radiation-preparing",
+    "url": "https://www.cdc.gov/radiation-emergencies/safety/index.html",
+    "authority": "CDC",
+    "title": "Preparing for a Radiation Emergency"
+  }
+]
