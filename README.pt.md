@@ -28,8 +28,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-pt.mp4">
+    <img src="./docs/assets/beacon-demo-hero-pt.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -64,8 +64,8 @@ Beacon usa um fluxo leve: primeiro o APK pequeno, depois o modelo Gemma e baixad
 
 - README principal em ingles: [`README.md`](./README.md)
 - README em chines simplificado: [`README.zh-CN.md`](./README.zh-CN.md)
-- Guia de contribuicao: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- Politica de seguranca: [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Guia de contribuicao: [`CONTRIBUTING.pt.md`](./CONTRIBUTING.pt.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Politica de seguranca: [`SECURITY.pt.md`](./SECURITY.pt.md), [`SECURITY.md`](./SECURITY.md)
 - Notas de i18n: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## Inicio rapido

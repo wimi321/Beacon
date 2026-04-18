@@ -30,8 +30,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-ar.mp4">
+    <img src="./docs/assets/beacon-demo-hero-ar.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -66,8 +66,8 @@
 
 - README الرئيسي بالإنجليزية: [`README.md`](./README.md)
 - README بالصينية المبسطة: [`README.zh-CN.md`](./README.zh-CN.md)
-- دليل المساهمة: [`CONTRIBUTING.md`](./CONTRIBUTING.md)، [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- سياسة الأمان: [`SECURITY.md`](./SECURITY.md)، [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- دليل المساهمة: [`CONTRIBUTING.ar.md`](./CONTRIBUTING.ar.md)، [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- سياسة الأمان: [`SECURITY.ar.md`](./SECURITY.ar.md)، [`SECURITY.md`](./SECURITY.md)
 - ملاحظات التدويل: [`docs/I18N.md`](./docs/I18N.md)، [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## البدء السريع

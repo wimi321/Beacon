@@ -28,8 +28,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-ko.mp4">
+    <img src="./docs/assets/beacon-demo-hero-ko.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -64,8 +64,8 @@ Beacon은 작은 APK를 먼저 배포하고, Gemma 모델은 앱 안에서 내�
 
 - 영어 메인 README: [`README.md`](./README.md)
 - 중국어 README: [`README.zh-CN.md`](./README.zh-CN.md)
-- 기여 가이드: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- 보안 정책: [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 기여 가이드: [`CONTRIBUTING.ko.md`](./CONTRIBUTING.ko.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- 보안 정책: [`SECURITY.ko.md`](./SECURITY.ko.md), [`SECURITY.md`](./SECURITY.md)
 - i18n 문서: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## 빠른 시작

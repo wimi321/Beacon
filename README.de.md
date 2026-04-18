@@ -28,8 +28,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-de.mp4">
+    <img src="./docs/assets/beacon-demo-hero-de.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -64,8 +64,8 @@ Beacon nutzt einen schlanken Distributionsweg: kleines APK zuerst, das eigentlic
 
 - Englisches Haupt-README: [`README.md`](./README.md)
 - Vereinfachtes Chinesisch: [`README.zh-CN.md`](./README.zh-CN.md)
-- Beitragshinweise: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- Sicherheitsrichtlinie: [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Beitragshinweise: [`CONTRIBUTING.de.md`](./CONTRIBUTING.de.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Sicherheitsrichtlinie: [`SECURITY.de.md`](./SECURITY.de.md), [`SECURITY.md`](./SECURITY.md)
 - i18n-Hinweise: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## Schnellstart

@@ -65,9 +65,10 @@ Beacon is a multilingual product and this repository now exposes multilingual pr
 Repository documentation coverage:
 
 - Localized README landing pages: [`English`](./README.md), [`简体中文`](./README.zh-CN.md), [`繁體中文`](./README.zh-TW.md), [`日本語`](./README.ja.md), [`한국어`](./README.ko.md), [`Español`](./README.es.md), [`Français`](./README.fr.md), [`Deutsch`](./README.de.md), [`Português`](./README.pt.md), [`العربية`](./README.ar.md)
-- Deep collaboration docs currently shipped in English and Simplified Chinese: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md), [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Localized collaboration docs: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md), [`CONTRIBUTING.zh-TW.md`](./CONTRIBUTING.zh-TW.md), [`CONTRIBUTING.ja.md`](./CONTRIBUTING.ja.md), [`CONTRIBUTING.ko.md`](./CONTRIBUTING.ko.md), [`CONTRIBUTING.es.md`](./CONTRIBUTING.es.md), [`CONTRIBUTING.fr.md`](./CONTRIBUTING.fr.md), [`CONTRIBUTING.de.md`](./CONTRIBUTING.de.md), [`CONTRIBUTING.pt.md`](./CONTRIBUTING.pt.md), [`CONTRIBUTING.ar.md`](./CONTRIBUTING.ar.md)
+- Localized security docs: [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md), [`SECURITY.zh-TW.md`](./SECURITY.zh-TW.md), [`SECURITY.ja.md`](./SECURITY.ja.md), [`SECURITY.ko.md`](./SECURITY.ko.md), [`SECURITY.es.md`](./SECURITY.es.md), [`SECURITY.fr.md`](./SECURITY.fr.md), [`SECURITY.de.md`](./SECURITY.de.md), [`SECURITY.pt.md`](./SECURITY.pt.md), [`SECURITY.ar.md`](./SECURITY.ar.md)
 - Internationalization references: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
-- Dedicated README demo assets currently exist in English and Simplified Chinese; the additional localized README pages intentionally reuse the English hero until more native captures are added
+- README hero assets now ship in the same 10 locales as the README landing pages
 
 App UI locales currently supported:
 

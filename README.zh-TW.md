@@ -28,8 +28,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-zh-TW.mp4">
+    <img src="./docs/assets/beacon-demo-hero-zh-TW.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -64,8 +64,8 @@ Beacon 採用輕量 APK 先安裝、模型在 App 內下載的方式，避免把
 
 - 英文主 README：[`README.md`](./README.md)
 - 簡體中文 README：[`README.zh-CN.md`](./README.zh-CN.md)
-- 貢獻指南：[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- 安全策略：[`SECURITY.md`](./SECURITY.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 貢獻指南：[`CONTRIBUTING.zh-TW.md`](./CONTRIBUTING.zh-TW.md)、[`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- 安全策略：[`SECURITY.zh-TW.md`](./SECURITY.zh-TW.md)、[`SECURITY.md`](./SECURITY.md)
 - 國際化說明：[`docs/I18N.md`](./docs/I18N.md)、[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## 快速開始

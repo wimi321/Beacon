@@ -43,14 +43,15 @@
 
 ## 多语言支持
 
-Beacon 不只是 App 本身支持多语言，这个开源仓库现在也扩成了多语种 README 着陆页体系。
+Beacon 不只是 App 本身支持多语言，这个开源仓库现在也扩成了多语种 README、贡献指南、安全策略和演示素材体系。
 
 仓库文档入口：
 
 - 多语言 README 着陆页：[`English`](./README.md)、[`简体中文`](./README.zh-CN.md)、[`繁體中文`](./README.zh-TW.md)、[`日本語`](./README.ja.md)、[`한국어`](./README.ko.md)、[`Español`](./README.es.md)、[`Français`](./README.fr.md)、[`Deutsch`](./README.de.md)、[`Português`](./README.pt.md)、[`العربية`](./README.ar.md)
-- 深度协作文档目前仍以英文和简体中文为主：[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)、[`SECURITY.md`](./SECURITY.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 多语言贡献指南：[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)、[`CONTRIBUTING.zh-TW.md`](./CONTRIBUTING.zh-TW.md)、[`CONTRIBUTING.ja.md`](./CONTRIBUTING.ja.md)、[`CONTRIBUTING.ko.md`](./CONTRIBUTING.ko.md)、[`CONTRIBUTING.es.md`](./CONTRIBUTING.es.md)、[`CONTRIBUTING.fr.md`](./CONTRIBUTING.fr.md)、[`CONTRIBUTING.de.md`](./CONTRIBUTING.de.md)、[`CONTRIBUTING.pt.md`](./CONTRIBUTING.pt.md)、[`CONTRIBUTING.ar.md`](./CONTRIBUTING.ar.md)
+- 多语言安全策略：[`SECURITY.md`](./SECURITY.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)、[`SECURITY.zh-TW.md`](./SECURITY.zh-TW.md)、[`SECURITY.ja.md`](./SECURITY.ja.md)、[`SECURITY.ko.md`](./SECURITY.ko.md)、[`SECURITY.es.md`](./SECURITY.es.md)、[`SECURITY.fr.md`](./SECURITY.fr.md)、[`SECURITY.de.md`](./SECURITY.de.md)、[`SECURITY.pt.md`](./SECURITY.pt.md)、[`SECURITY.ar.md`](./SECURITY.ar.md)
 - 国际化说明：[`docs/I18N.md`](./docs/I18N.md)、[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
-- README 演示素材目前已提供英文和简体中文版，其余语言 README 暂时复用英文首屏演示，后续可继续补本地化截图
+- README 演示素材目前也已经扩展到和 README 相同的 10 种语言
 
 App 当前已支持以下 20 种语言：
 

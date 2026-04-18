@@ -28,8 +28,8 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README demo" width="960">
+  <a href="./docs/assets/beacon-demo-hero-fr.mp4">
+    <img src="./docs/assets/beacon-demo-hero-fr.gif" alt="Beacon README demo" width="960">
   </a>
 </p>
 
@@ -64,8 +64,8 @@ Beacon suit un schema leger: petit APK d abord, puis telechargement du modele Ge
 
 - README principal anglais: [`README.md`](./README.md)
 - README chinois simplifie: [`README.zh-CN.md`](./README.zh-CN.md)
-- Guide de contribution: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
-- Politique de securite: [`SECURITY.md`](./SECURITY.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Guide de contribution: [`CONTRIBUTING.fr.md`](./CONTRIBUTING.fr.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Politique de securite: [`SECURITY.fr.md`](./SECURITY.fr.md), [`SECURITY.md`](./SECURITY.md)
 - Notes i18n: [`docs/I18N.md`](./docs/I18N.md), [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
 
 ## Demarrage rapide
