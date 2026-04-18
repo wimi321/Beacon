@@ -189,6 +189,12 @@ button {
   background: rgba(217, 65, 65, 0.18);
 }
 
+.status-badge.network-offline {
+  color: var(--text-secondary);
+  border-color: rgba(255, 176, 32, 0.3);
+  background: rgba(255, 176, 32, 0.08);
+}
+
 .warning-banner {
   margin-top: 0.5rem;
   display: flex;
@@ -595,6 +601,11 @@ html[dir="rtl"] .chat-input {
   background: rgba(255, 255, 255, 0.09);
 }
 
+.chat-input::placeholder {
+  color: #a0a098;
+  opacity: 1;
+}
+
 .chat-input:disabled {
   opacity: 0.6;
 }
@@ -955,6 +966,29 @@ html[dir="rtl"] .chat-input {
   }
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent-yellow);
+  outline-offset: 2px;
+}
+
+.nav-back-btn:focus-visible,
+.panic-btn:focus-visible,
+.viewfinder-btn:focus-visible,
+.sos-btn:focus-visible,
+.model-mgr-btn:focus-visible,
+.send-btn:focus-visible,
+.power-toggle:focus-visible {
+  outline: 2px solid var(--accent-yellow);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 216, 77, 0.2);
+}
+
+.chat-input:focus-visible {
+  outline: none;
+  border-color: rgba(255, 216, 77, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 216, 77, 0.15);
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -962,5 +996,23 @@ html[dir="rtl"] .chat-input {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+
+  .container {
+    transition: none;
+  }
+
+  .model-panel {
+    transition: none;
+  }
+
+  .panic-btn:active {
+    transform: none;
   }
 }

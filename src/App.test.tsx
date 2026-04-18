@@ -143,7 +143,7 @@ describe('App', () => {
   it('renders localized home copy for non-Chinese supported languages', async () => {
     renderApp('fr');
 
-    expect(await screen.findByRole('heading', { name: /Survis d abord, reflechis ensuite/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Survis d'abord, réfléchis ensuite/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Perdu \/ Sans signal/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /先活下来，再想别的/i })).toBeNull();
   });

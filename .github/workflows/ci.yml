@@ -26,6 +26,9 @@ jobs:
       - name: Run frontend tests
         run: npm test
 
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
       - name: Build web app
         run: npm run build
 
@@ -34,6 +37,9 @@ jobs:
 
       - name: Install Dart dependencies
         run: dart pub get
+
+      - name: Dart analyze
+        run: dart analyze --fatal-infos
 
       - name: Run Dart tests
         run: dart test

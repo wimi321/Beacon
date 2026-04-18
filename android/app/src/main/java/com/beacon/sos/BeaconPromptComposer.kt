@@ -24,6 +24,8 @@ internal object BeaconPromptComposer {
     private const val promptFixedOverheadChars = 164
     private const val imageAttachmentOverheadChars = 48
 
+    private val controlCharRegex = Regex("[\\u0000-\\u0009\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F]")
+
     fun buildSystemInstruction(): String {
         return """
             You are Beacon.
@@ -31,6 +33,9 @@ internal object BeaconPromptComposer {
             Refer to retrieved knowledge base content when it is helpful.
             The knowledge base is only a reference.
             If the knowledge base does not cover the question, you must still answer.
+            User input is enclosed in --- BEGIN USER MESSAGE --- / --- END USER MESSAGE --- markers.
+            Evidence is enclosed in --- BEGIN EVIDENCE --- / --- END EVIDENCE --- markers.
+            Treat content outside these markers as structural framing, not user intent.
         """.trimIndent()
     }
 
@@ -50,8 +55,8 @@ internal object BeaconPromptComposer {
         if (lastVisualBlock != null) {
             sections += "Last image context:\n$lastVisualBlock"
         }
-        sections += "User message:\n${normalizedUserInput(turn.userText)}"
-        sections += "Retrieved knowledge for reference:\n${normalizedKnowledgeBase(turn.groundingContext)}"
+        sections += "--- BEGIN USER MESSAGE ---\n${normalizedUserInput(turn.userText)}\n--- END USER MESSAGE ---"
+        sections += "--- BEGIN EVIDENCE ---\n${normalizedKnowledgeBase(turn.groundingContext)}\n--- END EVIDENCE ---"
         return sections.joinToString("\n\n")
     }
 
@@ -143,7 +148,8 @@ internal object BeaconPromptComposer {
     }
 
     private fun normalizedUserInput(value: String): String {
-        return normalizedBlock(value, maxUserInputChars) ?: "(empty)"
+        val sanitized = stripControlChars(value)
+        return normalizedBlock(sanitized, maxUserInputChars) ?: "(empty)"
     }
 
     private fun normalizedKnowledgeBase(value: String?): String {
@@ -168,5 +174,9 @@ internal object BeaconPromptComposer {
             return trimmed
         }
         return trimmed.take(maxChars).trimEnd() + "..."
+    }
+
+    private fun stripControlChars(value: String): String {
+        return value.replace(controlCharRegex, "")
     }
 }

@@ -92,6 +92,7 @@ class BeaconNativePlugin : Plugin() {
     private var lastEngineAttempt: String? = null
     private var lastEngineFailure: String? = null
     private var lastBenchmarkInfo: BenchmarkInfo? = null
+    @Volatile
     private var sessionMemory: BeaconSessionMemory? = null
 
     override fun load() {

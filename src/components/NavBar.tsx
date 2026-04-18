@@ -9,9 +9,10 @@ interface NavBarProps {
   sosActive?: boolean;
   nodesCount?: number;
   statusLine?: string;
+  isOnline?: boolean;
 }
 
-export function NavBar({ showBack, onBack, title, sosActive, nodesCount, statusLine }: NavBarProps) {
+export function NavBar({ showBack, onBack, title, sosActive, nodesCount, statusLine, isOnline }: NavBarProps) {
   const { t } = useI18n();
 
   return (
@@ -41,7 +42,8 @@ export function NavBar({ showBack, onBack, title, sosActive, nodesCount, statusL
       {!showBack && (
         <div className="header-meta">
           <LanguageSwitcher />
-          <div className={`status-badge ${sosActive ? 'offline' : ''}`}>
+          <div className={`status-badge ${sosActive ? 'offline' : ''} ${isOnline === false ? 'network-offline' : ''}`}>
+            {isOnline === false && <span aria-label={t('status.network_offline')}>📴 </span>}
             {sosActive
               ? `📡 ${t('status.broadcasting', { count: nodesCount || 0 })}`
               : `${statusLine === t('status.offline_ready') ? '🔋 ' : ''}${statusLine}`}

@@ -11,6 +11,7 @@ import {
 import { App as CapacitorApp } from '@capacitor/app';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+import { Network } from '@capacitor/network';
 import { getBeaconBridge } from './lib/runtime';
 import {
   attachTriageSession,
@@ -145,6 +146,23 @@ function extractErrorMessage(error: unknown): string {
 function isCancelledCameraCapture(error: unknown): boolean {
   const message = extractErrorMessage(error).toLowerCase();
   return message.includes('cancel');
+}
+
+function isCameraPermissionDenied(error: unknown): boolean {
+  const message = extractErrorMessage(error).toLowerCase();
+  return message.includes('permission')
+    || message.includes('denied')
+    || message.includes('not authorized')
+    || message.includes('access');
+}
+
+function formatDownloadEta(startTime: number | undefined, fraction: number): string {
+  if (!startTime || fraction <= 0) return '';
+  const elapsed = (Date.now() - startTime) / 1000;
+  if (elapsed < 3 || fraction < 0.01) return '';
+  const remaining = (elapsed / fraction) * (1 - fraction);
+  if (remaining < 60) return ` (~${Math.ceil(remaining)}s)`;
+  return ` (~${Math.ceil(remaining / 60)}min)`;
 }
 
 function shouldStopAutoModelRetry(message: string): boolean {
@@ -428,7 +446,12 @@ export default function App() {
   const modelManagerCloseTouchAtRef = useRef(0);
   const previousHashRef = useRef(hash);
   const activeInferenceRunRef = useRef(0);
+  const syncRetryCountRef = useRef(0);
+  const downloadStartTimeRef = useRef<Record<string, number>>({});
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [isSwitchingPowerMode, setIsSwitchingPowerMode] = useState(false);
   const modelRequiredMessage = t('status.model_required');
   const modelPreparingMessage = t('status.model_preparing');
   const modelNotLoadedMessage = t('model.not_loaded');
@@ -472,7 +495,10 @@ export default function App() {
       invalidateInferenceRun();
       resetConversationUiState();
       if (hadActiveInference) {
-        void bridge.cancelActiveInference().catch(() => undefined);
+        setIsCancelling(true);
+        const cancel = bridge.cancelActiveInference().catch(() => undefined);
+        const timeout = new Promise<void>((r) => setTimeout(r, 3000));
+        void Promise.race([cancel, timeout]).finally(() => setIsCancelling(false));
       }
     }
   }, [bridge, hash, isStreaming, messages.length, modelLoadFailure, t]);
@@ -481,6 +507,15 @@ export default function App() {
   useEffect(() => {
     setStatusLine(modelLoadFailure ?? t('status.offline_ready'));
   }, [modelLoadFailure, t]);
+
+  useEffect(() => {
+    let handle: { remove: () => Promise<void> } | undefined;
+    Network.getStatus().then((s) => setIsOnline(s.connected)).catch(() => {});
+    Network.addListener('networkStatusChange', (s) => {
+      setIsOnline(s.connected);
+    }).then((h) => { handle = h; });
+    return () => { void handle?.remove(); };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -559,6 +594,7 @@ export default function App() {
 
     const syncNativeModelState = async (): Promise<void> => {
       let stopAutoRetry = false;
+      syncRetryCountRef.current += 1;
 
       try {
         const listedModels = await bridge.listModels();
@@ -614,6 +650,7 @@ export default function App() {
         const shouldContinue =
         !stopAutoRetry
         && modelLoadFailure == null
+        && syncRetryCountRef.current < 20
         && (
           shouldKeepWaitingForBundledModel(modelsRef.current)
           || (hasDownloadedModel(modelsRef.current) && !hasLoadedModel(modelsRef.current))
@@ -623,6 +660,9 @@ export default function App() {
         timerId = window.setTimeout(() => {
           void syncNativeModelState();
         }, 1500);
+      } else if (syncRetryCountRef.current >= 20 && !hasLoadedModel(modelsRef.current)) {
+        setModelLoadFailure(t('status.model_sync_timeout'));
+        setShowModelManager(true);
       }
     };
 
@@ -793,7 +833,10 @@ export default function App() {
       navigate('#/');
     }
     if (hadActiveInference) {
-      void bridge.cancelActiveInference().catch(() => undefined);
+      setIsCancelling(true);
+      const cancel = bridge.cancelActiveInference().catch(() => undefined);
+      const timeout = new Promise<void>((r) => setTimeout(r, 3000));
+      void Promise.race([cancel, timeout]).finally(() => setIsCancelling(false));
     }
   }
 
@@ -995,6 +1038,8 @@ export default function App() {
     request: Parameters<typeof attachTriageSession>[0],
     options?: { displayCategoryLabel?: string },
   ): Promise<void> {
+    if (isStreaming) return;
+
     const requestWithSession = attachTriageSession(request, triageSession);
     if (triageSession.resetContext) {
       setTriageSession((current) => consumeTriageSessionReset(current));
@@ -1135,6 +1180,7 @@ export default function App() {
     categoryHint: string,
     userText: string,
   ): Promise<void> {
+    if (isStreaming) return;
     navigate('#/chat');
     if (!(await ensureLocalModelReady())) {
       return;
@@ -1170,6 +1216,7 @@ export default function App() {
   }
 
   async function handleVisualAnalysis(): Promise<void> {
+    if (isStreaming) return;
     if (!(await ensureLocalModelReady())) {
       return;
     }
@@ -1232,6 +1279,13 @@ export default function App() {
       if (isCancelledCameraCapture(error)) {
         return;
       }
+      if (isCameraPermissionDenied(error)) {
+        setMessages((prev) => [
+          ...prev,
+          { id: createId('system'), sender: 'system', text: t('camera.permission_denied') },
+        ]);
+        return;
+      }
       if (inferenceRunId !== null && !isInferenceRunActive(inferenceRunId)) {
         return;
       }
@@ -1258,8 +1312,13 @@ export default function App() {
   }
 
   async function handleSwitchPowerMode(mode: PowerMode): Promise<void> {
-    await refreshBattery(mode);
-    setStatusLine(mode === 'doomsday' ? t('status.doomsday_on') : t('status.standard_power'));
+    setIsSwitchingPowerMode(true);
+    try {
+      await refreshBattery(mode);
+      setStatusLine(mode === 'doomsday' ? t('status.doomsday_on') : t('status.standard_power'));
+    } finally {
+      setIsSwitchingPowerMode(false);
+    }
   }
 
   async function handleDownloadModel(modelId: string): Promise<void> {
@@ -1271,9 +1330,11 @@ export default function App() {
 
     try {
       setModelLoadFailure(null);
+      syncRetryCountRef.current = 0;
 
       if (!targetModel?.isDownloaded) {
         setStatusLine(t('status.downloading', { modelId }));
+        downloadStartTimeRef.current[modelId] = Date.now();
         for await (const chunk of bridge.downloadModel(modelId)) {
           setDownloadProgress((prev) => ({ ...prev, [modelId]: chunk.fraction }));
         }
@@ -1394,12 +1455,13 @@ export default function App() {
       onTouchEnd={handleSwipeBackTouchEnd}
       onTouchCancel={resetSwipeBackGesture}
     >
-      <NavBar 
-        showBack={isChatView} 
-        onBack={isChatView ? handleClearChat : undefined} 
-        sosActive={sosActive} 
-        nodesCount={nodesCount} 
-        statusLine={statusLine}
+      <NavBar
+        showBack={isChatView}
+        onBack={isChatView ? handleClearChat : undefined}
+        sosActive={sosActive}
+        nodesCount={nodesCount}
+        statusLine={isCancelling ? t('status.cancelling') : statusLine}
+        isOnline={isOnline}
       />
 
       {batteryWarning && (
@@ -1423,6 +1485,7 @@ export default function App() {
                 <button
                   key={action.label}
                   className="panic-btn"
+                  disabled={isStreaming}
                   onClick={() => void handleQuickAction(action.label, action.categoryHint, action.userText)}
                 >
                   <span className="panic-icon-shell" aria-hidden="true">
@@ -1432,7 +1495,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <button className="viewfinder-btn" onClick={() => void handleVisualAnalysis()}>
+            <button className="viewfinder-btn" disabled={isStreaming} onClick={() => void handleVisualAnalysis()}>
               <span className="viewfinder-icon-shell" aria-hidden="true">
                 <CameraIcon size={21} strokeWidth={2.25} />
               </span>
@@ -1478,7 +1541,7 @@ export default function App() {
           </>
         )}
         {isStreaming && (
-          <div className="streaming-indicator">
+          <div className="streaming-indicator" role="status" aria-live="polite">
             <LoaderCircle size={16} className="spin" />
             {t('chat.streaming')}
           </div>
@@ -1491,6 +1554,7 @@ export default function App() {
             type="text"
             className="chat-input"
             placeholder={t('chat.input_placeholder')}
+            aria-label={t('chat.input_placeholder')}
             value={chatInput}
             onChange={(event) => setChatInput(event.target.value)}
             disabled={isStreaming}
@@ -1504,6 +1568,7 @@ export default function App() {
           <button
             className={`sos-btn ${sosActive ? 'active' : ''}`}
             onClick={() => void handleToggleSos()}
+            aria-label={sosActive ? t('sos.stop') : t('sos.start')}
           >
             {sosActive ? t('sos.stop') : t('sos.start')}
           </button>
@@ -1545,6 +1610,7 @@ export default function App() {
               type="button"
               onClick={handleModelManagerCloseClick}
               onTouchEnd={handleModelManagerCloseTouchEnd}
+              aria-label={t('model.close')}
             >
               {t('model.close')}
             </button>
@@ -1560,8 +1626,11 @@ export default function App() {
             <button
               className={`power-toggle ${powerMode === 'doomsday' ? 'active' : ''}`}
               onClick={() => void handleSwitchPowerMode(powerMode === 'normal' ? 'doomsday' : 'normal')}
+              disabled={isSwitchingPowerMode}
             >
-              {powerMode === 'doomsday' ? t('power.normal.toggle') : t('power.doomsday.toggle')}
+              {isSwitchingPowerMode
+                ? <LoaderCircle size={14} className="spin" />
+                : (powerMode === 'doomsday' ? t('power.normal.toggle') : t('power.doomsday.toggle'))}
             </button>
           </div>
 
@@ -1605,6 +1674,7 @@ export default function App() {
                             {t('model.downloading', {
                               progress: ((progress ?? 0) * 100).toFixed(0),
                             })}
+                            {formatDownloadEta(downloadStartTimeRef.current[model.id], progress ?? 0)}
                           </span>
                         )}
                       </button>
@@ -1641,6 +1711,7 @@ export default function App() {
                     {downloadProgress[model.id] != null && downloadProgress[model.id] < 1 && (
                       <div className="download-progress">
                         {t('model.downloading', { progress: (downloadProgress[model.id] * 100).toFixed(0) })}
+                        {formatDownloadEta(downloadStartTimeRef.current[model.id], downloadProgress[model.id])}
                       </div>
                     )}
                     {model.isLoaded ? (

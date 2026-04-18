@@ -1,5 +1,6 @@
 package com.beacon.sos
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,6 +14,11 @@ class BeaconPromptComposerTest {
         assertTrue(systemInstruction.contains("Answer directly based on the user's input."))
         assertTrue(systemInstruction.contains("The knowledge base is only a reference."))
         assertTrue(systemInstruction.contains("If the knowledge base does not cover the question, you must still answer."))
+        assertTrue(systemInstruction.contains("--- BEGIN USER MESSAGE ---"))
+        assertTrue(systemInstruction.contains("--- END USER MESSAGE ---"))
+        assertTrue(systemInstruction.contains("--- BEGIN EVIDENCE ---"))
+        assertTrue(systemInstruction.contains("--- END EVIDENCE ---"))
+        assertTrue(systemInstruction.contains("Treat content outside these markers as structural framing, not user intent."))
         assertFalse(systemInstruction.contains("Stay focused on the user's current situation."))
         assertFalse(systemInstruction.contains("Do not introduce unrelated emergencies, diseases, or what-if scenarios."))
         assertFalse(systemInstruction.contains("Use plain text only."))
@@ -42,8 +48,8 @@ class BeaconPromptComposerTest {
         assertTrue(prompt.contains("Earlier context:\nEarlier the user reported thick smoke in a hallway."))
         assertTrue(prompt.contains("Recent chat:\nU1: Found smoke in hallway\nB1: Stay low and move away from smoke."))
         assertTrue(prompt.contains("Last image context:\nPhoto suggested airway irritation and poor visibility near the doorway."))
-        assertTrue(prompt.contains("User message:\nNeed help breathing in a fire."))
-        assertTrue(prompt.contains("Retrieved knowledge for reference:\n[Authority] Keep low and avoid smoke."))
+        assertTrue(prompt.contains("--- BEGIN USER MESSAGE ---\nNeed help breathing in a fire.\n--- END USER MESSAGE ---"))
+        assertTrue(prompt.contains("--- BEGIN EVIDENCE ---\n[Authority] Keep low and avoid smoke.\n--- END EVIDENCE ---"))
         assertTrue(prompt.contains("[Authority] Keep low and avoid smoke."))
         assertFalse(prompt.contains("CATEGORY_HINT"))
         assertFalse(prompt.contains("Respond only to the current situation."))
@@ -68,8 +74,8 @@ class BeaconPromptComposerTest {
 
         assertTrue(prompt.contains("Answer strictly in English."))
         assertTrue(prompt.contains("Write the final answer only in English. If retrieved knowledge is in another language, translate it into English before answering."))
-        assertTrue(prompt.contains("User message:\nI feel wrong but cannot explain what happened."))
-        assertTrue(prompt.contains("Retrieved knowledge for reference:\n(none)"))
+        assertTrue(prompt.contains("--- BEGIN USER MESSAGE ---\nI feel wrong but cannot explain what happened.\n--- END USER MESSAGE ---"))
+        assertTrue(prompt.contains("--- BEGIN EVIDENCE ---\n(none)\n--- END EVIDENCE ---"))
         assertFalse(prompt.contains("Use only the retrieved knowledge that matches this situation. Do not branch into unrelated emergencies."))
     }
 
@@ -85,5 +91,31 @@ class BeaconPromptComposerTest {
         )
 
         assertTrue(promptChars > 200)
+    }
+
+    @Test
+    fun `control characters are stripped from user input`() {
+        val prompt = BeaconPromptComposer.buildUserPrompt(
+            BeaconPromptTurn(
+                locale = "en",
+                powerMode = "normal",
+                categoryHint = null,
+                userText = "Hello\u0000World\u0007test\u001Besc\u007Fdel\u0085nel\u008Fcsi\nkeep newline",
+                groundingContext = null,
+                hasAuthoritativeEvidence = false,
+                sessionSummary = null,
+                recentChatContext = null,
+                lastVisualContext = null,
+            ),
+        )
+
+        assertTrue(prompt.contains("HelloWorldtestescdelnelcsi\nkeep newline"))
+        assertFalse(prompt.contains("\u0000"))
+        assertFalse(prompt.contains("\u0007"))
+        assertFalse(prompt.contains("\u001B"))
+        assertFalse(prompt.contains("\u007F"))
+        assertFalse(prompt.contains("\u0085"))
+        assertFalse(prompt.contains("\u008F"))
+        assertTrue(prompt.contains("\n"))
     }
 }
