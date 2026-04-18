@@ -24,7 +24,7 @@ build/
 output/
 __pycache__/
 scripts/__pycache__/
-docs/assets/.readme-demo-frames/
+docs/assets/.readme-demo-frames*/
 
 # Android
 android/.gradle/

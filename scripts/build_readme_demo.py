@@ -25,6 +25,14 @@ HEIGHT = 720
 FPS = 20
 DURATION_SECONDS = 8
 FRAME_COUNT = FPS * DURATION_SECONDS
+PHONE_WIDTH = 302
+PHONE_X = 912
+PHONE_Y = 22
+PHONE_FRAME_PADDING = 16
+HEADER_BOX = (56, 52, 808, 204)
+HEADER_TITLE_Y = 76
+HEADER_HEADLINE_Y = 126
+HEADER_CAPTION_Y = 168
 
 
 def clamp(value: float, low: float, high: float) -> float:
@@ -64,38 +72,46 @@ def build_background(source: Image.Image, t: float) -> Image.Image:
 
 
 def build_phone(source: Image.Image) -> Image.Image:
-    phone_width = 330
-    phone_height = int(source.height * phone_width / source.width)
-    return source.resize((phone_width, phone_height), Image.Resampling.LANCZOS).convert("RGBA")
+    phone_height = int(source.height * PHONE_WIDTH / source.width)
+    phone = source.resize((PHONE_WIDTH, phone_height), Image.Resampling.LANCZOS).convert("RGBA")
+    mask = Image.new("L", phone.size, 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.rounded_rectangle((0, 0, phone.width, phone.height), radius=34, fill=255)
+    rounded_phone = Image.new("RGBA", phone.size, (0, 0, 0, 0))
+    rounded_phone.paste(phone, (0, 0), mask)
+    return rounded_phone
 
 
 def build_frame(source: Image.Image, phone: Image.Image, fonts: dict[str, ImageFont.FreeTypeFont], index: int) -> Image.Image:
     t = index / FPS
     frame = build_background(source, t)
 
-    phone_x = 901
-    if t < 2.67:
-        phone_y = int(30 - 90 * scene_progress(t, 0.0, 2.67))
-    elif t < 5.34:
-        phone_y = int(-60 - 220 * scene_progress(t, 2.67, 5.34))
-    else:
-        phone_y = int(-280 - 110 * scene_progress(t, 5.34, 8.0))
-
     shadow = Image.new("RGBA", frame.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow, "RGBA")
-    rounded_box(shadow_draw, (890, 16, 1242, 704), 28, (0, 0, 0, 62), outline=(255, 255, 255, 28), width=2)
+    phone_frame_left = PHONE_X - PHONE_FRAME_PADDING
+    phone_frame_top = 16
+    phone_frame_right = PHONE_X + phone.width + PHONE_FRAME_PADDING
+    phone_frame_bottom = 704
+    rounded_box(
+        shadow_draw,
+        (phone_frame_left, phone_frame_top, phone_frame_right, phone_frame_bottom),
+        28,
+        (0, 0, 0, 62),
+        outline=(255, 255, 255, 28),
+        width=2,
+    )
     frame = Image.alpha_composite(frame, shadow)
-    frame.alpha_composite(phone, (phone_x, phone_y))
+    frame.alpha_composite(phone, (PHONE_X, PHONE_Y))
     draw = ImageDraw.Draw(frame, "RGBA")
 
-    rounded_box(draw, (56, 58, 788, 168), 22, (8, 12, 18, 120), outline=(255, 255, 255, 24), width=2)
-    draw_text_block(draw, "Beacon", fonts["title"], (76, 74), (255, 255, 255, 255))
-    draw_text_block(draw, "Offline-first emergency survival guidance", fonts["headline"], (76, 120), (255, 255, 255, 255))
+    rounded_box(draw, HEADER_BOX, 22, (8, 12, 18, 120), outline=(255, 255, 255, 24), width=2)
+    draw_text_block(draw, "Beacon", fonts["title"], (76, HEADER_TITLE_Y), (255, 255, 255, 255))
+    draw_text_block(draw, "Offline-first emergency survival guidance", fonts["headline"], (76, HEADER_HEADLINE_Y), (255, 255, 255, 255))
     draw_text_block(
         draw,
         "Real on-device Gemma 4 + multilingual UX + offline knowledge",
         fonts["caption"],
-        (76, 160),
+        (76, HEADER_CAPTION_Y),
         (235, 241, 248, 220),
     )
 
@@ -139,11 +155,11 @@ def build_frame(source: Image.Image, phone: Image.Image, fonts: dict[str, ImageF
 
         card_fill = (8, 12, 18, int(160 * alpha))
         accent_fill = (*card["accent"][:3], int(242 * alpha))
-        rounded_box(draw, (76, 232, 696, 408), 24, card_fill)
-        draw.rounded_rectangle((76, 232, 86, 408), radius=12, fill=accent_fill)
-        draw_text_block(draw, card["title"], fonts["card_title"], (104, 258), (255, 255, 255, int(255 * alpha)))
-        draw_text_block(draw, card["line1"], fonts["card_body"], (104, 305), (244, 247, 252, int(235 * alpha)))
-        draw_text_block(draw, card["line2"], fonts["card_small"], (104, 342), (222, 228, 236, int(210 * alpha)))
+        rounded_box(draw, (76, 248, 704, 424), 24, card_fill)
+        draw.rounded_rectangle((76, 248, 86, 424), radius=12, fill=accent_fill)
+        draw_text_block(draw, card["title"], fonts["card_title"], (104, 274), (255, 255, 255, int(255 * alpha)))
+        draw_text_block(draw, card["line1"], fonts["card_body"], (104, 321), (244, 247, 252, int(235 * alpha)))
+        draw_text_block(draw, card["line2"], fonts["card_small"], (104, 358), (222, 228, 236, int(210 * alpha)))
 
     badges = [
         ("ANDROID + IOS", 76, 616, 246),
