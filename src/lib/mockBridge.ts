@@ -68,7 +68,9 @@ class MockBeaconBridge implements BeaconBridge {
     await warmKnowledgeEngine();
     return inferTriageResponse({
       ...request,
-      userText: `${request.userText} visual wound or outdoor hazard analysis`,
+      userText:
+        request.userText.trim() ||
+        'What dangers do you see and what should I do next?',
       categoryHint: request.categoryHint ?? translateMessage(this.lastLocale, 'action.visual_help'),
     });
   }

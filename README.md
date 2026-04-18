@@ -33,6 +33,14 @@
   </a>
 </p>
 
+## Download
+
+- Install the latest Android ARM64 APK from [GitHub Releases](https://github.com/wimi321/Beacon/releases)
+- Open `Settings & Models` on first launch
+- Download `Gemma 4 E2B` for the fastest recommended setup, or `Gemma 4 E4B` for a larger higher-accuracy model
+
+This release flow mirrors the lightweight official app pattern: ship a small installable APK first, then let the user pull the on-device Gemma model inside the app.
+
 ## Languages
 
 Beacon is a multilingual product and this repository now exposes multilingual project docs as well.
@@ -70,6 +78,7 @@ App UI locales currently supported:
 
 ## Demo
 
+- English home screenshot: [`docs/assets/beacon-home-android-en.png`](./docs/assets/beacon-home-android-en.png)
 - README hero GIF: [`docs/assets/beacon-demo-hero.gif`](./docs/assets/beacon-demo-hero.gif)
 - Short video: [`docs/assets/beacon-demo-hero.mp4`](./docs/assets/beacon-demo-hero.mp4)
 - Poster frame: [`docs/assets/beacon-demo-hero-poster.png`](./docs/assets/beacon-demo-hero-poster.png)
@@ -213,6 +222,12 @@ npm run mobile:ios
 
 ```bash
 npm run mobile:android:release
+```
+
+### Build the lightweight GitHub APK
+
+```bash
+npm run mobile:android:release:github
 ```
 
 ## Development Commands

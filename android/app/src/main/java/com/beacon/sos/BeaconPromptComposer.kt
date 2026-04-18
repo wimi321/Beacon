@@ -38,9 +38,6 @@ internal object BeaconPromptComposer {
         val sections = mutableListOf<String>()
         sections += languageDirective(turn.locale)
         sections += outputLanguageReminder(turn.locale)
-        if (turn.hasImage) {
-            sections += "A real camera image is attached."
-        }
         val sessionSummaryBlock = normalizedSessionSummary(turn.sessionSummary)
         if (sessionSummaryBlock != null) {
             sections += "Earlier context:\n$sessionSummaryBlock"

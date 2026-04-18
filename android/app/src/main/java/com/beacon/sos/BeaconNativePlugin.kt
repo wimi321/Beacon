@@ -38,6 +38,8 @@ class BeaconNativePlugin : Plugin() {
     private val bundledModelsAssetDir = "models"
     private val progressNotifyStepBytes = 8L * 1024L * 1024L
     private val modelControlCharsRegex = Regex("[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]")
+    private val defaultVisualPromptWithImage = "What dangers do you see and what should I do next?"
+    private val defaultVisualPromptWithoutImage = "What visible details should I check and what should I do next?"
 
     private data class ModelSpec(
         val id: String,
@@ -474,11 +476,10 @@ class BeaconNativePlugin : Plugin() {
 
     @PluginMethod
     fun analyzeVisual(call: PluginCall) {
-        val userText = call.getString("userText")
-        if (userText.isNullOrBlank()) {
-            call.reject("userText is required.")
-            return
-        }
+        val userText = resolveVisualUserText(
+            userText = call.getString("userText"),
+            hasImage = !normalizeBase64Blob(call.getString("imageBase64")).isNullOrBlank(),
+        )
 
         executor.execute {
             try {
@@ -883,11 +884,22 @@ class BeaconNativePlugin : Plugin() {
         val imageBytes = decodeImageBytes(imageBase64)
         return Contents.of(
             listOf(
-                Content.Text("Emergency photo attached."),
                 Content.ImageBytes(imageBytes),
                 Content.Text(prompt),
             ),
         )
+    }
+
+    private fun resolveVisualUserText(userText: String?, hasImage: Boolean): String {
+        val trimmed = userText?.trim().orEmpty()
+        if (trimmed.isNotEmpty()) {
+            return trimmed
+        }
+        return if (hasImage) {
+            defaultVisualPromptWithImage
+        } else {
+            defaultVisualPromptWithoutImage
+        }
     }
 
     private fun prepareConversationSession(

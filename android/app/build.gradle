@@ -11,12 +11,27 @@ def bundledGemmaArtifact = file('../../.artifacts/gemma-4-E2B-it.litertlm')
 def generatedBundledAssetsDir = layout.buildDirectory.dir('generated/beacon-bundled-assets').get().asFile
 def generatedBundledModelsDir = new File(generatedBundledAssetsDir, 'models')
 def stagedBundledGemmaFile = new File(generatedBundledModelsDir, 'gemma-4-E2B-it.litertlm')
+def bundleGemmaInApk = providers.gradleProperty('beaconBundleGemmaInApk')
+    .map { it.toBoolean() }
+    .orElse(true)
+    .get()
+def arm64OnlyBuild = providers.gradleProperty('beaconArm64Only')
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
 
 tasks.register('stageBundledGemmaE2B') {
     inputs.file(bundledGemmaArtifact)
     outputs.file(stagedBundledGemmaFile)
 
     doLast {
+        if (!bundleGemmaInApk) {
+            if (stagedBundledGemmaFile.exists() && !stagedBundledGemmaFile.delete()) {
+                throw new GradleException("Failed to clear staged bundled model: ${stagedBundledGemmaFile.absolutePath}")
+            }
+            return
+        }
+
         if (!bundledGemmaArtifact.exists()) {
             throw new GradleException("Bundled Gemma 4 E2B artifact is missing: ${bundledGemmaArtifact.absolutePath}")
         }
@@ -52,22 +67,26 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
     sourceSets {
         main {
-            assets.srcDirs += generatedBundledAssetsDir.absolutePath
+            if (bundleGemmaInApk) {
+                assets.srcDirs += generatedBundledAssetsDir.absolutePath
+            }
             java {
                 exclude 'io/flutter/plugins/**'
             }
         }
     }
-    androidResources {
-        noCompress += ['litertlm']
-    }
     defaultConfig {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "0.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        if (arm64OnlyBuild) {
+            ndk {
+                abiFilters 'arm64-v8a'
+            }
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61

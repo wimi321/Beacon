@@ -62,6 +62,21 @@ function formatModelSizeLabel(
   return model.sizeLabel;
 }
 
+function chooseRecommendedDownloadModel(models: ModelDescriptor[]): ModelDescriptor | null {
+  return models.find((model) => model.id === 'gemma-4-e2b')
+    ?? models[0]
+    ?? null;
+}
+
+function chooseAlternateDownloadModel(
+  models: ModelDescriptor[],
+  recommendedModelId?: string,
+): ModelDescriptor | null {
+  return models.find((model) => model.id === 'gemma-4-e4b' && model.id !== recommendedModelId)
+    ?? models.find((model) => model.id !== recommendedModelId)
+    ?? null;
+}
+
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message.trim();
@@ -583,10 +598,24 @@ export default function App() {
     () => models.find((model) => model.isLoaded) ?? null,
     [models],
   );
+  const recommendedDownloadModel = useMemo(
+    () => chooseRecommendedDownloadModel(models),
+    [models],
+  );
+  const alternateDownloadModel = useMemo(
+    () => chooseAlternateDownloadModel(models, recommendedDownloadModel?.id),
+    [models, recommendedDownloadModel?.id],
+  );
   const batteryWarning = batteryStatus ? resolveBatteryWarning(batteryStatus, t) : undefined;
   const hasMessages = messages.length > 0;
   const isChatRoute = hash === '#/chat';
   const isChatView = isChatRoute || hasMessages;
+  const showModelDownloadGuide =
+    showModelManager
+    && !isBootstrapping
+    && modelLoadFailure == null
+    && models.length > 0
+    && !hasDownloadedModel(models);
 
   async function waitForBootstrap(): Promise<void> {
     if (!bootPromiseRef.current) {
@@ -1430,6 +1459,50 @@ export default function App() {
             {modelLoadFailure && (
               <p className="model-error-note">{modelLoadFailure}</p>
             )}
+            {showModelDownloadGuide && (
+              <section className="model-onboarding-card" aria-label={t('status.model_required')}>
+                <div className="model-onboarding-copy">
+                  <span className="model-onboarding-kicker">Gemma 4</span>
+                  <h3>{t('model.manage')}</h3>
+                  <p>{t('status.model_required')}</p>
+                </div>
+
+                <div className="model-onboarding-actions">
+                  {[recommendedDownloadModel, alternateDownloadModel].filter((model): model is ModelDescriptor => model != null).map((model, index) => {
+                    const progress = downloadProgress[model.id];
+                    const isBusy = isPreparingModel(model) || (progress != null && progress < 1);
+                    const actionLabel = model.isDownloaded ? t('model.switch_btn') : t('model.download_btn');
+
+                    return (
+                      <button
+                        key={model.id}
+                        type="button"
+                        className={`model-onboarding-action ${index === 0 ? 'primary' : 'secondary'}`}
+                        onClick={() => void handleDownloadModel(model.id)}
+                        disabled={isBusy}
+                        aria-busy={isBusy}
+                        aria-label={`${actionLabel} ${model.name}`}
+                      >
+                        <div className="model-onboarding-action-row">
+                          <span className="model-onboarding-action-title">{model.name}</span>
+                          <Download size={15} />
+                        </div>
+                        <span className="model-onboarding-action-meta">
+                          {formatModelSizeLabel(model, t)}
+                        </span>
+                        {isBusy && (
+                          <span className="model-onboarding-action-progress">
+                            {t('model.downloading', {
+                              progress: ((progress ?? 0) * 100).toFixed(0),
+                            })}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
             {models.length === 0 ? (
               <p className="model-empty">
                 {isBootstrapping || isRecoveringModel || modelLoadFailure == null
@@ -1439,10 +1512,20 @@ export default function App() {
             ) : (
               models.map((model) => (
                 <div key={model.id} className={`model-card ${model.isLoaded ? 'loaded' : ''}`}>
-                  <div>
-                    <strong>{model.name}</strong>
-                    <p>{formatModelSizeLabel(model, t)}</p>
-                    <p>{model.localPath}</p>
+                  <div className="model-card-copy">
+                    <div className="model-card-heading">
+                      <strong>{model.name}</strong>
+                      <span className={`model-tier-badge tier-${model.tier}`}>
+                        {formatModelSizeLabel(model, t)}
+                      </span>
+                    </div>
+                    <p>
+                      {model.isLoaded
+                        ? t('model.loaded_tag')
+                        : model.isDownloaded
+                          ? t('model.switch_btn')
+                          : t('model.download_btn')}
+                    </p>
                   </div>
                   <div className="model-actions">
                     {downloadProgress[model.id] != null && downloadProgress[model.id] < 1 && (

@@ -1,5 +1,5 @@
 name: beacon_backend
-version: 0.1.0
+version: 0.1.1
 publish_to: 'none'
 description: Offline-first backend module for the Beacon emergency rescue app.
 

@@ -12,10 +12,18 @@
 </p>
 
 <p align="center">
-  <a href="./docs/assets/beacon-demo-hero.mp4">
-    <img src="./docs/assets/beacon-demo-hero.gif" alt="Beacon README 演示" width="960">
+  <a href="./docs/assets/beacon-demo-hero-zh-CN.mp4">
+    <img src="./docs/assets/beacon-demo-hero-zh-CN.gif" alt="Beacon README 演示" width="960">
   </a>
 </p>
+
+## 下载方式
+
+- 直接从 [GitHub Releases](https://github.com/wimi321/Beacon/releases) 下载最新 Android ARM64 安装包
+- 首次打开 App 后进入 `设置与模型`
+- 优先下载 `Gemma 4 E2B` 作为推荐默认模型；如果设备更强、想要更高精度，可以再下载 `Gemma 4 E4B`
+
+这条发布链路已经改成“轻量 APK 先安装，Gemma 模型进 App 再下载”的方式，和官方轻量壳思路一致，不再把超大模型硬塞进 GitHub 安装包。
 
 ## 多语言支持
 
@@ -54,10 +62,11 @@ App 当前已支持以下 20 种语言：
 
 ## 演示素材
 
-- README 首屏 GIF：[`docs/assets/beacon-demo-hero.gif`](./docs/assets/beacon-demo-hero.gif)
-- 短视频：[`docs/assets/beacon-demo-hero.mp4`](./docs/assets/beacon-demo-hero.mp4)
-- 海报帧：[`docs/assets/beacon-demo-hero-poster.png`](./docs/assets/beacon-demo-hero-poster.png)
-- 重新生成命令：`npm run readme:demo`
+- 中文首页截图：[`docs/assets/beacon-home-android-zh-CN.png`](./docs/assets/beacon-home-android-zh-CN.png)
+- README 首屏 GIF：[`docs/assets/beacon-demo-hero-zh-CN.gif`](./docs/assets/beacon-demo-hero-zh-CN.gif)
+- 短视频：[`docs/assets/beacon-demo-hero-zh-CN.mp4`](./docs/assets/beacon-demo-hero-zh-CN.mp4)
+- 海报帧：[`docs/assets/beacon-demo-hero-zh-CN-poster.png`](./docs/assets/beacon-demo-hero-zh-CN-poster.png)
+- 重新生成命令：`npm run readme:demo:zh`
 
 ## 它是什么
 
@@ -157,6 +166,12 @@ npm run mobile:ios
 
 ```bash
 npm run mobile:android:release
+```
+
+### GitHub 轻量 APK 构建
+
+```bash
+npm run mobile:android:release:github
 ```
 
 ## 常用命令

@@ -171,7 +171,7 @@ describe('CapacitorBeaconBridge', () => {
     });
   });
 
-  it('sends a simple visual request and keeps the image payload for native multimodal inference', async () => {
+  it('sends a short default visual request and keeps the image payload for native multimodal inference', async () => {
     vi.mocked(NativeBeacon.analyzeVisual).mockResolvedValue({
       text: 'Check the wound.\n1. Keep pressure on it.',
       modelId: 'gemma-4-e2b',
@@ -189,7 +189,31 @@ describe('CapacitorBeaconBridge', () => {
 
     expect(NativeBeacon.analyzeVisual).toHaveBeenCalledWith(
       expect.objectContaining({
-        userText: 'Look at this image and tell me what is dangerous and what to do next.',
+        userText: 'What dangers do you see and what should I do next?',
+        imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+      }),
+    );
+  });
+
+  it('preserves a user-written visual question instead of appending a synthetic fallback prompt', async () => {
+    vi.mocked(NativeBeacon.analyzeVisual).mockResolvedValue({
+      text: 'The snake is close.\n1. Back away slowly.',
+      modelId: 'gemma-4-e2b',
+      usedProfileName: 'gemma-4-e2b-balanced',
+    });
+
+    const bridge = createCapacitorBeaconBridge();
+    await bridge.analyzeVisual({
+      userText: 'Is this snake dangerous?',
+      powerMode: 'normal',
+      locale: 'en',
+      sessionId: 'visual-custom-question-session',
+      imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+    });
+
+    expect(NativeBeacon.analyzeVisual).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userText: 'Is this snake dangerous?',
         imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
       }),
     );

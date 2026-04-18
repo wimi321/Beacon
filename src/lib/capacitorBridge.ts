@@ -39,8 +39,8 @@ const STORAGE_KEYS = {
 const BATTERY_WARNING_CODE = 'battery.low_power_emergency' as const;
 const VISUAL_ASSIST_CATEGORY =
   'Visual Help / 视觉求助 / wound bleeding bite sting snake spider tick burn rash plant animal fracture poisoning';
-const VISUAL_ASSIST_PROMPT_WITH_IMAGE = 'Look at this image and tell me what is dangerous and what to do next.';
-const VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE = 'Tell me what visible details to check and what to do next.';
+const VISUAL_ASSIST_PROMPT_WITH_IMAGE = 'What dangers do you see and what should I do next?';
+const VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE = 'What visible details should I check and what should I do next?';
 
 function normalizeLocale(locale?: string): string {
   return locale?.trim() || 'en';
@@ -173,15 +173,13 @@ class CapacitorBeaconBridge implements BeaconBridge {
 
     return {
       ...request,
-      categoryHint: VISUAL_ASSIST_CATEGORY,
+      categoryHint: request.categoryHint ?? VISUAL_ASSIST_CATEGORY,
       imageBase64: request.imageBase64,
-      userText: [
-        trimmedUserText,
-        request.imageBase64 ? VISUAL_ASSIST_PROMPT_WITH_IMAGE : VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE,
-      ]
-        .filter(Boolean)
-        .join('\n')
-        .trim(),
+      userText:
+        trimmedUserText ||
+        (request.imageBase64
+          ? VISUAL_ASSIST_PROMPT_WITH_IMAGE
+          : VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE),
     };
   }
 

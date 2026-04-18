@@ -41,6 +41,8 @@ static NSUInteger const kBeaconMaxRecentChatContextChars = 960;
 static NSUInteger const kBeaconMaxLastVisualContextChars = 260;
 static NSUInteger const kBeaconMaxRememberedUserTurnChars = 160;
 static NSUInteger const kBeaconMaxRememberedAssistantTurnChars = 260;
+static NSString * const kBeaconDefaultVisualPromptWithImage = @"What dangers do you see and what should I do next?";
+static NSString * const kBeaconDefaultVisualPromptWithoutImage = @"What visible details should I check and what should I do next?";
 static BOOL gBeaconSmokeRunClaimed = NO;
 static id gBeaconStandaloneSmokeRunner = nil;
 static void *gBeaconMetalAcceleratorHandle = NULL;
@@ -407,6 +409,14 @@ static NSString *BeaconOutputLanguageReminder(NSString *locale) {
     return [NSString stringWithFormat:@"Write the final answer only in %@. If retrieved knowledge is in another language, translate it into %@ before answering.", languageName, languageName];
 }
 
+static NSString *BeaconResolvedVisualUserText(NSString *userText, BOOL hasImage) {
+    NSString *trimmed = BeaconTrimmedString(userText ?: @"");
+    if (trimmed.length > 0) {
+        return trimmed;
+    }
+    return hasImage ? kBeaconDefaultVisualPromptWithImage : kBeaconDefaultVisualPromptWithoutImage;
+}
+
 static NSString *BeaconCompactGroundingContext(NSString *groundingContext) {
     NSString *trimmed = groundingContext != nil ? BeaconTrimmedString(groundingContext) : @"";
     if (trimmed.length == 0) {
@@ -463,7 +473,6 @@ static NSArray<NSDictionary *> *BeaconBuildConversationContent(NSString *prompt,
     NSMutableArray<NSDictionary *> *content = [NSMutableArray array];
     NSString *safePrompt = prompt ?: @"";
     if (imageBase64.length > 0) {
-        [content addObject:@{ @"type": @"text", @"text": @"Emergency photo attached." }];
         [content addObject:@{ @"type": @"image", @"blob": imageBase64 }];
         if (safePrompt.length > 0) {
             [content addObject:@{ @"type": @"text", @"text": safePrompt }];
@@ -960,12 +969,10 @@ static NSString *BeaconBuildUserPrompt(NSString *locale,
     (void)powerMode;
     (void)categoryHint;
     (void)hasAuthoritativeEvidence;
+    (void)hasImage;
     NSMutableArray<NSString *> *sections = [NSMutableArray array];
     [sections addObject:[NSString stringWithFormat:@"LANGUAGE:\n%@", BeaconLanguageDirective(locale)]];
     [sections addObject:[NSString stringWithFormat:@"OUTPUT_LANGUAGE:\n%@", BeaconOutputLanguageReminder(locale)]];
-    if (hasImage) {
-        [sections addObject:@"IMAGE:\nA real camera image is attached."];
-    }
     NSString *safeSessionSummary = BeaconNormalizedPromptBlock(sessionSummary, kBeaconMaxRollingSummaryChars);
     if (safeSessionSummary.length > 0) {
         [sections addObject:[NSString stringWithFormat:@"SESSION_SUMMARY:\n%@", safeSessionSummary]];
@@ -2388,15 +2395,6 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
             attempts = @[
                 @{
                     @"backend": @"gpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"activationDataType": @0,
-                    @"cacheMode": @"default",
-                    @"samplerBackend": @"cpu"
-                },
-                @{
-                    @"backend": @"gpu",
                     @"visionBackend": @"gpu",
                     @"parallel": @NO,
                     @"maxTokens": @1024,
@@ -2408,8 +2406,8 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                     @"visionBackend": @"cpu",
                     @"parallel": @NO,
                     @"maxTokens": @1024,
-                    @"activationDataType": @1,
-                    @"cacheMode": @"session-scoped",
+                    @"activationDataType": @0,
+                    @"cacheMode": @"default",
                     @"samplerBackend": @"cpu"
                 }
             ];
@@ -2417,20 +2415,20 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
             attempts = @[
                 @{
                     @"backend": @"gpu",
+                    @"visionBackend": @"gpu",
+                    @"parallel": @NO,
+                    @"maxTokens": @1024,
+                    @"activationDataType": @1,
+                    @"cacheMode": @"session-scoped"
+                },
+                @{
+                    @"backend": @"gpu",
                     @"visionBackend": @"cpu",
                     @"parallel": @NO,
                     @"maxTokens": @1024,
                     @"activationDataType": @0,
                     @"cacheMode": @"default",
                     @"samplerBackend": @"cpu"
-                },
-                @{
-                    @"backend": @"gpu",
-                    @"visionBackend": @"gpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"activationDataType": @1,
-                    @"cacheMode": @"session-scoped"
                 },
                 @{
                     @"backend": @"cpu",
@@ -3461,13 +3459,10 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
 }
 
 - (void)analyzeVisual:(CAPPluginCall *)call {
-    NSString *userText = [call getString:@"userText" defaultValue:nil];
-    if (BeaconTrimmedString(userText ?: @"").length == 0) {
-        [self rejectCall:call message:@"userText is required." error:nil];
-        return;
-    }
-
-    NSDictionary *request = call.options ?: @{};
+    NSMutableDictionary *request = [NSMutableDictionary dictionaryWithDictionary:(call.options ?: @{})];
+    NSString *imageBase64 = BeaconNormalizedBase64Blob([request[@"imageBase64"] isKindOfClass:[NSString class]] ? request[@"imageBase64"] : nil);
+    request[@"userText"] = BeaconResolvedVisualUserText([request[@"userText"] isKindOfClass:[NSString class]] ? request[@"userText"] : nil,
+                                                        imageBase64.length > 0);
     dispatch_async(_workerQueue, ^{
         NSError *error = nil;
         NSString *responseText = [self generateResponseForRequest:request error:&error];

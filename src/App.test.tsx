@@ -153,14 +153,102 @@ describe('App', () => {
 
     fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
 
-    expect(await screen.findByText(/当前已加载/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
+  });
+
+  it('auto-opens first-launch model guidance and lets users download E2B directly', async () => {
+    let downloadedModelId: string | null = null;
+    const mockBridge = createMockBeaconBridge();
+    const baseModels = [
+      {
+        id: 'gemma-4-e2b',
+        tier: 'e2b' as const,
+        name: 'Gemma 4 E2B',
+        localPath: '',
+        sizeLabel: '2B / Survival Baseline',
+        isLoaded: false,
+        isDownloaded: false,
+        downloadStatus: 'not_downloaded' as const,
+        artifactFormat: 'litertlm' as const,
+        runtimeStack: 'litert-lm-c-api' as const,
+        preferredBackend: 'auto-real' as const,
+        capabilityClass: 'supported' as const,
+        supportedDeviceClass: 'iphone_primary' as const,
+      },
+      {
+        id: 'gemma-4-e4b',
+        tier: 'e4b' as const,
+        name: 'Gemma 4 E4B',
+        localPath: '',
+        sizeLabel: '4B / Enhanced Accuracy',
+        isLoaded: false,
+        isDownloaded: false,
+        downloadStatus: 'not_downloaded' as const,
+        artifactFormat: 'litertlm' as const,
+        runtimeStack: 'litert-lm-c-api' as const,
+        preferredBackend: 'auto-real' as const,
+        capabilityClass: 'supported' as const,
+        supportedDeviceClass: 'iphone_primary' as const,
+      },
+    ];
+
+    const snapshotModels = (activeModelId: string | null = downloadedModelId) => baseModels.map((model) => ({
+      ...model,
+      isDownloaded: downloadedModelId === model.id,
+      isLoaded: activeModelId === model.id,
+      downloadStatus: downloadedModelId === model.id ? 'succeeded' as const : 'not_downloaded' as const,
+    }));
+
+    mockBridge.listModels = async () => snapshotModels(null);
+    mockBridge.loadModel = async (modelId: string) => snapshotModels(downloadedModelId === modelId ? modelId : null);
+    mockBridge.downloadModel = async function* (modelId: string) {
+      yield {
+        modelId,
+        receivedBytes: 64,
+        totalBytes: 128,
+        fraction: 0.5,
+        isResumed: false,
+        status: 'in_progress' as const,
+      };
+      downloadedModelId = modelId;
+      yield {
+        modelId,
+        receivedBytes: 128,
+        totalBytes: 128,
+        fraction: 1,
+        isResumed: false,
+        status: 'succeeded' as const,
+      };
+    };
+
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    expect((await screen.findAllByText(/请先在设置中下载离线急救包，再开始求救/)).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /下载并切换 Gemma 4 E2B/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /下载并切换 Gemma 4 E4B/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /下载并切换 Gemma 4 E2B/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/模型切换完成/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /设置与模型/i }));
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
 
   it('closes the model manager when swiping the sheet downward', async () => {
     const { container } = renderApp('zh-CN');
 
     fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
-    expect(await screen.findByText(/当前已加载/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
 
     const sheetHeader = container.querySelector('.model-panel-header');
     expect(sheetHeader).not.toBeNull();
@@ -177,7 +265,7 @@ describe('App', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText(/当前已加载/)).not.toBeInTheDocument();
+      expect(screen.queryAllByText(/当前已加载/)).toHaveLength(0);
     });
   });
 
@@ -222,7 +310,7 @@ describe('App', () => {
 
     fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
 
-    expect(await screen.findByText(/当前已加载/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
     expect(screen.queryByText('未加载模型')).toBeNull();
     expect(loadAttempts).toBeGreaterThanOrEqual(1);
   });
@@ -322,7 +410,7 @@ describe('App', () => {
 
     fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
 
-    expect(await screen.findByText(/当前已加载/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
     expect(screen.queryByText(/请先在设置中下载离线急救包/)).toBeNull();
     expect(loadAttempts).toBeGreaterThanOrEqual(1);
   });

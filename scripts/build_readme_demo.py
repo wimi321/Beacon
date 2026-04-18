@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import math
 import shutil
 import subprocess
@@ -11,11 +12,11 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-INPUT_IMAGE = ROOT_DIR / "docs/assets/beacon-home-android.png"
-FRAMES_DIR = ROOT_DIR / "docs/assets/.readme-demo-frames"
-OUTPUT_MP4 = ROOT_DIR / "docs/assets/beacon-demo-hero.mp4"
-OUTPUT_GIF = ROOT_DIR / "docs/assets/beacon-demo-hero.gif"
-OUTPUT_POSTER = ROOT_DIR / "docs/assets/beacon-demo-hero-poster.png"
+DEFAULT_INPUT_IMAGE = ROOT_DIR / "docs/assets/beacon-home-android-en.png"
+DEFAULT_FRAMES_DIR = ROOT_DIR / "docs/assets/.readme-demo-frames"
+DEFAULT_OUTPUT_MP4 = ROOT_DIR / "docs/assets/beacon-demo-hero.mp4"
+DEFAULT_OUTPUT_GIF = ROOT_DIR / "docs/assets/beacon-demo-hero.gif"
+DEFAULT_OUTPUT_POSTER = ROOT_DIR / "docs/assets/beacon-demo-hero-poster.png"
 FONT_BOLD = "/System/Library/Fonts/Supplemental/Verdana Bold.ttf"
 FONT_REG = "/System/Library/Fonts/Supplemental/Verdana.ttf"
 
@@ -166,12 +167,33 @@ def run_ffmpeg(*args: str):
     subprocess.run(["ffmpeg", "-y", *args], check=True)
 
 
-def main():
-    if not INPUT_IMAGE.exists():
-        raise SystemExit(f"Missing input screenshot: {INPUT_IMAGE}")
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build README demo hero assets from a mobile screenshot.")
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_IMAGE, help="Input mobile screenshot path.")
+    parser.add_argument("--frames-dir", type=Path, default=DEFAULT_FRAMES_DIR, help="Temporary frames directory.")
+    parser.add_argument("--mp4", type=Path, default=DEFAULT_OUTPUT_MP4, help="Output MP4 path.")
+    parser.add_argument("--gif", type=Path, default=DEFAULT_OUTPUT_GIF, help="Output GIF path.")
+    parser.add_argument("--poster", type=Path, default=DEFAULT_OUTPUT_POSTER, help="Output poster PNG path.")
+    return parser.parse_args()
 
-    ensure_clean_dir(FRAMES_DIR)
-    source = Image.open(INPUT_IMAGE).convert("RGB")
+
+def main():
+    args = parse_args()
+    input_image = args.input.resolve()
+    frames_dir = args.frames_dir.resolve()
+    output_mp4 = args.mp4.resolve()
+    output_gif = args.gif.resolve()
+    output_poster = args.poster.resolve()
+
+    if not input_image.exists():
+        raise SystemExit(f"Missing input screenshot: {input_image}")
+
+    output_mp4.parent.mkdir(parents=True, exist_ok=True)
+    output_gif.parent.mkdir(parents=True, exist_ok=True)
+    output_poster.parent.mkdir(parents=True, exist_ok=True)
+
+    ensure_clean_dir(frames_dir)
+    source = Image.open(input_image).convert("RGB")
     phone = build_phone(source)
     fonts = {
         "title": ImageFont.truetype(FONT_BOLD, 46),
@@ -185,13 +207,13 @@ def main():
 
     for index in range(FRAME_COUNT):
         frame = build_frame(source, phone, fonts, index)
-        frame.save(FRAMES_DIR / f"frame-{index:04d}.png", optimize=True)
+        frame.save(frames_dir / f"frame-{index:04d}.png", optimize=True)
 
     run_ffmpeg(
         "-framerate",
         str(FPS),
         "-i",
-        str(FRAMES_DIR / "frame-%04d.png"),
+        str(frames_dir / "frame-%04d.png"),
         "-an",
         "-c:v",
         "libx264",
@@ -199,30 +221,32 @@ def main():
         "yuv420p",
         "-movflags",
         "+faststart",
-        str(OUTPUT_MP4),
+        str(output_mp4),
     )
 
     run_ffmpeg(
         "-i",
-        str(OUTPUT_MP4),
+        str(output_mp4),
         "-vf",
         "fps=12,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=sierra2_4a",
-        str(OUTPUT_GIF),
+        str(output_gif),
     )
 
     run_ffmpeg(
         "-i",
-        str(OUTPUT_MP4),
+        str(output_mp4),
         "-vf",
         "select=eq(n\\,0)",
         "-vframes",
         "1",
-        str(OUTPUT_POSTER),
+        "-update",
+        "1",
+        str(output_poster),
     )
 
-    print(f"Generated {OUTPUT_MP4}")
-    print(f"Generated {OUTPUT_GIF}")
-    print(f"Generated {OUTPUT_POSTER}")
+    print(f"Generated {output_mp4}")
+    print(f"Generated {output_gif}")
+    print(f"Generated {output_poster}")
 
 
 if __name__ == "__main__":

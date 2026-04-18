@@ -2,6 +2,32 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.1.1 - 2026-04-18
+
+Focused release for install flow, first-launch model onboarding, and GitHub delivery polish.
+
+### Highlights
+
+- Added a first-launch `Settings & Models` onboarding card with direct `Gemma 4 E2B / E4B` download actions
+- Switched GitHub delivery to a lightweight Android ARM64 APK plus in-app model download flow
+- Added a dedicated `mobile:android:release:github` build command for publishable release artifacts
+
+### Product and UX
+
+- Auto-opens the model sheet when no local model is available
+- Makes `Gemma 4 E2B` the obvious one-tap recommended starting point
+- Simplifies model cards so they show user-facing model state instead of raw local file paths
+
+### Release and docs
+
+- Added APK-first download guidance to both English and Chinese READMEs
+- Synced repository package and app version metadata to `0.1.1`
+
+### Verification
+
+- `npm test`
+- `npm run build`
+
 ## v0.1.0 - 2026-04-18
 
 First public GitHub release of Beacon.
