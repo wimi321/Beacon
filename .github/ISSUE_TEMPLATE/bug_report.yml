@@ -1,5 +1,5 @@
-name: Bug report
-description: Report a reproducible issue in Beacon
+name: Bug report / 缺陷反馈
+description: Report a reproducible issue in Beacon / 提交一个可复现问题
 title: "[Bug]: "
 labels:
   - bug
@@ -7,24 +7,24 @@ body:
   - type: input
     id: platform
     attributes:
-      label: Platform
-      description: Which platform is affected?
+      label: Platform / 平台
+      description: Which platform is affected? / 影响的是哪个平台？
       placeholder: Android 15 / iOS 18 / Web
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Device
-      description: Which device are you using?
+      label: Device / 设备
+      description: Which device are you using? / 你使用的设备是什么？
       placeholder: Pixel 8 Pro / iPhone 16 Pro
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Reproduction steps
-      description: List the exact steps to reproduce the issue.
+      label: Reproduction steps / 复现步骤
+      description: List the exact steps to reproduce the issue. / 请按顺序写清如何复现。
       placeholder: |
         1. Open Beacon
         2. Tap a preset
@@ -35,32 +35,32 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: Expected behavior / 期望行为
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Actual behavior
+      label: Actual behavior / 实际行为
     validations:
       required: true
   - type: dropdown
     id: area
     attributes:
-      label: Affected area
+      label: Affected area / 影响模块
       options:
-        - Text triage
-        - Visual help
-        - Session memory
-        - Language / i18n
-        - Android native runtime
-        - iOS native runtime
-        - Knowledge retrieval
-        - Build / installation
+        - Text triage / 文本急救
+        - Visual help / 视觉求助
+        - Session memory / 会话记忆
+        - Language / i18n / 多语言
+        - Android native runtime / Android 原生运行时
+        - iOS native runtime / iOS 原生运行时
+        - Knowledge retrieval / 知识检索
+        - Build / installation / 构建与安装
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs or screenshots
-      description: Paste any relevant logs or attach screenshots if available.
+      label: Logs or screenshots / 日志或截图
+      description: Paste any relevant logs or attach screenshots if available. / 可贴日志或上传截图。

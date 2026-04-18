@@ -9,7 +9,10 @@
 </p>
 
 <p align="center">
-  中文说明见 <a href="./README.zh-CN.md">README.zh-CN.md</a>
+  Repository Docs:
+  <a href="./README.md">English</a>
+  ·
+  <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -27,6 +30,41 @@
 <p align="center">
   <img src="./docs/assets/beacon-home-android.png" alt="Beacon Android home screen" width="290">
 </p>
+
+## Languages
+
+Beacon is a multilingual product and this repository now exposes multilingual project docs as well.
+
+Repository docs:
+
+- English: [`README.md`](./README.md), [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md)
+- 简体中文: [`README.zh-CN.md`](./README.zh-CN.md), [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md), [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- Full i18n reference: [`docs/I18N.md`](./docs/I18N.md)
+
+App UI locales currently supported:
+
+| Code | Language | Native name | Direction |
+| --- | --- | --- | --- |
+| `en` | English | English | LTR |
+| `zh-CN` | Chinese (Simplified) | 简体中文 | LTR |
+| `zh-TW` | Chinese (Traditional) | 繁體中文 | LTR |
+| `ja` | Japanese | 日本語 | LTR |
+| `ko` | Korean | 한국어 | LTR |
+| `es` | Spanish | Español | LTR |
+| `fr` | French | Français | LTR |
+| `de` | German | Deutsch | LTR |
+| `pt` | Portuguese | Português | LTR |
+| `ru` | Russian | Русский | LTR |
+| `ar` | Arabic | العربية | RTL |
+| `hi` | Hindi | हिन्दी | LTR |
+| `id` | Indonesian | Bahasa Indonesia | LTR |
+| `it` | Italian | Italiano | LTR |
+| `tr` | Turkish | Türkçe | LTR |
+| `vi` | Vietnamese | Tiếng Việt | LTR |
+| `th` | Thai | ไทย | LTR |
+| `nl` | Dutch | Nederlands | LTR |
+| `pl` | Polish | Polski | LTR |
+| `uk` | Ukrainian | Українська | LTR |
 
 ## Why Beacon
 
@@ -250,13 +288,25 @@ If you want to help, open an issue with:
 See also:
 
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
 - [`SECURITY.md`](./SECURITY.md)
+- [`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
+
+## Community
+
+- Bug reports: use the GitHub issue form
+- Feature ideas: use the GitHub feature request form
+- Security reports: follow [`SECURITY.md`](./SECURITY.md)
+- Localization work: see [`docs/I18N.md`](./docs/I18N.md)
+- Discussions: use the repository Discussions tab for design and roadmap conversations
 
 ## Project Notes
 
 - Main integration reference: [`docs/Backend-Integration.md`](./docs/Backend-Integration.md)
 - Product concept notes: [`docs/开发文档.txt`](./docs/开发文档.txt)
 - User acceptance checklist: [`docs/User-E2E-Acceptance-Checklist.md`](./docs/User-E2E-Acceptance-Checklist.md)
+- Internationalization notes: [`docs/I18N.md`](./docs/I18N.md)
 
 ## License
 

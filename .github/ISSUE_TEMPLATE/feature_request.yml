@@ -1,0 +1,40 @@
+name: Feature request / 功能建议
+description: Suggest an improvement for Beacon / 为 Beacon 提一个改进建议
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 你想解决什么问题
+      description: What problem or user need does this address? / 这个需求解决了什么问题或用户痛点？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution / 你的建议方案
+      description: Describe the best solution you have in mind. / 描述你理想中的解决方式。
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 影响模块
+      options:
+        - Text triage / 文本急救
+        - Visual help / 视觉求助
+        - Session memory / 会话记忆
+        - Language / i18n / 多语言
+        - Android native runtime / Android 原生运行时
+        - iOS native runtime / iOS 原生运行时
+        - Knowledge retrieval / 知识检索
+        - GitHub / docs / GitHub 与文档
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context / 补充信息
+      description: Screenshots, references, examples, or constraints. / 可补充截图、参考资料、示例或约束。

@@ -5,8 +5,50 @@
 </p>
 
 <p align="center">
+  仓库文档：
+  <a href="./README.md">English</a>
+  ·
+  <a href="./README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
   <img src="./docs/assets/beacon-home-android.png" alt="Beacon 安卓首页" width="290">
 </p>
+
+## 多语言支持
+
+Beacon 不只是 App 本身支持多语言，这个开源仓库也开始同步做双语协作。
+
+仓库文档入口：
+
+- 英文：[`README.md`](./README.md)、[`CONTRIBUTING.md`](./CONTRIBUTING.md)、[`SECURITY.md`](./SECURITY.md)
+- 中文：[`README.zh-CN.md`](./README.zh-CN.md)、[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)、[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 完整 i18n 说明：[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+
+App 当前已支持以下 20 种语言：
+
+| 语言代码 | 语言 | 本地显示名 | 方向 |
+| --- | --- | --- | --- |
+| `en` | 英语 | English | LTR |
+| `zh-CN` | 简体中文 | 简体中文 | LTR |
+| `zh-TW` | 繁體中文 | 繁體中文 | LTR |
+| `ja` | 日语 | 日本語 | LTR |
+| `ko` | 韩语 | 한국어 | LTR |
+| `es` | 西班牙语 | Español | LTR |
+| `fr` | 法语 | Français | LTR |
+| `de` | 德语 | Deutsch | LTR |
+| `pt` | 葡萄牙语 | Português | LTR |
+| `ru` | 俄语 | Русский | LTR |
+| `ar` | 阿拉伯语 | العربية | RTL |
+| `hi` | 印地语 | हिन्दी | LTR |
+| `id` | 印度尼西亚语 | Bahasa Indonesia | LTR |
+| `it` | 意大利语 | Italiano | LTR |
+| `tr` | 土耳其语 | Türkçe | LTR |
+| `vi` | 越南语 | Tiếng Việt | LTR |
+| `th` | 泰语 | ไทย | LTR |
+| `nl` | 荷兰语 | Nederlands | LTR |
+| `pl` | 波兰语 | Polski | LTR |
+| `uk` | 乌克兰语 | Українська | LTR |
 
 ## 它是什么
 
@@ -154,7 +196,19 @@ Beacon 不是医生、医院或专业救援队的替代品。
 - 需求文档：[`docs/开发文档.txt`](./docs/开发文档.txt)
 - 用户视角验收清单：[`docs/User-E2E-Acceptance-Checklist.md`](./docs/User-E2E-Acceptance-Checklist.md)
 - 贡献指南：[`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- 中文贡献指南：[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
 - 安全策略：[`SECURITY.md`](./SECURITY.md)
+- 中文安全策略：[`SECURITY.zh-CN.md`](./SECURITY.zh-CN.md)
+- 国际化说明：[`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+- 社区准则：[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
+
+## 社区协作
+
+- 缺陷反馈：使用 GitHub Bug Report 模板
+- 功能建议：使用 GitHub Feature Request 模板
+- 安全问题：按 [`SECURITY.md`](./SECURITY.md) 里的方式走私密渠道
+- 多语言贡献：查看 [`docs/I18N.zh-CN.md`](./docs/I18N.zh-CN.md)
+- 讨论区：使用仓库 Discussions 做路线、设计和协作讨论
 
 ## 许可证
 

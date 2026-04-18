@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Discussions / 讨论区
+    url: https://github.com/wimi321/Beacon/discussions
+    about: Ask questions, discuss design, or talk about roadmap ideas. / 提问、讨论设计或路线图。
   - name: Security report
     url: https://github.com/wimi321/Beacon/security/advisories/new
-    about: Please use GitHub Security Advisories for sensitive reports when available.
+    about: Please use GitHub Security Advisories for sensitive reports when available. / 敏感问题请优先走私密安全通道。
