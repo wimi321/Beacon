@@ -20,7 +20,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "mobile:build": "npm run build && cap sync && node scripts/ensure_ios_plugin_registration.mjs",
+    "mobile:build": "npm run build && cap sync && node scripts/ensure_android_generated_build.mjs && node scripts/ensure_ios_plugin_registration.mjs",
     "mobile:android": "npm run mobile:build && cap open android",
     "mobile:ios": "npm run mobile:build && cap open ios",
     "mobile:android:release": "npm run mobile:build && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH ./gradlew assembleRelease bundleRelease",

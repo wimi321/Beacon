@@ -366,8 +366,16 @@ class CapacitorBeaconBridge implements BeaconBridge {
   }
 
   async listModels(): Promise<ModelDescriptor[]> {
-    const result = await NativeBeacon.listModels();
-    this.models = result.models;
+    try {
+      const result = await NativeBeacon.listModels();
+      this.models = result.models;
+    } catch (error) {
+      if (this.models.length === 0) {
+        console.warn('Beacon native model listing failed with no cached model catalog.', error);
+      } else {
+        console.warn('Beacon native model listing failed. Reusing cached model catalog.', error);
+      }
+    }
     return this.models.map((model) => ({ ...model }));
   }
 

@@ -237,6 +237,8 @@ Beacon 不是医生、医院或专业救援队的替代品。
 - 集成文档：[`docs/Backend-Integration.md`](./docs/Backend-Integration.md)
 - 需求文档：[`docs/开发文档.txt`](./docs/开发文档.txt)
 - 用户视角验收清单：[`docs/User-E2E-Acceptance-Checklist.md`](./docs/User-E2E-Acceptance-Checklist.md)
+- 发布说明索引：[`docs/releases/README.zh-CN.md`](./docs/releases/README.zh-CN.md)
+- 当前版本说明：[`docs/releases/v0.1.1.zh-CN.md`](./docs/releases/v0.1.1.zh-CN.md)
 - 贡献指南：[`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - 中文贡献指南：[`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)
 - 安全策略：[`SECURITY.md`](./SECURITY.md)

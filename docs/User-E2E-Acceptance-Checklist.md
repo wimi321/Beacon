@@ -5,6 +5,45 @@
 知识库基线：[offline_knowledge.json](/Users/haoc/Developer/Beacon/knowledge/offline_knowledge.json)  
 目标：从“普通慌乱用户”的角度，验证 Beacon 在断网、低电量、高压急救场景下是否真正可用。
 
+## 发布签收快照
+
+- 当前发布候选：`v0.1.1`
+- 已产出安装包：
+  - Android APK：[app-release.apk](/Users/haoc/Developer/Beacon/android/app/build/outputs/apk/release/app-release.apk)
+  - Android AAB：[app-release.aab](/Users/haoc/Developer/Beacon/android/app/build/outputs/bundle/release/app-release.aab)
+- 已完成自动验证：
+  - 前端、Web、Dart、Android unit/lint/build、iOS 构建与模拟器冷启动烟测
+- 仍建议补验的人工签收：
+  - Android 真机完整触控路径
+  - iPhone 真机安装、权限、相机、返回手势、连续问答
+- 关联文档：
+  - 当前版本说明：[`docs/releases/v0.1.1.md`](./releases/v0.1.1.md)
+  - 版本记录：[`CHANGELOG.md`](../CHANGELOG.md)
+
+## 本轮已自动验证
+
+以下项目已在 2026-04-18 这一轮收尾中完成自动化或安装级验证：
+
+- 前端单测：`67 passed`
+- Web 构建：`npm run build`
+- 移动端同步：`npm run mobile:build`
+- Dart 分析与测试：`dart analyze`、`dart test`
+- Android：`testDebugUnitTest`、`testReleaseUnitTest`、`lintDebug`、`assembleDebug`、`assembleRelease`、`bundleRelease`
+- iOS：Debug Simulator build、Release device build
+- iOS 模拟器安装与冷启动首页烟测：
+  - 截图 1：[ios-sim-cold-launch-fixed-8s.png](/Users/haoc/Developer/Beacon/output/smoke/ios-sim-cold-launch-fixed-8s.png)
+  - 结果：已确认冷启动后回到求生首页，而不是误入空聊天页
+
+## 本轮仍需真机补验
+
+当前这轮没有检测到连着的 Android 设备，因此以下项目仍建议在真机上补一次人工验收：
+
+- Android 真机安装、冷启动、连续提问、后台恢复
+- Android 相机/相册/权限流
+- Android 返回手势、系统返回键、SOS 与语言切换
+- iPhone / iPad 真机权限流、拍照流、热启动与冷启动
+- 真机连续 8-10 轮问答下的稳定性与本地模型行为
+
 ## 验收前准备
 
 - 在真机上安装 `release` 包，而不是 `debug` 包。
@@ -221,3 +260,4 @@
 - 会话清空后必须逻辑重置，但不能把模型从内存里卸掉。
 - 多语言切换后，AI 输出语言必须与 UI 保持一致。
 - 高危场景回答必须优先给出动作步骤和禁忌，而不是泛泛解释。
+- 冷启动时如果只有系统级电量告警，也必须停留在首页，不能误判成进入聊天页。

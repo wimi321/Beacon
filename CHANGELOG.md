@@ -17,16 +17,27 @@ Focused release for install flow, first-launch model onboarding, and GitHub deli
 - Auto-opens the model sheet when no local model is available
 - Makes `Gemma 4 E2B` the obvious one-tap recommended starting point
 - Simplifies model cards so they show user-facing model state instead of raw local file paths
+- Fixes the cold-start home-state bug where system-only warnings could incorrectly push the app into chat view
+- Preserves the emergency home screen when the app boots with a low-battery warning only
 
 ### Release and docs
 
 - Added APK-first download guidance to both English and Chinese READMEs
+- Added Android and iOS release-hardening notes for `v0.1.1`
+- Added a release-notes index plus a Simplified Chinese `v0.1.1` release note
+- Added a user-perspective acceptance checklist update with this round's validation evidence
 - Synced repository package and app version metadata to `0.1.1`
 
 ### Verification
 
 - `npm test`
 - `npm run build`
+- `npm run mobile:build`
+- `dart analyze`
+- `dart test`
+- `cd android && ./gradlew :app:testDebugUnitTest :app:testReleaseUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease :app:bundleRelease`
+- `xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build`
+- `xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build`
 
 ## v0.1.0 - 2026-04-18
 

@@ -351,6 +351,8 @@ See also:
 - Main integration reference: [`docs/Backend-Integration.md`](./docs/Backend-Integration.md)
 - Product concept notes: [`docs/开发文档.txt`](./docs/开发文档.txt)
 - User acceptance checklist: [`docs/User-E2E-Acceptance-Checklist.md`](./docs/User-E2E-Acceptance-Checklist.md)
+- Release notes index: [`docs/releases/README.md`](./docs/releases/README.md)
+- Current release note: [`docs/releases/v0.1.1.md`](./docs/releases/v0.1.1.md)
 - Internationalization notes: [`docs/I18N.md`](./docs/I18N.md)
 - Release history: [`CHANGELOG.md`](./CHANGELOG.md)
 

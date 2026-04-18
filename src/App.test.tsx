@@ -148,10 +148,70 @@ describe('App', () => {
     expect(screen.queryByRole('heading', { name: /先活下来，再想别的/i })).toBeNull();
   });
 
+  it('keeps the home screen visible when boot only adds a localized battery warning', async () => {
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.getBatteryStatus = async () => ({
+      level: 0.08,
+      isLowPowerMode: true,
+      forcedPowerMode: 'doomsday',
+      warningCode: 'battery.low_power_emergency',
+      warning: '当前电量极低，已切换为极限抢险省电方案。',
+    });
+
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /先活下来，再想别的/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /迷路断联/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /返回主页/i })).toBeNull();
+  });
+
+  it('falls back to the static download catalog when native model discovery transiently fails on boot', async () => {
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.listModels = async () => {
+      throw new Error('Transient native model listing failure');
+    };
+    mockBridge.loadModel = async () => {
+      throw new Error('No bundled model ready yet');
+    };
+
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /先活下来，再想别的/i })).toBeInTheDocument();
+    expect(screen.queryByText(/生成建议失败，请重试/)).toBeNull();
+    expect(screen.queryByText(/错误：Transient native model listing failure/)).toBeNull();
+    expect(await screen.findByRole('button', { name: /下载并切换 Gemma 4 E2B/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /下载并切换 Gemma 4 E4B/i })).toBeInTheDocument();
+  });
+
   it('opens model manager and shows loaded model', async () => {
     renderApp('zh-CN');
 
     fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+
+    expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
+  });
+
+  it('opens model manager from a touch-end activation on the settings button', async () => {
+    renderApp('zh-CN');
+
+    fireEvent.touchEnd((await screen.findAllByRole('button', { name: /设置与模型/i }))[0], {
+      cancelable: true,
+      changedTouches: [{ clientX: 960, clientY: 2240 }],
+    });
 
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
@@ -373,6 +433,7 @@ describe('App', () => {
         localPath: 'models/gemma-4-E2B-it.litertlm',
         sizeLabel: '2B / Survival Baseline',
         isLoaded: false,
+        isBundled: true,
         isDownloaded: false,
         downloadStatus: 'not_downloaded' as const,
         artifactFormat: 'litertlm' as const,
@@ -425,6 +486,7 @@ describe('App', () => {
         localPath: 'models/gemma-4-E2B-it.litertlm',
         sizeLabel: '2B / Survival Baseline',
         isLoaded: false,
+        isBundled: true,
         isDownloaded: false,
         downloadStatus: 'not_downloaded' as const,
         artifactFormat: 'litertlm' as const,

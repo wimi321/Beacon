@@ -2,6 +2,4 @@
 <resources>
     <string name="app_name">Beacon SOS</string>
     <string name="title_activity_main">Beacon SOS</string>
-    <string name="package_name">com.beacon.sos</string>
-    <string name="custom_url_scheme">com.beacon.sos</string>
 </resources>

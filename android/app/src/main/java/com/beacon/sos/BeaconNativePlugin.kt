@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
+import androidx.core.content.edit
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -1061,7 +1062,7 @@ class BeaconNativePlugin : Plugin() {
 
             engine = initializedEngine
             loadedModelId = targetModelId
-            prefs.edit().putString("loadedModelId", targetModelId).apply()
+            prefs.edit { putString("loadedModelId", targetModelId) }
             Log.i(logTag, "Engine ready. loadedModelId=$loadedModelId")
             return initializedEngine
         }

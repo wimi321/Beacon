@@ -77,6 +77,55 @@ function chooseAlternateDownloadModel(
     ?? null;
 }
 
+function createFallbackDownloadCatalog(): ModelDescriptor[] {
+  return [
+    {
+      id: 'gemma-4-e2b',
+      tier: 'e2b',
+      name: 'Gemma 4 E2B',
+      localPath: 'models/gemma-4-E2B-it.litertlm',
+      sizeLabel: '2B / Survival Baseline',
+      isLoaded: false,
+      isDownloaded: false,
+      downloadStatus: 'not_downloaded',
+      artifactFormat: 'litertlm',
+      runtimeStack: 'litert-lm-c-api',
+      preferredBackend: 'auto-real',
+      capabilityClass: 'supported',
+      supportedDeviceClass: 'unknown',
+      supportsImageInput: true,
+      supportsVision: true,
+      defaultProfileName: 'gemma-4-e2b-balanced',
+      recommendedFor: 'Default offline triage on most phones.',
+      acceleratorHints: ['gpu', 'cpu'],
+      isBundled: false,
+      sizeBytes: 2_583_085_056,
+    },
+    {
+      id: 'gemma-4-e4b',
+      tier: 'e4b',
+      name: 'Gemma 4 E4B',
+      localPath: 'models/gemma-4-E4B-it.litertlm',
+      sizeLabel: '4B / High Precision',
+      isLoaded: false,
+      isDownloaded: false,
+      downloadStatus: 'not_downloaded',
+      artifactFormat: 'litertlm',
+      runtimeStack: 'litert-lm-c-api',
+      preferredBackend: 'auto-real',
+      capabilityClass: 'supported',
+      supportedDeviceClass: 'unknown',
+      supportsImageInput: true,
+      supportsVision: true,
+      defaultProfileName: 'gemma-4-e4b-expert',
+      recommendedFor: 'Higher precision when thermal and battery headroom allow.',
+      acceleratorHints: ['gpu', 'cpu'],
+      isBundled: false,
+      sizeBytes: 3_654_467_584,
+    },
+  ];
+}
+
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message.trim();
@@ -253,7 +302,9 @@ function hasLoadedModel(models: ModelDescriptor[]): boolean {
 }
 
 function isBundledModelPlaceholder(model: ModelDescriptor): boolean {
-  return model.id === DEFAULT_BUNDLED_MODEL_ID && !model.isDownloaded;
+  return model.id === DEFAULT_BUNDLED_MODEL_ID
+    && model.isBundled === true
+    && !model.isDownloaded;
 }
 
 function shouldKeepWaitingForBundledModel(models: ModelDescriptor[]): boolean {
@@ -373,11 +424,14 @@ export default function App() {
   const bootPromiseRef = useRef<Promise<void> | null>(null);
   const swipeBackRef = useRef<SwipeBackState>(createSwipeBackState());
   const modelSheetDismissRef = useRef<SwipeBackState>(createSwipeBackState());
+  const modelManagerTouchAtRef = useRef(0);
+  const modelManagerCloseTouchAtRef = useRef(0);
   const previousHashRef = useRef(hash);
   const activeInferenceRunRef = useRef(0);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const modelRequiredMessage = t('status.model_required');
   const modelPreparingMessage = t('status.model_preparing');
+  const modelNotLoadedMessage = t('model.not_loaded');
 
   function beginInferenceRun(): number {
     activeInferenceRunRef.current += 1;
@@ -434,27 +488,28 @@ export default function App() {
     const boot = async () => {
       try {
         await bridge.initialize();
-        const [initialBattery, listedModels] = await Promise.all([
-          bridge.getBatteryStatus(),
-          bridge.listModels(),
-        ]);
+        const initialBattery = await bridge.getBatteryStatus();
+        const listedModels = await bridge.listModels().catch(() => [] as ModelDescriptor[]);
         const initialModels = needsBundledModelRecovery(listedModels)
-          ? await recoverBundledModelState(bridge)
+          ? await recoverBundledModelState(bridge).catch(() => listedModels)
           : listedModels;
+        const resolvedModels = initialModels.length > 0
+          ? initialModels
+          : createFallbackDownloadCatalog();
 
         if (isCancelled) {
           return;
         }
 
-        modelsRef.current = initialModels;
+        modelsRef.current = resolvedModels;
         setBatteryStatus(initialBattery);
         setPowerMode(initialBattery.forcedPowerMode);
-        setModels(initialModels);
-        if (shouldKeepWaitingForBundledModel(initialModels)) {
+        setModels(resolvedModels);
+        if (shouldKeepWaitingForBundledModel(resolvedModels)) {
           setStatusLine(modelPreparingMessage);
-        } else if (!hasDownloadedModel(initialModels)) {
+        } else if (!hasDownloadedModel(resolvedModels)) {
           setShowModelManager(true);
-          setStatusLine(modelRequiredMessage);
+          setStatusLine(modelNotLoadedMessage);
         }
 
         const initialWarning = resolveBatteryWarning(initialBattery, t);
@@ -488,7 +543,7 @@ export default function App() {
     return () => {
       isCancelled = true;
     };
-  }, [bridge]);
+  }, [bridge, modelNotLoadedMessage, modelPreparingMessage]);
 
   useEffect(() => {
     modelsRef.current = models;
@@ -535,7 +590,7 @@ export default function App() {
           closeModelManager();
         } else if (!readyModel && nextModels.length > 0) {
           setShowModelManager(true);
-          setStatusLine(modelRequiredMessage);
+          setStatusLine(modelNotLoadedMessage);
         }
       } catch (error) {
         if (!isCancelled) {
@@ -585,7 +640,7 @@ export default function App() {
         window.clearTimeout(timerId);
       }
     };
-  }, [bridge, isBootstrapping, locale, modelLoadFailure, modelPreparingMessage, modelRequiredMessage, t]);
+  }, [bridge, isBootstrapping, locale, modelLoadFailure, modelNotLoadedMessage, modelPreparingMessage, modelRequiredMessage, t]);
 
   useEffect(() => {
     if (!chatAreaRef.current) {
@@ -607,14 +662,17 @@ export default function App() {
     [models, recommendedDownloadModel?.id],
   );
   const batteryWarning = batteryStatus ? resolveBatteryWarning(batteryStatus, t) : undefined;
-  const hasMessages = messages.length > 0;
+  const hasConversationMessages = messages.some((message) => (
+    message.sender === 'user' || message.sender === 'ai'
+  ));
   const isChatRoute = hash === '#/chat';
-  const isChatView = isChatRoute || hasMessages;
+  const isChatView = isChatRoute || hasConversationMessages;
   const showModelDownloadGuide =
     showModelManager
     && !isBootstrapping
     && modelLoadFailure == null
     && models.length > 0
+    && !shouldKeepWaitingForBundledModel(models)
     && !hasDownloadedModel(models);
 
   async function waitForBootstrap(): Promise<void> {
@@ -658,7 +716,11 @@ export default function App() {
       if (recoveredModels.length > 0) {
         return await reconcileModelState(recoveredModels, t('status.model_switched'));
       }
-      return recoveredModels;
+      const fallbackModels = createFallbackDownloadCatalog();
+      modelsRef.current = fallbackModels;
+      setModels(fallbackModels);
+      setStatusLine(modelNotLoadedMessage);
+      return fallbackModels;
     } finally {
       setIsRecoveringModel(false);
     }
@@ -669,7 +731,7 @@ export default function App() {
       await waitForBootstrap();
     }
 
-    if (modelsRef.current.length === 0 || !modelsRef.current.some((model) => model.isDownloaded)) {
+    if (modelsRef.current.length === 0 || shouldKeepWaitingForBundledModel(modelsRef.current)) {
       await recoverBundledModelIntoState();
     }
 
@@ -681,9 +743,11 @@ export default function App() {
       return true;
     }
 
-    const systemMessage = (isRecoveringModel || shouldKeepWaitingForBundledModel(modelsRef.current))
-      ? modelPreparingMessage
-      : modelRequiredMessage;
+    const systemMessage = modelsRef.current.length === 0
+      ? modelRequiredMessage
+      : (isRecoveringModel || shouldKeepWaitingForBundledModel(modelsRef.current))
+        ? modelPreparingMessage
+        : modelRequiredMessage;
     setShowModelManager(true);
     setStatusLine(systemMessage);
     setMessages((prev) => {
@@ -1237,17 +1301,51 @@ export default function App() {
       return;
     }
 
+    setShowModelManager(true);
+
     if (isBootstrapping) {
       await waitForBootstrap();
     }
 
-    if (modelsRef.current.length === 0 || !modelsRef.current.some((model) => model.isDownloaded)) {
-      await recoverBundledModelIntoState();
+    if (modelsRef.current.length === 0) {
+      void recoverBundledModelIntoState();
+    } else if (shouldKeepWaitingForBundledModel(modelsRef.current)) {
+      void recoverBundledModelIntoState();
     } else if (modelsRef.current.some((model) => model.isDownloaded) && !modelsRef.current.some((model) => model.isLoaded)) {
-      await reconcileModelState(modelsRef.current);
+      void reconcileModelState(modelsRef.current);
     }
+  }
 
-    setShowModelManager(true);
+  function handleModelManagerButtonTouchEnd(event: ReactTouchEvent<HTMLButtonElement>): void {
+    modelManagerTouchAtRef.current = Date.now();
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+    void handleToggleModelManager();
+  }
+
+  function handleModelManagerButtonClick(): void {
+    if (Date.now() - modelManagerTouchAtRef.current < 450) {
+      return;
+    }
+    void handleToggleModelManager();
+  }
+
+  function handleModelManagerCloseTouchEnd(event: ReactTouchEvent<HTMLButtonElement>): void {
+    modelManagerCloseTouchAtRef.current = Date.now();
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+    closeModelManager();
+  }
+
+  function handleModelManagerCloseClick(): void {
+    if (Date.now() - modelManagerCloseTouchAtRef.current < 450) {
+      return;
+    }
+    closeModelManager();
   }
 
   useEffect(() => {
@@ -1264,7 +1362,7 @@ export default function App() {
         return;
       }
 
-      if (hash === '#/chat' || hasMessages) {
+      if (hash === '#/chat' || hasConversationMessages) {
         handleClearChat();
         return;
       }
@@ -1285,7 +1383,7 @@ export default function App() {
         void listenerHandle.remove();
       }
     };
-  }, [hash, hasMessages, isStreaming, showModelManager]);
+  }, [hash, hasConversationMessages, isStreaming, showModelManager]);
 
   return (
     <div
@@ -1411,7 +1509,9 @@ export default function App() {
           </button>
           <button
             className="model-mgr-btn"
-            onClick={() => void handleToggleModelManager()}
+            type="button"
+            onClick={handleModelManagerButtonClick}
+            onTouchEnd={handleModelManagerButtonTouchEnd}
             aria-label={t('model.manage')}
             title={t('model.manage')}
           >
@@ -1441,7 +1541,13 @@ export default function App() {
             onTouchCancel={resetModelSheetGesture}
           >
             <h2>{t('model.manage')}</h2>
-            <button onClick={closeModelManager}>{t('model.close')}</button>
+            <button
+              type="button"
+              onClick={handleModelManagerCloseClick}
+              onTouchEnd={handleModelManagerCloseTouchEnd}
+            >
+              {t('model.close')}
+            </button>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>

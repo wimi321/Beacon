@@ -152,6 +152,7 @@ export type ModelDescriptor = {
   localPath: string;
   sizeLabel: string;
   isLoaded: boolean;
+  isBundled?: boolean;
   isDownloaded?: boolean;
   sizeBytes?: number;
   defaultProfileName?: string | null;

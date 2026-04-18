@@ -659,6 +659,8 @@ html[dir="rtl"] .chat-input {
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-secondary);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sheet-backdrop {
@@ -709,6 +711,8 @@ html[dir="rtl"] .chat-input {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .model-list {
