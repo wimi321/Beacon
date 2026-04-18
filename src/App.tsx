@@ -1327,14 +1327,18 @@ export default function App() {
                   className="panic-btn"
                   onClick={() => void handleQuickAction(action.label, action.categoryHint, action.userText)}
                 >
-                  <span className="icon">{action.icon}</span>
-                  {action.label}
+                  <span className="panic-icon-shell" aria-hidden="true">
+                    <span className="icon">{action.icon}</span>
+                  </span>
+                  <span className="panic-label">{action.label}</span>
                 </button>
               ))}
             </div>
             <button className="viewfinder-btn" onClick={() => void handleVisualAnalysis()}>
-              <CameraIcon size={20} />
-              {t('action.visual_help')}
+              <span className="viewfinder-icon-shell" aria-hidden="true">
+                <CameraIcon size={21} strokeWidth={2.25} />
+              </span>
+              <span className="viewfinder-label">{t('action.visual_help')}</span>
             </button>
           </div>
         ) : (
