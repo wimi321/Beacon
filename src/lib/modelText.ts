@@ -14,12 +14,15 @@ function extractRawResponseText(response: TriageResponse): string {
   return typeof rawText === 'string' ? rawText : '';
 }
 
+const STRUCTURAL_MARKER_REGEX = /---\s*(?:BEGIN|END)\s+(?:USER MESSAGE|EVIDENCE)\s*---\n?/g;
+
 export function processModelResponse(value?: string | null): string {
   return (value ?? '')
     .replace(/\\n/g, '\n')
     .replace(/\r\n?/g, '\n')
     .replace(/\$\s*\\?l?rightarrow\s*\$/gi, ' -> ')
-    .replace(CONTROL_CHARS_REGEX, '');
+    .replace(CONTROL_CHARS_REGEX, '')
+    .replace(STRUCTURAL_MARKER_REGEX, '');
 }
 
 export function hasMeaningfulModelText(value?: string | null): boolean {

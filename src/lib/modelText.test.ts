@@ -29,6 +29,16 @@ describe('processModelResponse', () => {
   it('only restores escaped newlines and strips control chars', () => {
     expect(processModelResponse('Line 1\\n\\n1. Step one\u0007')).toBe('Line 1\n\n1. Step one');
   });
+
+  it('strips structural prompt markers echoed by the model', () => {
+    const raw = '--- BEGIN USER MESSAGE ---\n被蛇咬了\n--- END USER MESSAGE ---\n不要切开伤口。';
+    expect(processModelResponse(raw)).toBe('被蛇咬了\n不要切开伤口。');
+  });
+
+  it('strips evidence markers echoed by the model', () => {
+    const raw = '--- BEGIN EVIDENCE ---\nFM 21-76\n--- END EVIDENCE ---\nStay calm.';
+    expect(processModelResponse(raw)).toBe('FM 21-76\nStay calm.');
+  });
 });
 
 describe('formatModelTextForDisplay', () => {
