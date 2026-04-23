@@ -1,127 +1,151 @@
 #!/usr/bin/env python3
-"""Generate a social preview image (1280x640) for the Beacon GitHub repo."""
+"""Generate a premium social preview image (1280x640) for the Beacon GitHub repo."""
 
-from PIL import Image, ImageDraw, ImageFont
-import os
+from __future__ import annotations
+
+import math
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "docs" / "assets" / "beacon-social-preview.png"
+PUBLIC_OUT = ROOT / "public" / "social-preview.png"
+ICON = ROOT / "docs" / "assets" / "beacon-icon.png"
+PHONE = ROOT / "docs" / "assets" / "beacon-home-android-en.png"
 
 W, H = 1280, 640
-BG = (0, 0, 0)
-WHITE = (255, 255, 255)
-AMBER = (245, 158, 11)
-GRAY = (156, 163, 175)
+BG = (3, 4, 3)
+WHITE = (248, 247, 240)
+MUTED = (178, 178, 168)
+AMBER = (255, 216, 77)
+AMBER_DEEP = (217, 65, 65)
+CYAN = (125, 215, 255)
+PANEL = (7, 10, 9)
 
-img = Image.new("RGB", (W, H), BG)
-draw = ImageDraw.Draw(img)
 
-# Load the app icon
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(script_dir)
-icon_path = os.path.join(project_root, "docs", "assets", "beacon-icon.png")
-
-icon = Image.open(icon_path).convert("RGBA")
-icon = icon.resize((120, 120), Image.LANCZOS)
-
-# Paste icon centered near top
-icon_x = (W - 120) // 2
-icon_y = 80
-# Create a black background for compositing
-icon_bg = Image.new("RGB", (120, 120), BG)
-icon_bg.paste(icon, mask=icon.split()[3])
-img.paste(icon_bg, (icon_x, icon_y))
-
-# Try to use a good font, fall back to default
-def get_font(size, bold=False):
-    font_paths = [
+def font(size: int, bold: bool = False) -> ImageFont.ImageFont:
+    candidates = [
+        "/System/Library/Fonts/SF-Pro-Display-Bold.otf" if bold else "/System/Library/Fonts/SF-Pro-Display-Regular.otf",
         "/System/Library/Fonts/SFCompact.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
         "/System/Library/Fonts/HelveticaNeue.ttc",
-        "/Library/Fonts/Arial.ttf",
         "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
     ]
-    for fp in font_paths:
-        if os.path.exists(fp):
+    for path in candidates:
+        if path and Path(path).exists():
             try:
-                return ImageFont.truetype(fp, size)
+                return ImageFont.truetype(path, size)
             except Exception:
-                continue
+                pass
     return ImageFont.load_default()
 
-font_title = get_font(72, bold=True)
-font_tagline = get_font(28)
-font_features = get_font(22)
-font_badge = get_font(18)
 
-# Title
-title = "Beacon"
-bbox = draw.textbbox((0, 0), title, font=font_title)
-tw = bbox[2] - bbox[0]
-draw.text(((W - tw) // 2, 220), title, fill=WHITE, font=font_title)
+def rounded_mask(size, radius):
+    mask = Image.new("L", size, 0)
+    d = ImageDraw.Draw(mask)
+    d.rounded_rectangle((0, 0, size[0] - 1, size[1] - 1), radius=radius, fill=255)
+    return mask
 
-# Tagline
-tagline = "Your phone becomes a survival AI"
-bbox = draw.textbbox((0, 0), tagline, font=font_tagline)
-tw = bbox[2] - bbox[0]
-draw.text(((W - tw) // 2, 310), tagline, fill=AMBER, font=font_tagline)
 
-# Sub-tagline
-sub = "Powered by Gemma 4 running entirely on-device. No internet needed."
-bbox = draw.textbbox((0, 0), sub, font=font_features)
-tw = bbox[2] - bbox[0]
-draw.text(((W - tw) // 2, 360), sub, fill=GRAY, font=font_features)
+def add_glow(base: Image.Image, center, radius, color, opacity):
+    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    px = overlay.load()
+    cx, cy = center
+    for y in range(base.height):
+        for x in range(base.width):
+            d = math.hypot(x - cx, y - cy) / radius
+            if d < 1:
+                a = int(255 * opacity * ((1 - d) ** 2))
+                if a:
+                    px[x, y] = (*color, a)
+    base.alpha_composite(overlay)
 
-# Feature pills
-features = [
-    "Offline-First",
-    "Gemma 4 On-Device",
-    "14,229 Knowledge Entries",
-    "20 Languages",
-    "Visual AI",
-]
 
-pill_y = 430
-pill_h = 36
-pill_pad = 16
-pill_gap = 14
-pill_radius = 18
+def draw_topo(draw: ImageDraw.ImageDraw):
+    cx, cy = 660, 280
+    for r in range(60, 900, 46):
+        alpha = int(32 * max(0.16, 1 - r / 900))
+        bbox = (cx - r * 1.28, cy - r * 0.72, cx + r * 1.28, cy + r * 0.72)
+        draw.ellipse(bbox, outline=(*AMBER, alpha), width=1)
 
-# Calculate total width for centering
-pill_widths = []
-for feat in features:
-    bbox = draw.textbbox((0, 0), feat, font=font_badge)
-    pw = bbox[2] - bbox[0] + pill_pad * 2
-    pill_widths.append(pw)
 
-total_w = sum(pill_widths) + pill_gap * (len(features) - 1)
-start_x = (W - total_w) // 2
+def draw_text(draw: ImageDraw.ImageDraw, xy, text, fnt, fill):
+    draw.text(xy, text, font=fnt, fill=fill)
 
-for i, feat in enumerate(features):
-    pw = pill_widths[i]
-    x1 = start_x
-    y1 = pill_y
-    x2 = x1 + pw
-    y2 = y1 + pill_h
 
-    draw.rounded_rectangle([x1, y1, x2, y2], radius=pill_radius, fill=(30, 30, 30), outline=(60, 60, 60))
+def pill(draw: ImageDraw.ImageDraw, x, y, text, accent=None):
+    f = font(22, bold=True)
+    bbox = draw.textbbox((0, 0), text, font=f)
+    w = bbox[2] - bbox[0] + 34
+    h = 42
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=21, fill=(9, 14, 14), outline=(47, 54, 48), width=1)
+    if accent:
+        draw.ellipse((x + 14, y + 15, x + 24, y + 25), fill=accent)
+        tx = x + 32
+    else:
+        tx = x + 17
+    draw.text((tx, y + 9), text, font=f, fill=WHITE)
+    return x + w + 16
 
-    bbox = draw.textbbox((0, 0), feat, font=font_badge)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
-    tx = x1 + (pw - text_w) // 2
-    ty = y1 + (pill_h - text_h) // 2 - 2
-    draw.text((tx, ty), feat, fill=WHITE, font=font_badge)
 
-    start_x = x2 + pill_gap
+def paste_phone(base: Image.Image):
+    if not PHONE.exists():
+        return
+    phone = Image.open(PHONE).convert("RGBA")
+    target_h = 574
+    target_w = int(phone.width * target_h / phone.height)
+    phone = phone.resize((target_w, target_h), Image.Resampling.LANCZOS)
+    frame_w, frame_h = target_w + 30, target_h + 30
+    frame = Image.new("RGBA", (frame_w, frame_h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(frame)
+    d.rounded_rectangle((0, 0, frame_w - 1, frame_h - 1), radius=42, fill=(4, 5, 5, 255), outline=(67, 70, 62, 255), width=2)
+    d.rounded_rectangle((10, 10, frame_w - 11, frame_h - 11), radius=34, fill=(0, 0, 0, 255))
+    mask = rounded_mask(phone.size, 27)
+    frame.alpha_composite(Image.composite(phone, Image.new("RGBA", phone.size, (0, 0, 0, 0)), mask), (15, 15))
+    shadow = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+    shadow.putalpha(rounded_mask(frame.size, 42).filter(ImageFilter.GaussianBlur(26)).point(lambda p: int(p * 0.48)))
+    base.alpha_composite(shadow, (894, 17))
+    base.alpha_composite(frame, (892, 16))
 
-# Bottom line
-bottom = "Emergency survival guidance with on-device AI inference"
-bbox = draw.textbbox((0, 0), bottom, font=font_features)
-tw = bbox[2] - bbox[0]
-draw.text(((W - tw) // 2, 510), bottom, fill=(100, 100, 100), font=font_features)
 
-# Subtle border
-draw.rectangle([0, 0, W-1, H-1], outline=(40, 40, 40), width=1)
+def main():
+    img = Image.new("RGBA", (W, H), (*BG, 255))
+    add_glow(img, (300, 240), 430, AMBER, 0.23)
+    add_glow(img, (1060, 180), 280, CYAN, 0.08)
+    d = ImageDraw.Draw(img, "RGBA")
+    draw_topo(d)
 
-out_path = os.path.join(project_root, "docs", "assets", "beacon-social-preview.png")
-img.save(out_path, "PNG", optimize=True)
-print(f"Created social preview: {out_path}")
-print(f"Size: {os.path.getsize(out_path)} bytes")
+    d.rounded_rectangle((56, 54, 838, 226), radius=26, fill=(*PANEL, 226), outline=(242, 242, 220, 110), width=2)
+    icon = Image.open(ICON).convert("RGBA").resize((116, 116), Image.Resampling.LANCZOS)
+    img.alpha_composite(icon, (82, 82))
+
+    draw_text(d, (224, 78), "Beacon", font(58, bold=True), WHITE)
+    draw_text(d, (226, 142), "Offline survival AI for no-signal moments", font(29), WHITE)
+    draw_text(d, (226, 182), "On-device Gemma 4. Offline knowledge. 20 languages.", font(21), MUTED)
+
+    d.rounded_rectangle((76, 264, 760, 424), radius=24, fill=(4, 8, 9, 232))
+    d.rounded_rectangle((76, 264, 88, 424), radius=6, fill=(*AMBER, 255))
+    draw_text(d, (112, 292), "Real local guidance", font(40, bold=True), WHITE)
+    draw_text(d, (112, 346), "Built for panic: tap, ask, scan, survive.", font(25), WHITE)
+    draw_text(d, (112, 384), "No cloud dependency on the critical path.", font(23), MUTED)
+
+    x = 76
+    x = pill(d, x, 496, "ANDROID APK", AMBER_DEEP)
+    x = pill(d, x, 496, "20 LANGUAGES", CYAN)
+    x = pill(d, x, 496, "OFFLINE FIRST", AMBER)
+
+    paste_phone(img)
+
+    d.rectangle((0, 0, W - 1, H - 1), outline=(45, 49, 42, 255), width=1)
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    rgb = img.convert("RGB")
+    rgb.save(OUT, "PNG", optimize=True)
+    PUBLIC_OUT.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(PUBLIC_OUT, "PNG", optimize=True)
+    print(f"Created social preview: {OUT}")
+    print(f"Created web social preview: {PUBLIC_OUT}")
+    print(f"Size: {OUT.stat().st_size} bytes")
+
+
+if __name__ == "__main__":
+    main()

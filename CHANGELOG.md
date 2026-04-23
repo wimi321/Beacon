@@ -2,6 +2,28 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.3 - 2026-04-24
+
+Brand polish release focused on making Beacon feel consistent and release-grade from install to splash to GitHub.
+
+### Highlights
+
+- Replaces the old white-background flame icon with a generated dark Beacon rescue-lantern app icon
+- Adds generated brand masters for the app icon and transparent emblem, plus a reproducible brand asset pipeline
+- Regenerates iOS AppIcon, Android launcher icons, adaptive foreground icons, Web/PWA icons, favicon, and apple-touch-icon
+- Rebuilds iOS and Android splash screens with the same dark Beacon visual language
+- Updates web metadata, PWA theme colors, and a premium GitHub/social preview image
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `git diff --check`
+- `dart analyze --fatal-infos`
+- `dart test`
+- `cd android && ./gradlew testDebugUnitTest`
+- `npm run mobile:android:release:github`
+
 ## v0.2.2 - 2026-04-24
 
 Visual polish release focused on making the first screen feel calmer, clearer, and more premium without adding friction to emergency use.
