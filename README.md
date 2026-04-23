@@ -55,7 +55,7 @@
 ## Download
 
 > [!TIP]
-> **Get started in 2 minutes:** Install APK → open *Settings & Models* → download **Gemma 4 E2B** (1.5 GB) → fully offline.
+> **Get started in 2 minutes:** Install APK → open *Settings & Models* → download **Gemma 4 E2B** (~2.6 GB) → fully offline.
 
 <p>
   <a href="https://github.com/wimi321/Beacon/releases/latest"><img alt="Download APK" src="https://img.shields.io/badge/Download_APK-GitHub_Releases-16a34a?style=for-the-badge&logo=android"></a>
@@ -65,8 +65,8 @@ Choose your model:
 
 | Model | Size | Best for |
 | --- | --- | --- |
-| **Gemma 4 E2B** | ~1.5 GB | Fast setup, recommended for most devices |
-| **Gemma 4 E4B** | ~2.8 GB | Higher accuracy, needs more RAM |
+| **Gemma 4 E2B** | ~2.6 GB | Fast setup, recommended for most devices |
+| **Gemma 4 E4B** | ~3.7 GB | Higher accuracy, needs more RAM |
 
 ---
 

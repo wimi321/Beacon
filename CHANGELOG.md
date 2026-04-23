@@ -2,6 +2,25 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.1 - 2026-04-24
+
+Release polish for the Android APK, mobile interaction flow, and GitHub delivery.
+
+### Highlights
+
+- Keeps the chat input editable while the local model is generating, so users can prepare the next follow-up without waiting
+- Simplifies the first-launch model sheet by removing duplicate model cards while the download guide is shown
+- Ships the latest AI response cleanup so structural prompt markers are not shown in chat
+- Corrects README model download sizes to match the current Gemma 4 E2B / E4B allowlist
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `dart analyze --fatal-infos`
+- `dart test`
+- `cd android && ./gradlew testDebugUnitTest`
+
 ## v0.1.1 - 2026-04-18
 
 Focused release for install flow, first-launch model onboarding, and GitHub delivery polish.

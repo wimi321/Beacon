@@ -1557,7 +1557,6 @@ export default function App() {
             aria-label={t('chat.input_placeholder')}
             value={chatInput}
             onChange={(event) => setChatInput(event.target.value)}
-            disabled={isStreaming}
           />
           <button className="send-btn" type="submit" disabled={isStreaming}>
             {t('chat.send')}
@@ -1689,7 +1688,7 @@ export default function App() {
                   ? t('model.preparing')
                   : t('model.not_loaded')}
               </p>
-            ) : (
+            ) : showModelDownloadGuide ? null : (
               models.map((model) => (
                 <div key={model.id} className={`model-card ${model.isLoaded ? 'loaded' : ''}`}>
                   <div className="model-card-copy">

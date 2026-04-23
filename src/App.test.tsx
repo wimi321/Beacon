@@ -578,7 +578,10 @@ describe('App', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
     expect(await screen.findByText('先处理明显危险。')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('输入你现在的情况......')).toBeDisabled();
+    const chatInput = screen.getByPlaceholderText('输入你现在的情况......');
+    expect(chatInput).not.toBeDisabled();
+    fireEvent.change(chatInput, { target: { value: '我还在二楼窗口旁边' } });
+    expect(chatInput).toHaveValue('我还在二楼窗口旁边');
     fireEvent.click(screen.getByLabelText('返回主页'));
 
     await waitFor(() => {
