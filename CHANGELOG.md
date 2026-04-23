@@ -2,6 +2,28 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.2 - 2026-04-24
+
+Visual polish release focused on making the first screen feel calmer, clearer, and more premium without adding friction to emergency use.
+
+### Highlights
+
+- Adds a generated Beacon-style visual direction to the app UI: warm rescue glow, subtle map-line atmosphere, and stronger emergency hierarchy
+- Refreshes the home screen hero with a compact signal aura while preserving one-screen panic actions
+- Restyles panic cards, visual-help entry, chat input, SOS control, model sheet, and status badges for better touch confidence
+- Regenerates README hero media and the English, Simplified Chinese, and Arabic screenshots from the updated interface
+- Keeps RTL layout and multilingual home screen behavior intact while improving visual consistency
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `git diff --check`
+- `dart analyze --fatal-infos`
+- `dart test`
+- `cd android && ./gradlew testDebugUnitTest`
+- `npm run mobile:android:release:github`
+
 ## v0.2.1 - 2026-04-24
 
 Release polish for the Android APK, mobile interaction flow, and GitHub delivery.

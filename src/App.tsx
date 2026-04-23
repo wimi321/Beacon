@@ -1475,6 +1475,11 @@ export default function App() {
 
         {!isChatView ? (
           <div className="empty-state">
+            <div className="beacon-aura" aria-hidden="true">
+              <span className="beacon-aura-core" />
+              <span className="beacon-aura-ring ring-one" />
+              <span className="beacon-aura-ring ring-two" />
+            </div>
             <div className="hero-copy">
               <p className="hero-kicker">{t('hero.kicker')}</p>
               <h1>{t('hero.title')}</h1>
