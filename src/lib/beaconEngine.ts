@@ -318,6 +318,45 @@ function isConflictQuery(query: string): boolean {
   return /(战争|戰爭|炮击|炮擊|轰炸|轟炸|爆炸|枪击|槍擊|空袭|空襲|war zone|blast|explosion|active shooter)/i.test(query);
 }
 
+function isConcreteEmergencyQuery(query: string): boolean {
+  return isOutdoorSurvivalQuery(query)
+    || isConflictQuery(query)
+    || isRadiationQuery(query)
+    || isBioQuery(query)
+    || isCyberQuery(query)
+    || isChestPainQuery(query)
+    || isBurnQuery(query)
+    || /(出血|流血|止血|止血带|止血帶|骨折|摔伤|摔傷|外伤|外傷|烧伤|燒傷|烫伤|燙傷|呼吸|窒息|哮喘|中毒|腹痛|昏迷|抽搐|休克|bleed|bleeding|tourniquet|fracture|burn|choking|asthma|poison|shock|seizure|unconscious)/i.test(query);
+}
+
+function isConversationMemoryQuery(query: string): boolean {
+  const normalized = compactWhitespace(query).toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
+  if (
+    /(what did i (just )?(say|mention|tell you)|what situation did i (just )?mention|what was my (last|previous) (message|question)|do you remember what i (said|mentioned)|what did we just talk about)/i.test(
+      normalized,
+    )
+    || /(我刚才|我剛才|刚才|剛才|之前|前面|上面|上一条|上一條|上一句).*(说|說|讲|講|提|问|問|聊).*(什么|什麼|啥|哪)/.test(normalized)
+    || /(还记得|還記得).*(我|刚才|剛才|之前|前面|上面)/.test(normalized)
+  ) {
+    return true;
+  }
+
+  if (isConcreteEmergencyQuery(normalized)) {
+    return false;
+  }
+
+  return /^(继续|繼續|然后呢|然後呢|下一步|接下来|接下來|下一步怎么办|下一步怎麼辦|接下来怎么办|接下來怎麼辦|还要做什么|還要做什麼|再说详细点|再說詳細點|详细点|詳細點|这是什么意思|這是什麼意思|什么意思|什麼意思|怎么办|怎麼辦)$/i.test(
+    normalized,
+  )
+    || /^(continue|go on|next|what next|what now|what should i do next|what do i do next|explain that|what does that mean)$/i.test(
+      normalized,
+    );
+}
+
 function inferScenarioHint(
   rawCategoryHint: string,
   rawQuery: string,
@@ -619,6 +658,15 @@ export function retrieveEvidenceBundle(request: TriageRequest): EvidenceBundle {
   const knowledgeCards = getKnowledgeCards();
   const rawCategoryHint = request.categoryHint?.trim() ?? '';
   const rawQuery = [rawCategoryHint, request.userText].filter(Boolean).join(' ').trim();
+  if (isConversationMemoryQuery(rawQuery)) {
+    return {
+      authoritative: [],
+      supporting: [],
+      matchedCategories: [],
+      queryTerms: normalizeTerms(rawQuery),
+    };
+  }
+
   const scenarioHint = inferScenarioHint(rawCategoryHint, rawQuery);
   const scenarioTerms = getScenarioRetrievalTerms(scenarioHint);
   const primaryScenarioCategories = new Set(

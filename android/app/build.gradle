@@ -79,8 +79,8 @@ android {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "0.2.3"
+        versionCode 7
+        versionName "0.2.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         if (arm64OnlyBuild) {
             ndk {
@@ -105,8 +105,11 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources = true
+            // Keep the release bridge unminified. R8 can hide locally registered
+            // Capacitor plugins from the injected JS plugin catalog, which is not
+            // acceptable for a safety-critical offline inference path.
+            minifyEnabled false
+            shrinkResources = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig = keystoreProperties['storeFile'] ? signingConfigs.release : signingConfigs.debug
         }

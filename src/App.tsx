@@ -250,6 +250,21 @@ function isNativeAndroidApp(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 }
 
+function blurActiveTextInput(): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const activeElement = document.activeElement;
+  if (
+    activeElement instanceof HTMLInputElement
+    || activeElement instanceof HTMLTextAreaElement
+    || activeElement instanceof HTMLSelectElement
+  ) {
+    activeElement.blur();
+  }
+}
+
 function buildAiMessage(
   response: TriageResponse,
   text: string,
@@ -419,7 +434,7 @@ export default function App() {
   }
 
   const [messages, setMessages] = useState<BeaconMessage[]>([]);
-  const { hash, navigate, goBack } = useHashRouter();
+  const { hash, navigate } = useHashRouter();
   const [chatInput, setChatInput] = useState('');
   const [showModelManager, setShowModelManager] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -530,7 +545,7 @@ export default function App() {
           : listedModels;
         const resolvedModels = initialModels.length > 0
           ? initialModels
-          : createFallbackDownloadCatalog();
+          : (isNativeAndroidApp() ? [] : createFallbackDownloadCatalog());
 
         if (isCancelled) {
           return;
@@ -560,11 +575,14 @@ export default function App() {
         }
 
         const message = extractErrorMessage(error) || t('status.infer_failed');
+        const localizedFailure = localizeModelLoadFailure(message, locale);
+        setModelLoadFailure(localizedFailure);
+        setShowModelManager(true);
         setMessages((prev) => [
           ...prev,
-          { id: createId('system'), sender: 'system', text: t('error.generic', { message }) },
+          { id: createId('system'), sender: 'system', text: t('error.generic', { message: localizedFailure }) },
         ]);
-        setStatusLine(t('status.infer_failed'));
+        setStatusLine(localizedFailure);
       } finally {
         if (!isCancelled) {
           setIsBootstrapping(false);
@@ -578,7 +596,7 @@ export default function App() {
     return () => {
       isCancelled = true;
     };
-  }, [bridge, modelNotLoadedMessage, modelPreparingMessage]);
+  }, [bridge, locale, modelNotLoadedMessage, modelPreparingMessage, t]);
 
   useEffect(() => {
     modelsRef.current = models;
@@ -756,7 +774,7 @@ export default function App() {
       if (recoveredModels.length > 0) {
         return await reconcileModelState(recoveredModels, t('status.model_switched'));
       }
-      const fallbackModels = createFallbackDownloadCatalog();
+      const fallbackModels = isNativeAndroidApp() ? [] : createFallbackDownloadCatalog();
       modelsRef.current = fallbackModels;
       setModels(fallbackModels);
       setStatusLine(modelNotLoadedMessage);
@@ -827,11 +845,7 @@ export default function App() {
     const hadActiveInference = isStreaming;
     invalidateInferenceRun();
     resetConversationUiState();
-    if (hash === '#/chat') {
-      goBack();
-    } else {
-      navigate('#/');
-    }
+    navigate('#/', true);
     if (hadActiveInference) {
       setIsCancelling(true);
       const cancel = bridge.cancelActiveInference().catch(() => undefined);
@@ -878,8 +892,31 @@ export default function App() {
     return isChatView && !showModelManager;
   }
 
+  function isInteractiveTouchTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) {
+      return false;
+    }
+
+    return Boolean(target.closest([
+      'button',
+      'input',
+      'textarea',
+      'select',
+      'a',
+      '[role="button"]',
+      '.fixed-bottom-panel',
+      '.model-panel',
+      '.sheet-backdrop',
+    ].join(',')));
+  }
+
   function handleSwipeBackTouchStart(event: ReactTouchEvent<HTMLDivElement>): void {
     if (!canHandleSwipeBack()) {
+      resetSwipeBackGesture();
+      return;
+    }
+
+    if (isInteractiveTouchTarget(event.target)) {
       resetSwipeBackGesture();
       return;
     }
@@ -1183,6 +1220,7 @@ export default function App() {
     if (isStreaming) return;
     navigate('#/chat');
     if (!(await ensureLocalModelReady())) {
+      navigate('#/', true);
       return;
     }
     await runTriage(
@@ -1197,11 +1235,11 @@ export default function App() {
   }
 
   async function handleSendChat(event?: FormEvent): Promise<void> {
-    if (hash !== '#/chat') navigate('#/chat');
     event?.preventDefault();
     if (!chatInput.trim() || isStreaming) {
       return;
     }
+    if (hash !== '#/chat') navigate('#/chat');
     if (!(await ensureLocalModelReady())) {
       return;
     }
@@ -1362,6 +1400,7 @@ export default function App() {
       return;
     }
 
+    blurActiveTextInput();
     setShowModelManager(true);
 
     if (isBootstrapping) {
@@ -1462,6 +1501,7 @@ export default function App() {
         nodesCount={nodesCount}
         statusLine={isCancelling ? t('status.cancelling') : statusLine}
         isOnline={isOnline}
+        onStatusClick={() => void handleToggleModelManager()}
       />
 
       {batteryWarning && (

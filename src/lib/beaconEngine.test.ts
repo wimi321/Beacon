@@ -160,6 +160,30 @@ describe('beaconEngine', () => {
     expect(response.steps.length).toBeGreaterThan(0);
   });
 
+  it('does not let context-memory follow-ups pull unrelated evidence', () => {
+    const evidence = retrieveEvidenceBundle({
+      userText: 'What did I just mention?',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'session-engine-memory-followup',
+    });
+
+    expect(evidence.authoritative).toHaveLength(0);
+    expect(evidence.supporting).toHaveLength(0);
+    expect(buildGroundingContext(evidence)).toBe('');
+  });
+
+  it('still retrieves evidence when a follow-up contains a concrete emergency', () => {
+    const evidence = retrieveEvidenceBundle({
+      userText: '被蛇咬了下一步怎么办',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'session-engine-concrete-followup',
+    });
+
+    expect(evidence.authoritative.some((item) => /蛇|snake/i.test(`${item.title} ${item.source}`))).toBe(true);
+  });
+
   it('keeps broad forest prompts grounded in field survival actions', () => {
     const response = inferTriageResponse({
       userText: '我在树林里，周围都是树',

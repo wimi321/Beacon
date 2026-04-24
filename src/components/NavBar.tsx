@@ -5,6 +5,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 interface NavBarProps {
   showBack?: boolean;
   onBack?: () => void;
+  onStatusClick?: () => void;
   title?: string;
   sosActive?: boolean;
   nodesCount?: number;
@@ -12,8 +13,12 @@ interface NavBarProps {
   isOnline?: boolean;
 }
 
-export function NavBar({ showBack, onBack, title, sosActive, nodesCount, statusLine, isOnline }: NavBarProps) {
+export function NavBar({ showBack, onBack, onStatusClick, title, sosActive, nodesCount, statusLine, isOnline }: NavBarProps) {
   const { t } = useI18n();
+  const statusText = sosActive
+    ? `📡 ${t('status.broadcasting', { count: nodesCount || 0 })}`
+    : `${statusLine === t('status.offline_ready') ? '🔋 ' : ''}${statusLine}`;
+  const statusClassName = `status-badge ${sosActive ? 'offline' : ''} ${isOnline === false ? 'network-offline' : ''}`;
 
   return (
     <header className={`header ${showBack ? 'header-chat' : 'header-home'}`}>
@@ -42,12 +47,23 @@ export function NavBar({ showBack, onBack, title, sosActive, nodesCount, statusL
       {!showBack && (
         <div className="header-meta">
           <LanguageSwitcher />
-          <div className={`status-badge ${sosActive ? 'offline' : ''} ${isOnline === false ? 'network-offline' : ''}`}>
-            {isOnline === false && <span aria-label={t('status.network_offline')}>📴 </span>}
-            {sosActive
-              ? `📡 ${t('status.broadcasting', { count: nodesCount || 0 })}`
-              : `${statusLine === t('status.offline_ready') ? '🔋 ' : ''}${statusLine}`}
-          </div>
+          {onStatusClick ? (
+            <button
+              className={statusClassName}
+              type="button"
+              onClick={onStatusClick}
+              aria-label={`${t('model.status')}: ${statusText}`}
+              title={t('model.manage')}
+            >
+              {isOnline === false && <span aria-label={t('status.network_offline')}>📴 </span>}
+              {statusText}
+            </button>
+          ) : (
+            <div className={statusClassName}>
+              {isOnline === false && <span aria-label={t('status.network_offline')}>📴 </span>}
+              {statusText}
+            </div>
+          )}
         </div>
       )}
     </header>

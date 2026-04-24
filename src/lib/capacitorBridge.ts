@@ -110,12 +110,8 @@ class CapacitorBeaconBridge implements BeaconBridge {
 
     await Network.getStatus().catch(() => null);
 
-    try {
-      const result = await NativeBeacon.listModels();
-      this.models = result.models;
-    } catch {
-      this.models = [];
-    }
+    const result = await NativeBeacon.listModels();
+    this.models = result.models;
   }
 
   private getActiveModelId(): string | undefined {
@@ -330,26 +326,26 @@ class CapacitorBeaconBridge implements BeaconBridge {
   async getBatteryStatus(): Promise<BatteryStatus> {
     const battery = await Device.getBatteryInfo().catch(() => null);
     const levelRaw = battery?.batteryLevel;
+    const hasReportedLevel = typeof levelRaw === 'number' && !Number.isNaN(levelRaw);
     const level =
-      typeof levelRaw === 'number' && !Number.isNaN(levelRaw)
+      hasReportedLevel
         ? levelRaw > 1
           ? levelRaw / 100
           : levelRaw
-        : this.powerMode === 'doomsday'
-          ? 0.08
-          : 0.42;
+        : 0.42;
 
+    const isCriticallyLow = level < 0.1;
     const isLowPowerMode =
-      battery?.isCharging === false && (level < 0.1 || this.powerMode === 'doomsday');
+      this.powerMode === 'doomsday' || (battery?.isCharging === false && isCriticallyLow);
 
     return {
       level,
       isLowPowerMode,
       forcedPowerMode: this.powerMode,
       warningCode:
-        level < 0.1 || this.powerMode === 'doomsday' ? BATTERY_WARNING_CODE : undefined,
+        isCriticallyLow ? BATTERY_WARNING_CODE : undefined,
       warning:
-        level < 0.1 || this.powerMode === 'doomsday'
+        isCriticallyLow
           ? localizeBatteryWarning(this.lastLocale)
           : undefined,
     };
@@ -371,7 +367,11 @@ class CapacitorBeaconBridge implements BeaconBridge {
       this.models = result.models;
     } catch (error) {
       if (this.models.length === 0) {
-        console.warn('Beacon native model listing failed with no cached model catalog.', error);
+        throw new Error(
+          `Beacon native model bridge is not available: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
       } else {
         console.warn('Beacon native model listing failed. Reusing cached model catalog.', error);
       }

@@ -273,4 +273,12 @@ describe('CapacitorBeaconBridge', () => {
       '\nStay where you are.\n\n- Make yourself visible\n',
     );
   });
+
+  it('fails loudly when the native model bridge cannot list models and no cached catalog exists', async () => {
+    vi.mocked(NativeBeacon.listModels).mockRejectedValueOnce(new Error('BeaconNative unavailable'));
+
+    const bridge = createCapacitorBeaconBridge();
+
+    await expect(bridge.listModels()).rejects.toThrow('Beacon native model bridge is not available');
+  });
 });
