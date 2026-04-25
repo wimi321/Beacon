@@ -13,7 +13,7 @@ def generatedBundledModelsDir = new File(generatedBundledAssetsDir, 'models')
 def stagedBundledGemmaFile = new File(generatedBundledModelsDir, 'gemma-4-E2B-it.litertlm')
 def bundleGemmaInApk = providers.gradleProperty('beaconBundleGemmaInApk')
     .map { it.toBoolean() }
-    .orElse(true)
+    .orElse(false)
     .get()
 def arm64OnlyBuild = providers.gradleProperty('beaconArm64Only')
     .map { it.toBoolean() }
@@ -21,7 +21,7 @@ def arm64OnlyBuild = providers.gradleProperty('beaconArm64Only')
     .get()
 
 tasks.register('stageBundledGemmaE2B') {
-    inputs.file(bundledGemmaArtifact)
+    inputs.file(bundledGemmaArtifact).optional()
     outputs.file(stagedBundledGemmaFile)
 
     doLast {
@@ -79,8 +79,8 @@ android {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "0.2.5"
+        versionCode 9
+        versionName "0.2.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         if (arm64OnlyBuild) {
             ndk {
