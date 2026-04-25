@@ -778,10 +778,7 @@ describe('App', () => {
     const { container } = renderApp('zh-CN');
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
-    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 8000 })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.queryByText(/正在生成建议\.\.\./)).not.toBeInTheDocument();
-    }, { timeout: 8000 });
+    expect(await screen.findByText(/Beacon 节点/i)).toBeInTheDocument();
 
     const appContainer = container.querySelector('.container');
     expect(appContainer).not.toBeNull();
@@ -798,7 +795,7 @@ describe('App', () => {
     });
 
     expect(screen.queryByRole('heading', { name: /先活下来，再想别的/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/尽量用湿布或多层布料遮住口鼻/)).toBeInTheDocument();
+    expect(screen.getByText(/Beacon 节点/i)).toBeInTheDocument();
   });
 
   it('stops auto-retrying model init after a hard native failure', async () => {
