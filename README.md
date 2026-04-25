@@ -69,8 +69,8 @@ Choose your model:
 | **Gemma 4 E4B** | ~3.7 GB | Higher accuracy, needs more RAM |
 
 Model downloads are resumable and use an ordered mirror list. Beacon tries the
-China-friendly `hf-mirror.com` link first, then falls back to the official
-Hugging Face URL if the first source is unavailable.
+China-friendly ModelScope CDN first, then falls back to `hf-mirror.com` and the
+official Hugging Face URL if an earlier source is unavailable.
 
 ---
 

@@ -10,7 +10,7 @@
       "name": "Gemma 4 E2B",
       "fileName": "gemma-4-E2B-it.litertlm",
       "sizeLabel": "2B / Survival Baseline",
-      "downloadUrl": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+      "downloadUrl": "https://modelscope.cn/models/litert-community/gemma-4-E2B-it-litert-lm/resolve/master/gemma-4-E2B-it.litertlm",
       "sizeInBytes": 2583085056,
       "defaultProfileName": "gemma-4-e2b-balanced",
       "recommendedFor": "Default offline triage on most phones.",
@@ -20,6 +20,7 @@
         "cpu"
       ],
       "downloadUrls": [
+        "https://modelscope.cn/models/litert-community/gemma-4-E2B-it-litert-lm/resolve/master/gemma-4-E2B-it.litertlm",
         "https://hf-mirror.com/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
         "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
       ]
@@ -30,7 +31,7 @@
       "name": "Gemma 4 E4B",
       "fileName": "gemma-4-E4B-it.litertlm",
       "sizeLabel": "4B / High Precision",
-      "downloadUrl": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+      "downloadUrl": "https://modelscope.cn/models/litert-community/gemma-4-E4B-it-litert-lm/resolve/master/gemma-4-E4B-it.litertlm",
       "sizeInBytes": 3654467584,
       "defaultProfileName": "gemma-4-e4b-expert",
       "recommendedFor": "Higher precision when thermal and battery headroom allow.",
@@ -40,6 +41,7 @@
         "cpu"
       ],
       "downloadUrls": [
+        "https://modelscope.cn/models/litert-community/gemma-4-E4B-it-litert-lm/resolve/master/gemma-4-E4B-it.litertlm",
         "https://hf-mirror.com/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
         "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
       ]

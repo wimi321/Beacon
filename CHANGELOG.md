@@ -2,6 +2,28 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.11 - 2026-04-25
+
+Download resilience release focused on making the in-app Gemma 4 model setup usable in mainland China without bundling multi-GB weights into the APK.
+
+### Highlights
+
+- Adds ModelScope CDN mirrors as the first download source for both `Gemma 4 E2B` and `Gemma 4 E4B`
+- Keeps `hf-mirror.com` and the official Hugging Face URLs as ordered fallbacks
+- Updates the legacy `downloadUrl` field so older allowlist readers also use the China-friendly source first
+- Keeps the APK lightweight: users still download model weights in-app, with resumable progress and mirror failover
+- Bumps Android to `versionCode 14` / `versionName 0.2.11`
+
+### Verification
+
+- Verified ModelScope E2B and E4B URLs with per-command proxy bypass; system proxy was not changed
+- Confirmed both ModelScope files support byte ranges, resume chunks, and expected file sizes
+- Confirmed first 1 MiB SHA256 matches the existing Hugging Face mirror for both E2B and E4B
+- `npm test -- --run`
+- `npm run build`
+- `cd android && ./gradlew testReleaseUnitTest`
+- `npm run mobile:android:release:github`
+
 ## v0.2.10 - 2026-04-25
 
 Mobile release focused on real-device usability, visual rescue entry reliability, and cleaner model output.
