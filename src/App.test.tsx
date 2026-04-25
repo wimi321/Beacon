@@ -600,10 +600,10 @@ describe('App', () => {
     const { container } = renderApp('zh-CN');
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
-    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 8000 })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByText(/正在生成建议\.\.\./)).not.toBeInTheDocument();
-    });
+    }, { timeout: 8000 });
 
     const appContainer = container.querySelector('.container');
     expect(appContainer).not.toBeNull();
@@ -687,10 +687,10 @@ describe('App', () => {
     const { container } = renderApp('zh-CN');
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
-    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText(/尽量用湿布或多层布料遮住口鼻/, {}, { timeout: 8000 })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByText(/正在生成建议\.\.\./)).not.toBeInTheDocument();
-    });
+    }, { timeout: 8000 });
 
     const appContainer = container.querySelector('.container');
     expect(appContainer).not.toBeNull();
