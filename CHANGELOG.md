@@ -2,6 +2,29 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.10 - 2026-04-25
+
+Mobile release focused on real-device usability, visual rescue entry reliability, and cleaner model output.
+
+### Highlights
+
+- Replaces the hard-to-read native camera source prompt with a clear in-app visual picker for `拍摄 / 从相册导入`
+- Keeps the native camera and Android photo picker flows intact while making the first visual-help step obvious
+- Centers the language menu inside the model/settings sheet so it no longer clips against the screen edge
+- Cleans display-only markdown emphasis leftovers from local model responses while preserving paragraphs, bullets, and numbered steps
+- Bumps Android to `versionCode 13` / `versionName 0.2.10`
+
+### Verification
+
+- Real-device Android install and smoke test on `25019PNF3C` / Android 16
+- Cold launch with downloaded Gemma 4 E2B showing `离线就绪`
+- Visual Help picker, native camera permission/capture flow, and native album picker flow
+- Local model text generation with offline NPS survival evidence
+- Returning home while the model is still generating
+- `npm test -- --run`
+- `cd android && ./gradlew testReleaseUnitTest`
+- `npm run mobile:android:release:github`
+
 ## v0.2.3 - 2026-04-24
 
 Brand polish release focused on making Beacon feel consistent and release-grade from install to splash to GitHub.

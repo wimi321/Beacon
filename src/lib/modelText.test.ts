@@ -42,9 +42,9 @@ describe('processModelResponse', () => {
 });
 
 describe('formatModelTextForDisplay', () => {
-  it('preserves markdown syntax instead of rewriting it', () => {
+  it('removes lightweight emphasis markers without flattening structure', () => {
     expect(formatModelTextForDisplay('*Keep warm*\n\n1. Find shelter')).toBe(
-      '*Keep warm*\n\n1. Find shelter',
+      'Keep warm\n\n1. Find shelter',
     );
   });
 
@@ -54,7 +54,17 @@ describe('formatModelTextForDisplay', () => {
         '根据以下步骤进行自救：1. **评估状况：**停下，评估伤情。2. **选择位置：**优先背风位置。**核心原则：**先停、想、看、计划。',
       ),
     ).toBe(
-      '根据以下步骤进行自救：\n\n1. **评估状况：** 停下，评估伤情。\n2. **选择位置：** 优先背风位置。\n\n**核心原则：** 先停、想、看、计划。',
+      '根据以下步骤进行自救：\n\n1. 评估状况： 停下，评估伤情。\n2. 选择位置： 优先背风位置。\n\n核心原则： 先停、想、看、计划。',
+    );
+  });
+
+  it('keeps readable bullets while stripping orphan emphasis stars from model output', () => {
+    expect(
+      formatModelTextForDisplay(
+        '至少应携带以下装备： *导航工具、头灯或手电。\n* 保暖防雨层。\n- 急救包。 *足够饮水和高热量食物。',
+      ),
+    ).toBe(
+      '至少应携带以下装备： 导航工具、头灯或手电。\n• 保暖防雨层。\n• 急救包。 足够饮水和高热量食物。',
     );
   });
 });

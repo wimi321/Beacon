@@ -42,8 +42,18 @@ function softenInlineMarkdownStructure(value: string): string {
     .replace(/\n{3,}/g, '\n\n');
 }
 
+function removeDisplayOnlyMarkdownEmphasis(value: string): string {
+  return value
+    .replace(/(^|\n)[ \t]*[-*][ \t]+/g, '$1• ')
+    .replace(/\*\*([^*\n]+?)\*\*/g, '$1')
+    .replace(/\*([^*\n]+?)\*/g, '$1')
+    .replace(/\*\*/g, '')
+    .replace(/(^|[ \t（(])\*(?=\S)/gm, '$1')
+    .replace(/(\S)\*(?=$|[\s，,。.!?！？；;：:）)])/g, '$1');
+}
+
 export function formatModelTextForDisplay(value?: string | null): string {
-  return softenInlineMarkdownStructure(processModelResponse(value));
+  return removeDisplayOnlyMarkdownEmphasis(softenInlineMarkdownStructure(processModelResponse(value)));
 }
 
 export function splitModelResponseText(text: string): { summary: string; steps: string[] } {

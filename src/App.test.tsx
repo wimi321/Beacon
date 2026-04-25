@@ -664,19 +664,21 @@ describe('App', () => {
     });
   });
 
-  it('opens the native camera picker with camera and album choices when visual help is tapped', async () => {
+  it('opens a clear visual picker and calls native camera or album explicitly', async () => {
     renderApp('zh-CN');
 
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
 
+    expect(await screen.findByRole('button', { name: '拍摄' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '从相册导入' })).toBeInTheDocument();
+    expect(cameraPluginState.getPhotoMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '从相册导入' }));
+
     await waitFor(() => {
       expect(cameraPluginState.getPhotoMock).toHaveBeenCalledWith(expect.objectContaining({
-        source: 'prompt',
+        source: 'photos',
         resultType: 'base64',
-        promptLabelHeader: '视觉求助 / 拍摄创口',
-        promptLabelPhoto: '从相册导入',
-        promptLabelPicture: '拍摄',
-        promptLabelCancel: '取消',
       }));
     });
 

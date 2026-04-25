@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent, TouchEvent as ReactTouchEvent } from 're
 import {
   Camera as CameraIcon,
   Download,
+  ImagePlus,
   LoaderCircle,
   Settings,
   ShieldCheck,
@@ -454,6 +455,7 @@ export default function App() {
   const { hash, navigate } = useHashRouter();
   const [chatInput, setChatInput] = useState('');
   const [showModelManager, setShowModelManager] = useState(false);
+  const [showVisualPicker, setShowVisualPicker] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [sosActive, setSosActive] = useState(false);
   const [nodesCount, setNodesCount] = useState(0);
@@ -506,6 +508,7 @@ export default function App() {
     setMessages([]);
     setChatInput('');
     setShowModelManager(false);
+    setShowVisualPicker(false);
     setTriageSession(resetTriageSessionState());
     setIsStreaming(false);
     setSwipeBackOffset(0);
@@ -1270,14 +1273,20 @@ export default function App() {
     });
   }
 
-  async function handleVisualAnalysis(): Promise<void> {
+  function openVisualPicker(): void {
+    if (isStreaming) return;
+    setShowVisualPicker(true);
+  }
+
+  async function handleVisualAnalysis(source: CameraSource): Promise<void> {
     if (isStreaming) return;
 
     let inferenceRunId: number | null = null;
     try {
+      setShowVisualPicker(false);
       setStatusLine(t('camera.capture_aria'));
       const photo = await CapacitorCamera.getPhoto({
-        source: CameraSource.Prompt,
+        source,
         resultType: CameraResultType.Base64,
         quality: 72,
         width: 1536,
@@ -1285,10 +1294,6 @@ export default function App() {
         allowEditing: false,
         saveToGallery: false,
         correctOrientation: true,
-        promptLabelHeader: t('action.visual_help'),
-        promptLabelPhoto: t('action.import_photo'),
-        promptLabelPicture: t('camera.capture_aria'),
-        promptLabelCancel: t('camera.cancel'),
       });
       const imageBase64 = photo.base64String?.trim();
       if (!imageBase64) {
@@ -1502,6 +1507,11 @@ export default function App() {
         return;
       }
 
+      if (showVisualPicker) {
+        setShowVisualPicker(false);
+        return;
+      }
+
       if (hash === '#/chat' || hasConversationMessages) {
         handleClearChat();
         return;
@@ -1523,7 +1533,7 @@ export default function App() {
         void listenerHandle.remove();
       }
     };
-  }, [hash, hasConversationMessages, isStreaming, showModelManager]);
+  }, [hash, hasConversationMessages, isStreaming, showModelManager, showVisualPicker]);
 
   return (
     <div
@@ -1580,7 +1590,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <button className="viewfinder-btn" disabled={isStreaming} onClick={() => void handleVisualAnalysis()}>
+            <button className="viewfinder-btn" disabled={isStreaming} onClick={openVisualPicker}>
               <span className="viewfinder-icon-shell" aria-hidden="true">
                 <CameraIcon size={21} strokeWidth={2.25} />
               </span>
@@ -1675,6 +1685,38 @@ export default function App() {
           onClick={closeModelManager}
           aria-hidden="true"
         />
+      )}
+
+      {showVisualPicker && (
+        <div
+          className="visual-picker-backdrop"
+          onClick={() => setShowVisualPicker(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {showVisualPicker && (
+        <section className="visual-picker-panel" aria-label={t('action.visual_help')}>
+          <div className="visual-picker-header">
+            <div>
+              <h2>{t('action.visual_help')}</h2>
+              <p>{t('camera.prompt2')}</p>
+            </div>
+            <button type="button" onClick={() => setShowVisualPicker(false)}>
+              {t('camera.cancel')}
+            </button>
+          </div>
+          <div className="visual-picker-actions">
+            <button type="button" onClick={() => void handleVisualAnalysis(CameraSource.Camera)}>
+              <CameraIcon size={24} />
+              <span>{t('camera.capture_aria')}</span>
+            </button>
+            <button type="button" onClick={() => void handleVisualAnalysis(CameraSource.Photos)}>
+              <ImagePlus size={24} />
+              <span>{t('action.import_photo')}</span>
+            </button>
+          </div>
+        </section>
       )}
 
       {showModelManager && (
