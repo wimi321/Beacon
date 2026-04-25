@@ -48,7 +48,7 @@ class BeaconNativePlugin : Plugin() {
         val name: String,
         val fileName: String,
         val sizeLabel: String,
-        val downloadUrl: String,
+        val downloadUrls: List<String>,
         val sizeInBytes: Long,
         val defaultProfileName: String?,
         val recommendedFor: String?,
@@ -240,92 +240,116 @@ class BeaconNativePlugin : Plugin() {
                         )
                     }
                 }
-                var existingBytes = if (tempFile.exists()) tempFile.length() else 0L
-                Log.i(
-                    logTag,
-                    "Starting model download. modelId=${spec.id} target=${modelFile.absolutePath} resumeBytes=$existingBytes"
-                )
-                var connection = openDownloadConnection(spec.downloadUrl, existingBytes)
-                if (existingBytes > 0L && connection.responseCode != HttpURLConnection.HTTP_PARTIAL) {
-                    Log.w(
-                        logTag,
-                        "Server ignored resume request for modelId=${spec.id}; restarting download from byte 0."
-                    )
-                    connection.disconnect()
-                    tempFile.delete()
-                    existingBytes = 0L
-                    connection = openDownloadConnection(spec.downloadUrl, existingBytes)
-                }
-                val expectedBytes = resolveExpectedBytes(connection, existingBytes).coerceAtLeast(spec.sizeInBytes)
-                val isResumed = existingBytes > 0L && connection.responseCode == HttpURLConnection.HTTP_PARTIAL
+                var lastDownloadError: Exception? = null
+                for ((urlIndex, downloadUrl) in spec.downloadUrls.withIndex()) {
+                    try {
+                        var existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+                        Log.i(
+                            logTag,
+                            "Starting model download. modelId=${spec.id} mirror=${urlIndex + 1}/${spec.downloadUrls.size} target=${modelFile.absolutePath} resumeBytes=$existingBytes"
+                        )
+                        var connection = openDownloadConnection(downloadUrl, existingBytes)
+                        if (existingBytes > 0L && connection.responseCode != HttpURLConnection.HTTP_PARTIAL) {
+                            Log.w(
+                                logTag,
+                                "Server ignored resume request for modelId=${spec.id} mirror=${urlIndex + 1}; restarting download from byte 0."
+                            )
+                            connection.disconnect()
+                            tempFile.delete()
+                            existingBytes = 0L
+                            connection = openDownloadConnection(downloadUrl, existingBytes)
+                        }
+                        val expectedBytes = resolveExpectedBytes(connection, existingBytes).coerceAtLeast(spec.sizeInBytes)
+                        val isResumed = existingBytes > 0L && connection.responseCode == HttpURLConnection.HTTP_PARTIAL
 
-                if (isResumed) {
-                    notifyDownloadProgress(
-                        spec.id,
-                        estimator.sample(
-                            receivedBytes = existingBytes,
-                            totalBytes = expectedBytes,
-                            isResumed = true,
-                            status = BeaconDownloadStatus.PARTIALLY_DOWNLOADED,
-                        ),
-                    )
-                }
+                        if (isResumed) {
+                            notifyDownloadProgress(
+                                spec.id,
+                                estimator.sample(
+                                    receivedBytes = existingBytes,
+                                    totalBytes = expectedBytes,
+                                    isResumed = true,
+                                    status = BeaconDownloadStatus.PARTIALLY_DOWNLOADED,
+                                ),
+                            )
+                        }
 
-                connection.inputStream.use { input ->
-                    FileOutputStream(tempFile, isResumed).use { output ->
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var receivedBytes = existingBytes
-                        var lastNotifiedBytes = existingBytes
-                        var lastNotifiedAt = System.currentTimeMillis()
-                        while (true) {
-                            val read = input.read(buffer)
-                            if (read <= 0) {
-                                break
-                            }
-                            output.write(buffer, 0, read)
-                            receivedBytes += read.toLong()
-                            if (shouldNotifyProgress(receivedBytes, lastNotifiedBytes, lastNotifiedAt)) {
-                                notifyDownloadProgress(
-                                    spec.id,
-                                    estimator.sample(
-                                        receivedBytes = receivedBytes,
-                                        totalBytes = expectedBytes,
-                                        isResumed = isResumed,
-                                        status = BeaconDownloadStatus.IN_PROGRESS,
-                                    ),
-                                )
-                                lastNotifiedBytes = receivedBytes
-                                lastNotifiedAt = System.currentTimeMillis()
+                        connection.inputStream.use { input ->
+                            FileOutputStream(tempFile, isResumed).use { output ->
+                                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                                var receivedBytes = existingBytes
+                                var lastNotifiedBytes = existingBytes
+                                var lastNotifiedAt = System.currentTimeMillis()
+                                while (true) {
+                                    val read = input.read(buffer)
+                                    if (read <= 0) {
+                                        break
+                                    }
+                                    output.write(buffer, 0, read)
+                                    receivedBytes += read.toLong()
+                                    if (shouldNotifyProgress(receivedBytes, lastNotifiedBytes, lastNotifiedAt)) {
+                                        notifyDownloadProgress(
+                                            spec.id,
+                                            estimator.sample(
+                                                receivedBytes = receivedBytes,
+                                                totalBytes = expectedBytes,
+                                                isResumed = isResumed,
+                                                status = BeaconDownloadStatus.IN_PROGRESS,
+                                            ),
+                                        )
+                                        lastNotifiedBytes = receivedBytes
+                                        lastNotifiedAt = System.currentTimeMillis()
+                                    }
+                                }
                             }
                         }
+
+                        if (expectedBytes > 0L && tempFile.length() < expectedBytes) {
+                            throw IllegalStateException(
+                                "Downloaded model is incomplete for ${spec.id}: ${tempFile.length()} / $expectedBytes bytes."
+                            )
+                        }
+
+                        if (modelFile.exists()) {
+                            modelFile.delete()
+                        }
+                        if (!BeaconModelFiles.replaceFile(tempFile, modelFile)) {
+                            throw IllegalStateException("Failed to finalize downloaded model file for ${spec.id}.")
+                        }
+                        Log.i(
+                            logTag,
+                            "Model download finished. modelId=${spec.id} mirror=${urlIndex + 1}/${spec.downloadUrls.size} path=${modelFile.absolutePath} bytes=${modelFile.length()}"
+                        )
+                        notifyDownloadProgress(
+                            spec.id,
+                            estimator.sample(
+                                receivedBytes = modelFile.length(),
+                                totalBytes = modelFile.length(),
+                                isResumed = isResumed,
+                                status = BeaconDownloadStatus.SUCCEEDED,
+                                done = true,
+                            ),
+                        )
+                        call.resolve(JSObject().apply {
+                            put("modelId", spec.id)
+                            put("localPath", modelFile.absolutePath)
+                            put("downloaded", true)
+                        })
+                        return@execute
+                    } catch (downloadError: Exception) {
+                        lastDownloadError = downloadError
+                        Log.w(
+                            logTag,
+                            "Model download mirror failed. modelId=${spec.id} mirror=${urlIndex + 1}/${spec.downloadUrls.size}",
+                            downloadError,
+                        )
                     }
                 }
 
-                if (modelFile.exists()) {
-                    modelFile.delete()
-                }
-                if (!BeaconModelFiles.replaceFile(tempFile, modelFile)) {
-                    throw IllegalStateException("Failed to finalize downloaded model file for ${spec.id}.")
-                }
-                Log.i(
-                    logTag,
-                    "Model download finished. modelId=${spec.id} path=${modelFile.absolutePath} bytes=${modelFile.length()}"
+                throw IllegalStateException(
+                    "All model download mirrors failed for ${spec.id}: ${lastDownloadError?.message.orEmpty()}",
+                    lastDownloadError,
                 )
-                notifyDownloadProgress(
-                    spec.id,
-                    estimator.sample(
-                        receivedBytes = modelFile.length(),
-                        totalBytes = modelFile.length(),
-                        isResumed = isResumed,
-                        status = BeaconDownloadStatus.SUCCEEDED,
-                        done = true,
-                    ),
-                )
-                call.resolve(JSObject().apply {
-                    put("modelId", spec.id)
-                    put("localPath", modelFile.absolutePath)
-                    put("downloaded", true)
-                })
             } catch (error: Exception) {
                 Log.e(logTag, "Model download failed for modelId=${spec.id}", error)
                 val partialBytes = File(File(modelsDir(), spec.fileName).absolutePath + ".part")
@@ -1297,7 +1321,7 @@ class BeaconNativePlugin : Plugin() {
                     name = allowed.name,
                     fileName = allowed.fileName,
                     sizeLabel = allowed.sizeLabel,
-                    downloadUrl = allowed.downloadUrl,
+                    downloadUrls = allowed.downloadUrls,
                     sizeInBytes = allowed.sizeInBytes,
                     defaultProfileName = allowed.defaultProfileName,
                     recommendedFor = allowed.recommendedFor,
@@ -1319,7 +1343,7 @@ class BeaconNativePlugin : Plugin() {
                         name = allowed.name,
                         fileName = allowed.fileName,
                         sizeLabel = allowed.sizeLabel,
-                        downloadUrl = allowed.downloadUrl,
+                        downloadUrls = allowed.downloadUrls,
                         sizeInBytes = allowed.sizeInBytes,
                         defaultProfileName = allowed.defaultProfileName,
                         recommendedFor = allowed.recommendedFor,

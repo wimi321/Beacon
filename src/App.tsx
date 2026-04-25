@@ -348,7 +348,6 @@ function shouldKeepWaitingForBundledModel(models: ModelDescriptor[]): boolean {
 
 function needsBundledModelRecovery(models: ModelDescriptor[]): boolean {
   return models.length === 0
-    || !hasDownloadedModel(models)
     || models.every(isBundledModelPlaceholder);
 }
 

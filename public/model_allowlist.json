@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-04-12",
+  "updatedAt": "2026-04-25",
   "refreshIntervalHours": 12,
   "remoteUrl": "",
   "models": [
@@ -18,6 +18,10 @@
       "accelerators": [
         "gpu",
         "cpu"
+      ],
+      "downloadUrls": [
+        "https://hf-mirror.com/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+        "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
       ]
     },
     {
@@ -34,6 +38,10 @@
       "accelerators": [
         "gpu",
         "cpu"
+      ],
+      "downloadUrls": [
+        "https://hf-mirror.com/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+        "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
       ]
     }
   ]

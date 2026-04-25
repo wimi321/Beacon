@@ -13,13 +13,16 @@ internal data class BeaconAllowedModel(
     val name: String,
     val fileName: String,
     val sizeLabel: String,
-    val downloadUrl: String,
+    val downloadUrls: List<String>,
     val sizeInBytes: Long,
     val defaultProfileName: String?,
     val recommendedFor: String?,
     val supportsImageInput: Boolean,
     val accelerators: List<String>,
-)
+) {
+    val downloadUrl: String
+        get() = downloadUrls.first()
+}
 
 internal data class BeaconModelAllowlist(
     val schemaVersion: Int,
@@ -50,6 +53,7 @@ internal object BeaconModelAllowlistRepository {
         val fileName: String? = null,
         val sizeLabel: String? = null,
         val downloadUrl: String? = null,
+        val downloadUrls: List<String>? = null,
         val sizeInBytes: Long? = 0L,
         val defaultProfileName: String? = null,
         val recommendedFor: String? = null,
@@ -100,8 +104,14 @@ internal object BeaconModelAllowlistRepository {
             val name = item.name.orEmpty().trim()
             val fileName = item.fileName.orEmpty().trim()
             val sizeLabel = item.sizeLabel.orEmpty().trim()
-            val downloadUrl = item.downloadUrl.orEmpty().trim()
-            if (id.isEmpty() || tier.isEmpty() || name.isEmpty() || fileName.isEmpty() || downloadUrl.isEmpty()) {
+            val downloadUrls = buildList {
+                item.downloadUrls.orEmpty()
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .forEach(::add)
+                item.downloadUrl?.trim()?.takeIf { it.isNotEmpty() }?.let(::add)
+            }.distinct()
+            if (id.isEmpty() || tier.isEmpty() || name.isEmpty() || fileName.isEmpty() || downloadUrls.isEmpty()) {
                 continue
             }
 
@@ -111,7 +121,7 @@ internal object BeaconModelAllowlistRepository {
                 name = name,
                 fileName = fileName,
                 sizeLabel = sizeLabel.ifEmpty { name },
-                downloadUrl = downloadUrl,
+                downloadUrls = downloadUrls,
                 sizeInBytes = item.sizeInBytes ?: 0L,
                 defaultProfileName = item.defaultProfileName?.trim()?.ifEmpty { null },
                 recommendedFor = item.recommendedFor?.trim()?.ifEmpty { null },

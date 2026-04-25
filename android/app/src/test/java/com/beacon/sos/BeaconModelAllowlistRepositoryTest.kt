@@ -36,8 +36,42 @@ class BeaconModelAllowlistRepositoryTest {
         assertEquals(1, allowlist.models.size)
         assertEquals("https://example.com/model_allowlist.json", allowlist.remoteUrl)
         assertEquals("gemma-4-e2b", allowlist.models.first().id)
+        assertEquals(listOf("https://example.com/e2b.litertlm"), allowlist.models.first().downloadUrls)
+        assertEquals("https://example.com/e2b.litertlm", allowlist.models.first().downloadUrl)
         assertEquals(listOf("gpu", "cpu"), allowlist.models.first().accelerators)
         assertFalse(allowlist.models.first().supportsImageInput)
+    }
+
+    @Test
+    fun `parse prefers ordered mirror list while keeping legacy downloadUrl compatibility`() {
+        val allowlist = BeaconModelAllowlistRepository.parse(
+            """
+            {
+              "models": [
+                {
+                  "id": "gemma-4-e2b",
+                  "tier": "e2b",
+                  "name": "Gemma 4 E2B",
+                  "fileName": "gemma-4-E2B-it.litertlm",
+                  "downloadUrl": "https://example.com/official.litertlm",
+                  "downloadUrls": [
+                    "https://mirror.example.com/e2b.litertlm",
+                    "https://example.com/official.litertlm"
+                  ]
+                }
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(
+            listOf(
+                "https://mirror.example.com/e2b.litertlm",
+                "https://example.com/official.litertlm",
+            ),
+            allowlist.models.first().downloadUrls,
+        )
+        assertEquals("https://mirror.example.com/e2b.litertlm", allowlist.models.first().downloadUrl)
     }
 
     @Test
@@ -85,7 +119,7 @@ class BeaconModelAllowlistRepositoryTest {
                     name = "Gemma 4 E2B",
                     fileName = "gemma-4-E2B-it.litertlm",
                     sizeLabel = "2B",
-                    downloadUrl = "https://example.com/e2b",
+                    downloadUrls = listOf("https://example.com/e2b"),
                     sizeInBytes = 123,
                     defaultProfileName = null,
                     recommendedFor = null,

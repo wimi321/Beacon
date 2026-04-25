@@ -68,6 +68,10 @@ Choose your model:
 | **Gemma 4 E2B** | ~2.6 GB | Fast setup, recommended for most devices |
 | **Gemma 4 E4B** | ~3.7 GB | Higher accuracy, needs more RAM |
 
+Model downloads are resumable and use an ordered mirror list. Beacon tries the
+China-friendly `hf-mirror.com` link first, then falls back to the official
+Hugging Face URL if the first source is unavailable.
+
 ---
 
 ## What Makes Beacon Different
@@ -218,11 +222,14 @@ npm run mobile:ios
 ### Build Release APK
 
 ```bash
-# Full release (bundled model)
+# Standard release: APK only, users download Gemma in-app
 npm run mobile:android:release
 
-# Lightweight GitHub release (no bundled model, arm64 only)
+# GitHub APK release: APK only, arm64 only
 npm run mobile:android:release:github
+
+# Optional internal build: intentionally bundle Gemma E2B in the APK
+npm run mobile:android:release:bundled
 ```
 
 ### Other Commands
