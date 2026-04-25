@@ -682,7 +682,28 @@ describe('App', () => {
       }));
     });
 
+    const uploadedPreview = await screen.findByRole('img', { name: /视觉求助/i });
+    expect(uploadedPreview).toHaveAttribute('src', 'data:image/jpeg;base64,ZmFrZS1pbWFnZS1ieXRlcw==');
+    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 从相册导入/)).toBeInTheDocument();
     expect(screen.queryByText(/请将创口、不明植物或动物置于框内/)).not.toBeInTheDocument();
+  });
+
+  it('renders a captured camera photo inside the chat before visual analysis finishes', async () => {
+    renderApp('zh-CN');
+
+    fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
+    fireEvent.click(await screen.findByRole('button', { name: '拍摄' }));
+
+    await waitFor(() => {
+      expect(cameraPluginState.getPhotoMock).toHaveBeenCalledWith(expect.objectContaining({
+        source: 'camera',
+        resultType: 'base64',
+      }));
+    });
+
+    const capturedPreview = await screen.findByRole('img', { name: /视觉求助/i });
+    expect(capturedPreview).toHaveAttribute('src', 'data:image/jpeg;base64,ZmFrZS1pbWFnZS1ieXRlcw==');
+    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 拍摄/)).toBeInTheDocument();
   });
 
   it('ignores swipes that do not start from the leading edge', async () => {

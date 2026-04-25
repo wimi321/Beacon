@@ -79,8 +79,8 @@ android {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "0.2.11"
+        versionCode 15
+        versionName "0.2.12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         if (arm64OnlyBuild) {
             ndk {

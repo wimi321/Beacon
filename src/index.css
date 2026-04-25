@@ -630,6 +630,40 @@ button.status-badge {
   border-end-end-radius: 0.35rem;
 }
 
+.message.with-image {
+  width: min(18rem, 82vw);
+  padding: 0.42rem 0.42rem 0.72rem;
+}
+
+.message-image-frame {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(135deg, rgba(125, 215, 255, 0.16), rgba(255, 216, 77, 0.08)),
+    rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0.7rem 1.5rem rgba(0, 0, 0, 0.2);
+}
+
+.message-image {
+  display: block;
+  width: 100%;
+  max-height: min(18rem, 42vh);
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+
+.message.with-image .message-text {
+  margin-top: 0.58rem;
+  padding-inline: 0.36rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .message.system {
   align-self: stretch;
   max-width: 100%;

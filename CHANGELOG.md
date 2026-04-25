@@ -2,6 +2,26 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.12 - 2026-04-25
+
+Visual rescue polish release focused on making photo-based help feel trustworthy and chat-native.
+
+### Highlights
+
+- Shows captured camera photos directly inside the chat as a user message before local visual analysis starts
+- Shows imported album photos the same way, so users can confirm the exact image they submitted
+- Adds a rounded, constrained image preview style that fits mobile chat without pushing the whole UI around
+- Keeps the real native multimodal request path unchanged: the same image payload is still sent to local Gemma 4
+- Bumps Android to `versionCode 15` / `versionName 0.2.12`
+
+### Verification
+
+- Added regression coverage for camera photo preview in chat
+- Added regression coverage for album photo preview in chat
+- `npm test -- --run`
+- `npm run build`
+- `npm run mobile:android:release:github`
+
 ## v0.2.11 - 2026-04-25
 
 Download resilience release focused on making the in-app Gemma 4 model setup usable in mainland China without bundling multi-GB weights into the APK.

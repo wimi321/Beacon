@@ -159,6 +159,23 @@ function isCameraPermissionDenied(error: unknown): boolean {
     || message.includes('access');
 }
 
+function normalizePhotoMimeType(format: string | undefined): string {
+  const normalizedFormat = format?.trim().toLowerCase().replace(/^image\//, '') ?? '';
+  if (normalizedFormat === 'jpg') {
+    return 'image/jpeg';
+  }
+
+  if (['jpeg', 'png', 'webp', 'gif', 'heic', 'heif'].includes(normalizedFormat)) {
+    return `image/${normalizedFormat}`;
+  }
+
+  return 'image/jpeg';
+}
+
+function buildPhotoDataUrl(base64: string, format: string | undefined): string {
+  return `data:${normalizePhotoMimeType(format)};base64,${base64}`;
+}
+
 function formatDownloadEta(startTime: number | undefined, fraction: number): string {
   if (!startTime || fraction <= 0) return '';
   const elapsed = (Date.now() - startTime) / 1000;
@@ -1300,21 +1317,26 @@ export default function App() {
         throw new Error(t('status.infer_failed'));
       }
 
+      if (hash !== '#/chat') navigate('#/chat');
+      const imageMessage: BeaconMessage = {
+        id: createId('user'),
+        sender: 'user',
+        text: `${t('action.visual_help')} - ${
+          source === CameraSource.Photos ? t('action.import_photo') : t('camera.capture_aria')
+        }`,
+        image: {
+          src: buildPhotoDataUrl(imageBase64, photo.format),
+          alt: t('action.visual_help'),
+        },
+      };
+      setMessages((prev) => [...prev, imageMessage]);
+
       if (!(await ensureLocalModelReady())) {
         return;
       }
 
       inferenceRunId = beginInferenceRun();
       setIsStreaming(true);
-      if (hash !== '#/chat') navigate('#/chat');
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: createId('user'),
-          sender: 'user',
-          text: t('system.visual_request'),
-        },
-      ]);
 
       const request = attachTriageSession(
         {
@@ -1600,12 +1622,23 @@ export default function App() {
         ) : (
           <>
             {messages.map((message) => (
-              <article key={message.id} className={`message ${message.sender}`}>
+              <article key={message.id} className={`message ${message.sender} ${message.image ? 'with-image' : ''}`}>
                 {message.isAuthoritative && !message.isStreaming && (
                   <div className="authoritative-badge">
                     <ShieldCheck size={14} />
                     {t('badge.authoritative')}
                   </div>
+                )}
+                {message.image && (
+                  <figure className="message-image-frame">
+                    <img
+                      className="message-image"
+                      src={message.image.src}
+                      alt={message.image.alt}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </figure>
                 )}
                 {message.sender === 'ai' ? (
                   <MarkdownMessage text={message.text} />

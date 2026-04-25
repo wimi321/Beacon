@@ -188,6 +188,10 @@ export type BeaconMessage = {
   id: string;
   sender: Sender;
   text: string;
+  image?: {
+    src: string;
+    alt: string;
+  };
   isStreaming?: boolean;
   isAuthoritative?: boolean;
   guidanceMode?: GuidanceMode;
