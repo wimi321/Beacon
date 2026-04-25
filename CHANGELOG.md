@@ -2,6 +2,27 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.14 - 2026-04-25
+
+Portrait-only mobile shell release focused on panic-proof ergonomics.
+
+### Highlights
+
+- Locks the Android app to portrait orientation so gravity sensor changes no longer rotate the rescue UI into landscape
+- Restricts iPhone and iPad supported orientations to portrait only
+- Enables iPad full-screen mode so portrait-only orientation behaves consistently with native iOS rules
+- Bumps Android to `versionCode 17` / `versionName 0.2.14`
+
+### Verification
+
+- Validated Android manifest contains `android:screenOrientation="portrait"`
+- Validated iOS `Info.plist` only declares `UIInterfaceOrientationPortrait` for iPhone and iPad
+- Installed on Android real device and forced system rotation to landscape; Beacon remained portrait at `1080 x 2400`
+- `npm test -- --run`
+- `npm run build`
+- `npm run mobile:android:release:github`
+- `plutil -lint ios/App/App/Info.plist`
+
 ## v0.2.13 - 2026-04-25
 
 Model setup reliability release focused on interrupted large-weight downloads.
