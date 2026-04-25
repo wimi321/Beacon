@@ -2,6 +2,26 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.13 - 2026-04-25
+
+Model setup reliability release focused on interrupted large-weight downloads.
+
+### Highlights
+
+- Lets users resume a partially downloaded Gemma 4 model instead of leaving the model card locked at `下载中 0%`
+- Keeps actively downloading models protected from double taps while treating interrupted partial files as resumable
+- Preserves the lightweight APK path: model weights are still downloaded in-app with mirror fallback and resume support
+- Bumps Android to `versionCode 16` / `versionName 0.2.13`
+
+### Verification
+
+- Real-device Android E4B download smoke test confirmed visible progress, resume from a partial file, completion, and automatic model switch
+- Real-device interrupted-download state reproduced after force stop and fixed for resume
+- Real-device camera and album visual-help flows verified that submitted images appear in chat before local analysis
+- Added regression coverage for partially downloaded model resume
+- `npm test -- --run`
+- `npm run build`
+
 ## v0.2.12 - 2026-04-25
 
 Visual rescue polish release focused on making photo-based help feel trustworthy and chat-native.

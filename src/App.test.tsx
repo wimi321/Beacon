@@ -304,6 +304,74 @@ describe('App', () => {
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
 
+  it('lets users resume a partially downloaded model instead of locking the card as busy', async () => {
+    let resumedModelId: string | null = null;
+    const mockBridge = createMockBeaconBridge();
+    const models = [
+      {
+        id: 'gemma-4-e2b',
+        tier: 'e2b' as const,
+        name: 'Gemma 4 E2B',
+        localPath: 'models/gemma-4-E2B-it.litertlm',
+        sizeLabel: '2B / Survival Baseline',
+        isLoaded: true,
+        isDownloaded: true,
+        downloadStatus: 'succeeded' as const,
+        artifactFormat: 'litertlm' as const,
+        runtimeStack: 'litert-lm-c-api' as const,
+        preferredBackend: 'auto-real' as const,
+        capabilityClass: 'supported' as const,
+        supportedDeviceClass: 'iphone_primary' as const,
+      },
+      {
+        id: 'gemma-4-e4b',
+        tier: 'e4b' as const,
+        name: 'Gemma 4 E4B',
+        localPath: 'models/gemma-4-E4B-it.litertlm',
+        sizeLabel: '4B / High Precision',
+        isLoaded: false,
+        isDownloaded: false,
+        downloadStatus: 'partially_downloaded' as const,
+        artifactFormat: 'litertlm' as const,
+        runtimeStack: 'litert-lm-c-api' as const,
+        preferredBackend: 'auto-real' as const,
+        capabilityClass: 'supported' as const,
+        supportedDeviceClass: 'iphone_primary' as const,
+      },
+    ];
+    mockBridge.listModels = async () => models;
+    mockBridge.downloadModel = async function* (modelId: string) {
+      resumedModelId = modelId;
+      yield {
+        modelId,
+        receivedBytes: 256,
+        totalBytes: 1024,
+        fraction: 0.25,
+        isResumed: true,
+        status: 'in_progress' as const,
+      };
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    const resumeButton = await screen.findByRole('button', { name: /^下载并切换$/i });
+
+    expect(screen.queryByText(/下载中 0%/)).toBeNull();
+
+    fireEvent.click(resumeButton);
+
+    await waitFor(() => {
+      expect(resumedModelId).toBe('gemma-4-e4b');
+    });
+  });
+
   it('closes the model manager when swiping the sheet downward', async () => {
     const { container } = renderApp('zh-CN');
 

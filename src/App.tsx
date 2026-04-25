@@ -336,8 +336,7 @@ function formatResponseText(response: TriageResponse, streamedText?: string): st
 }
 
 function isPreparingModel(model: ModelDescriptor): boolean {
-  return !model.isDownloaded
-    && (model.downloadStatus === 'in_progress' || model.downloadStatus === 'partially_downloaded');
+  return !model.isDownloaded && model.downloadStatus === 'in_progress';
 }
 
 function choosePreferredReadyModel(models: ModelDescriptor[]): ModelDescriptor | null {
