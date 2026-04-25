@@ -22,12 +22,14 @@ import {
 import type {
   BatteryStatus,
   BeaconMessage,
+  ModelDownloadStatus,
   ModelDescriptor,
   PowerMode,
   TriageResponse,
 } from './lib/types';
 import { useI18n } from './i18n';
 import { NavBar } from './components/NavBar';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { MarkdownMessage } from './components/MarkdownMessage';
 import { useHashRouter } from './lib/useHashRouter';
 import type { BeaconBridge } from './lib/beaconBridge';
@@ -332,6 +334,22 @@ function hasDownloadedModel(models: ModelDescriptor[]): boolean {
 
 function hasLoadedModel(models: ModelDescriptor[]): boolean {
   return models.some((model) => model.isLoaded);
+}
+
+function patchModelDownloadState(
+  models: ModelDescriptor[],
+  modelId: string,
+  patch: { downloadStatus: ModelDownloadStatus; isDownloaded?: boolean },
+): ModelDescriptor[] {
+  return models.map((model) => (
+    model.id === modelId
+      ? {
+          ...model,
+          downloadStatus: patch.downloadStatus,
+          isDownloaded: patch.isDownloaded ?? model.isDownloaded,
+        }
+      : model
+  ));
 }
 
 function isBundledModelPlaceholder(model: ModelDescriptor): boolean {
@@ -1254,12 +1272,10 @@ export default function App() {
 
   async function handleVisualAnalysis(): Promise<void> {
     if (isStreaming) return;
-    if (!(await ensureLocalModelReady())) {
-      return;
-    }
 
     let inferenceRunId: number | null = null;
     try {
+      setStatusLine(t('camera.capture_aria'));
       const photo = await CapacitorCamera.getPhoto({
         source: CameraSource.Prompt,
         resultType: CameraResultType.Base64,
@@ -1279,8 +1295,13 @@ export default function App() {
         throw new Error(t('status.infer_failed'));
       }
 
+      if (!(await ensureLocalModelReady())) {
+        return;
+      }
+
       inferenceRunId = beginInferenceRun();
       setIsStreaming(true);
+      if (hash !== '#/chat') navigate('#/chat');
       setMessages((prev) => [
         ...prev,
         {
@@ -1314,6 +1335,7 @@ export default function App() {
       setStatusLine(response.isKnowledgeBacked ? t('status.visual_evidence') : t('status.model_responded'));
     } catch (error) {
       if (isCancelledCameraCapture(error)) {
+        setStatusLine(modelLoadFailure ?? t('status.offline_ready'));
         return;
       }
       if (isCameraPermissionDenied(error)) {
@@ -1372,8 +1394,22 @@ export default function App() {
       if (!targetModel?.isDownloaded) {
         setStatusLine(t('status.downloading', { modelId }));
         downloadStartTimeRef.current[modelId] = Date.now();
+        setDownloadProgress((prev) => ({ ...prev, [modelId]: prev[modelId] ?? 0 }));
+        const startedModels = patchModelDownloadState(modelsRef.current, modelId, {
+          downloadStatus: 'in_progress',
+          isDownloaded: false,
+        });
+        modelsRef.current = startedModels;
+        setModels(startedModels);
         for await (const chunk of bridge.downloadModel(modelId)) {
-          setDownloadProgress((prev) => ({ ...prev, [modelId]: chunk.fraction }));
+          const fraction = Math.max(0, Math.min(1, chunk.fraction));
+          setDownloadProgress((prev) => ({ ...prev, [modelId]: fraction }));
+          const nextModels = patchModelDownloadState(modelsRef.current, modelId, {
+            downloadStatus: chunk.status,
+            isDownloaded: chunk.status === 'succeeded' ? true : undefined,
+          });
+          modelsRef.current = nextModels;
+          setModels(nextModels);
         }
         setStatusLine(t('status.download_done', { modelId }));
       }
@@ -1387,6 +1423,11 @@ export default function App() {
     } catch (error) {
       const message = extractErrorMessage(error);
       const localizedFailure = localizeModelLoadFailure(message, locale);
+      setDownloadProgress((prev) => {
+        const next = { ...prev };
+        delete next[modelId];
+        return next;
+      });
       setModelLoadFailure(localizedFailure);
       setStatusLine(localizedFailure);
       setShowModelManager(true);
@@ -1648,7 +1689,10 @@ export default function App() {
             onTouchEnd={handleModelSheetTouchEnd}
             onTouchCancel={resetModelSheetGesture}
           >
-            <h2>{t('model.manage')}</h2>
+            <div className="model-panel-heading">
+              <h2>{t('model.manage')}</h2>
+              <LanguageSwitcher />
+            </div>
             <button
               type="button"
               onClick={handleModelManagerCloseClick}
@@ -1694,12 +1738,13 @@ export default function App() {
                     const progress = downloadProgress[model.id];
                     const isBusy = isPreparingModel(model) || (progress != null && progress < 1);
                     const actionLabel = model.isDownloaded ? t('model.switch_btn') : t('model.download_btn');
+                    const progressPercent = Math.round((progress ?? 0) * 100);
 
                     return (
                       <button
                         key={model.id}
                         type="button"
-                        className={`model-onboarding-action ${index === 0 ? 'primary' : 'secondary'}`}
+                        className={`model-onboarding-action ${index === 0 ? 'primary' : 'secondary'} ${isBusy ? 'downloading' : ''}`}
                         onClick={() => void handleDownloadModel(model.id)}
                         disabled={isBusy}
                         aria-busy={isBusy}
@@ -1707,17 +1752,23 @@ export default function App() {
                       >
                         <div className="model-onboarding-action-row">
                           <span className="model-onboarding-action-title">{model.name}</span>
-                          <Download size={15} />
+                          {isBusy ? <LoaderCircle size={15} className="spin" /> : <Download size={15} />}
                         </div>
                         <span className="model-onboarding-action-meta">
                           {formatModelSizeLabel(model, t)}
                         </span>
                         {isBusy && (
                           <span className="model-onboarding-action-progress">
-                            {t('model.downloading', {
-                              progress: ((progress ?? 0) * 100).toFixed(0),
-                            })}
-                            {formatDownloadEta(downloadStartTimeRef.current[model.id], progress ?? 0)}
+                            <span className="model-progress-track" aria-hidden="true">
+                              <span
+                                className="model-progress-fill"
+                                style={{ width: `${Math.max(4, progressPercent)}%` }}
+                              />
+                            </span>
+                            <span>
+                              {t('model.downloading', { progress: progressPercent.toFixed(0) })}
+                              {formatDownloadEta(downloadStartTimeRef.current[model.id], progress ?? 0)}
+                            </span>
                           </span>
                         )}
                       </button>
@@ -1751,22 +1802,39 @@ export default function App() {
                     </p>
                   </div>
                   <div className="model-actions">
-                    {downloadProgress[model.id] != null && downloadProgress[model.id] < 1 && (
-                      <div className="download-progress">
-                        {t('model.downloading', { progress: (downloadProgress[model.id] * 100).toFixed(0) })}
-                        {formatDownloadEta(downloadStartTimeRef.current[model.id], downloadProgress[model.id])}
-                      </div>
-                    )}
-                    {model.isLoaded ? (
-                      <span className="loaded-tag">{t('model.loaded_tag')}</span>
-                    ) : isPreparingModel(model) ? (
-                      <span className="loaded-tag">{t('model.preparing')}</span>
-                    ) : (
-                      <button onClick={() => void handleDownloadModel(model.id)}>
-                        <Download size={14} />
-                        {model.isDownloaded ? t('model.switch_btn') : t('model.download_btn')}
-                      </button>
-                    )}
+                    {(() => {
+                      const progress = downloadProgress[model.id];
+                      const isBusy = isPreparingModel(model) || (progress != null && progress < 1);
+                      const progressPercent = Math.round((progress ?? 0) * 100);
+
+                      if (model.isLoaded) {
+                        return <span className="loaded-tag">{t('model.loaded_tag')}</span>;
+                      }
+
+                      if (isBusy) {
+                        return (
+                          <div className="download-progress" role="status" aria-live="polite">
+                            <span className="model-progress-track" aria-hidden="true">
+                              <span
+                                className="model-progress-fill"
+                                style={{ width: `${Math.max(4, progressPercent)}%` }}
+                              />
+                            </span>
+                            <span>
+                              {t('model.downloading', { progress: progressPercent.toFixed(0) })}
+                              {formatDownloadEta(downloadStartTimeRef.current[model.id], progress ?? 0)}
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button onClick={() => void handleDownloadModel(model.id)}>
+                          <Download size={14} />
+                          {model.isDownloaded ? t('model.switch_btn') : t('model.download_btn')}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { I18nProvider } from '../i18n';
@@ -14,12 +14,12 @@ function renderLanguageSwitcher() {
 }
 
 describe('LanguageSwitcher', () => {
-  it('renders a select element with all supported languages', () => {
+  it('opens a custom language list with all supported languages', () => {
     renderLanguageSwitcher();
 
-    const select = screen.getByRole('combobox');
-    const options = select.querySelectorAll('option');
+    fireEvent.click(screen.getByRole('button', { name: 'Language selection' }));
 
+    const options = screen.getAllByRole('option');
     expect(options).toHaveLength(SUPPORTED_LANGUAGES.length);
   });
 
@@ -32,8 +32,10 @@ describe('LanguageSwitcher', () => {
   it('each option shows native language name', () => {
     renderLanguageSwitcher();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Language selection' }));
+
     for (const lang of SUPPORTED_LANGUAGES) {
-      expect(screen.getByText(lang.nativeName)).toBeInTheDocument();
+      expect(screen.getAllByText(lang.nativeName).length).toBeGreaterThan(0);
     }
   });
 });

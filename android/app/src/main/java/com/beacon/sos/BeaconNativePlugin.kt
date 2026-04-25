@@ -244,6 +244,19 @@ class BeaconNativePlugin : Plugin() {
                 for ((urlIndex, downloadUrl) in spec.downloadUrls.withIndex()) {
                     try {
                         var existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+                        notifyDownloadProgress(
+                            spec.id,
+                            estimator.sample(
+                                receivedBytes = existingBytes,
+                                totalBytes = spec.sizeInBytes.coerceAtLeast(existingBytes),
+                                isResumed = existingBytes > 0L,
+                                status = if (existingBytes > 0L) {
+                                    BeaconDownloadStatus.PARTIALLY_DOWNLOADED
+                                } else {
+                                    BeaconDownloadStatus.IN_PROGRESS
+                                },
+                            ),
+                        )
                         Log.i(
                             logTag,
                             "Starting model download. modelId=${spec.id} mirror=${urlIndex + 1}/${spec.downloadUrls.size} target=${modelFile.absolutePath} resumeBytes=$existingBytes"
