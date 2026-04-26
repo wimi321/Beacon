@@ -51,7 +51,9 @@ Primary story:
 ## Files In This Pack
 
 - [WRITEUP_DRAFT.md](./WRITEUP_DRAFT.md) - 1,500-word Kaggle writeup draft.
-- [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) - 3-minute video structure, shots, and voiceover.
+- [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) - concise 3-minute video structure, shots, and voiceover.
+- [VIDEO_PRODUCTION_PACK.md](./VIDEO_PRODUCTION_PACK.md) - full director-grade script, shot list, storyboards, and editing plan.
+- [VIDEO_SEEDANCE_PROMPTS.md](./VIDEO_SEEDANCE_PROMPTS.md) - copy/paste prompt library for Seedance-style image-to-video generation.
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - technical architecture and judge-verification points.
 - [VALIDATION.md](./VALIDATION.md) - real-device validation plan and release evidence.
 - [DATA_LICENSES.md](./DATA_LICENSES.md) - data source license audit and competition-safe data strategy.

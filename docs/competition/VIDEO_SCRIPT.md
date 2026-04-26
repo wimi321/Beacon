@@ -4,6 +4,12 @@ Target length: 2:45-2:55.
 
 Tone: human, urgent, concrete. The video should feel like a real product saving time in a bad situation, not a feature tour.
 
+For the full production package, storyboard frames, and Seedance-style image-to-video prompts, see:
+
+- [VIDEO_PRODUCTION_PACK.md](./VIDEO_PRODUCTION_PACK.md)
+- [VIDEO_SEEDANCE_PROMPTS.md](./VIDEO_SEEDANCE_PROMPTS.md)
+- [Storyboard contact sheet](../assets/competition-video/storyboards/contact-sheet.png)
+
 ## Storyboard
 
 | Time | Visual | Voiceover |
