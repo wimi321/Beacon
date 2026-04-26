@@ -8,16 +8,16 @@ Current development bundle:
 
 | Metric | Value |
 | --- | --- |
-| Source records | 6,302 |
-| Entries | 14,229 |
-| Generated at | 2026-04-13T12:35:17.402Z |
+| Source records | 6,332 |
+| Entries | 14,406 |
+| Generated at | 2026-04-26T02:55:11.901Z |
 
 Current conservative competition-safe preview:
 
 | Metric | Value |
 | --- | ---: |
-| Safe source records | 96 |
-| Safe entries | 1,300 |
+| Safe source records | 126 |
+| Safe entries | 1,477 |
 | Removed source records | 6,206 |
 | Removed entries | 12,929 |
 
@@ -29,12 +29,12 @@ Largest authorities in the current bundle:
 | --- | ---: | --- |
 | MSD Manual | 3,346 | High, requires permission or removal for competition build. |
 | Merck Manual Professional Edition | 2,831 | High, requires permission or removal for competition build. |
-| CDC | 64 | Generally suitable with attribution and no logos/third-party assets. |
+| CDC | 73 | Generally suitable with attribution and no logos/third-party assets. |
 | MedlinePlus | 15 | High for AI/RAG use; page terms include restrictive AI/indexing language. |
-| Ready.gov | 15 | Generally suitable with attribution and no logos/third-party assets. |
+| Ready.gov | 28 | Generally suitable with attribution and no logos/third-party assets. |
 | American Red Cross | 7 | Review required; use summaries/links unless permission is clear. |
-| National Park Service | 4 | Generally suitable with attribution and no logos/third-party assets. |
-| National Weather Service / NOAA | 4 | Generally suitable with attribution and no logos/third-party assets. |
+| National Weather Service / NOAA | 10 | Generally suitable with attribution and no logos/third-party assets. |
+| National Park Service | 6 | Generally suitable with attribution and no logos/third-party assets. |
 | NHS | 3 | Review required; Crown copyright and NHS API/content terms apply. |
 | WHO | 3 | Review required; WHO materials can have specific license restrictions. |
 
@@ -58,6 +58,12 @@ Prefer these for the Kaggle demo and public release notes:
 - US Army FM 21-76 / FM 3-05.70 survival manual where distribution status is confirmed.
 - NIH/NINDS/NIDDK public health pages where terms allow reuse.
 - Stop the Bleed materials only if the specific poster/content reuse rights are confirmed.
+
+Primary reuse references:
+
+- CDC use-of-agency-materials policy: https://www.cdc.gov/other/agencymaterials.html
+- NWS/NOAA disclaimer and public-domain data policy: https://www.weather.gov/disclaimer/
+- NPS disclaimer and ownership policy: https://www.nps.gov/aboutus/disclaimer.htm
 
 ## Sources That Need Action
 

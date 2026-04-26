@@ -494,5 +494,191 @@
     "url": "https://www.cdc.gov/radiation-emergencies/safety/index.html",
     "authority": "CDC",
     "title": "Preparing for a Radiation Emergency"
+  },
+  {
+    "id": "nps-hike-smart",
+    "url": "https://www.nps.gov/articles/hiking-safety.htm",
+    "authority": "National Park Service",
+    "title": "Hike Smart"
+  },
+  {
+    "id": "nps-campfires",
+    "url": "https://www.nps.gov/articles/campfires.htm",
+    "authority": "National Park Service",
+    "title": "Campfires"
+  },
+  {
+    "id": "ready-hurricanes",
+    "url": "https://www.ready.gov/hurricanes",
+    "authority": "Ready.gov",
+    "title": "Hurricanes"
+  },
+  {
+    "id": "ready-tornadoes",
+    "url": "https://www.ready.gov/tornadoes",
+    "authority": "Ready.gov",
+    "title": "Tornadoes"
+  },
+  {
+    "id": "ready-winter-weather",
+    "url": "https://www.ready.gov/winter-weather",
+    "authority": "Ready.gov",
+    "title": "Winter Weather"
+  },
+  {
+    "id": "ready-drought",
+    "url": "https://www.ready.gov/drought",
+    "authority": "Ready.gov",
+    "title": "Drought"
+  },
+  {
+    "id": "ready-landslides-debris-flow",
+    "url": "https://www.ready.gov/landslides-debris-flow",
+    "authority": "Ready.gov",
+    "title": "Landslides and Debris Flow"
+  },
+  {
+    "id": "ready-volcanoes",
+    "url": "https://www.ready.gov/volcanoes",
+    "authority": "Ready.gov",
+    "title": "Volcanoes"
+  },
+  {
+    "id": "ready-tsunamis",
+    "url": "https://www.ready.gov/tsunamis",
+    "authority": "Ready.gov",
+    "title": "Tsunamis"
+  },
+  {
+    "id": "ready-home-fires",
+    "url": "https://www.ready.gov/home-fires",
+    "authority": "Ready.gov",
+    "title": "Home Fires"
+  },
+  {
+    "id": "ready-avalanche",
+    "url": "https://www.ready.gov/avalanche",
+    "authority": "Ready.gov",
+    "title": "Avalanche"
+  },
+  {
+    "id": "ready-severe-weather",
+    "url": "https://www.ready.gov/severe-weather",
+    "authority": "Ready.gov",
+    "title": "Severe Weather"
+  },
+  {
+    "id": "ready-space-weather",
+    "url": "https://www.ready.gov/space-weather",
+    "authority": "Ready.gov",
+    "title": "Space Weather"
+  },
+  {
+    "id": "ready-household-chemical-emergencies",
+    "url": "https://www.ready.gov/household-chemical-emergencies",
+    "authority": "Ready.gov",
+    "title": "Household Chemical Emergencies"
+  },
+  {
+    "id": "ready-alerts",
+    "url": "https://www.ready.gov/alerts",
+    "authority": "Ready.gov",
+    "title": "Emergency Alerts"
+  },
+  {
+    "id": "cdc-water-emergency-safe-water",
+    "url": "https://www.cdc.gov/water-emergency/about/index.html",
+    "authority": "CDC",
+    "title": "How to Make Water Safe in an Emergency"
+  },
+  {
+    "id": "cdc-food-safe-after-emergency",
+    "url": "https://www.cdc.gov/food-safety/foods/keep-food-safe-after-emergency.html",
+    "authority": "CDC",
+    "title": "Keep Food Safe After an Emergency"
+  },
+  {
+    "id": "cdc-natural-disasters-response",
+    "url": "https://www.cdc.gov/natural-disasters/response/index.html",
+    "authority": "CDC",
+    "title": "What to Do to Prevent Getting Hurt or Sick After a Disaster"
+  },
+  {
+    "id": "cdc-natural-disasters-cleanup-safety",
+    "url": "https://www.cdc.gov/natural-disasters/safety/index.html",
+    "authority": "CDC",
+    "title": "Guidelines for Cleaning Safely After a Disaster"
+  },
+  {
+    "id": "cdc-natural-disasters-chemicals",
+    "url": "https://www.cdc.gov/natural-disasters/safety/guidelines-for-protecting-yourself-from-chemicals-after-a-disaster.html",
+    "authority": "CDC",
+    "title": "Protecting Yourself From Chemicals After a Disaster"
+  },
+  {
+    "id": "cdc-natural-disasters-power-outage",
+    "url": "https://www.cdc.gov/natural-disasters/response/what-to-do-protect-yourself-during-a-power-outage.html",
+    "authority": "CDC",
+    "title": "What to Do During a Power Outage"
+  },
+  {
+    "id": "cdc-disaster-respiratory-cleanup",
+    "url": "https://www.cdc.gov/natural-disasters/safety/what-you-can-do-to-protect-your-respiratory-health-during-disaster-cleanup.html",
+    "authority": "CDC",
+    "title": "Protect Respiratory Health During Disaster Cleanup"
+  },
+  {
+    "id": "cdc-mold-cleanup-after-disasters",
+    "url": "https://www.cdc.gov/mold-health/communication-resources/guide-to-mold-cleanup.html",
+    "authority": "CDC",
+    "title": "Homeowners and Renters Guide to Mold Cleanup After Disasters"
+  },
+  {
+    "id": "cdc-infant-feeding-emergencies",
+    "url": "https://www.cdc.gov/infant-feeding-emergencies-toolkit/php/special-considerations.html",
+    "authority": "CDC",
+    "title": "Special Considerations for Infant and Child Feeding in Emergencies"
+  },
+  {
+    "id": "cdc-children-school-preparedness",
+    "url": "https://www.cdc.gov/children-and-school-preparedness/before-during-after/index.html",
+    "authority": "CDC",
+    "title": "Children and School Preparedness Before, During, and After Emergencies"
+  },
+  {
+    "id": "nws-tornado-safety",
+    "url": "https://www.weather.gov/safety/tornado-hazards",
+    "authority": "National Weather Service / NOAA",
+    "title": "Tornado Safety"
+  },
+  {
+    "id": "nws-winter-safety",
+    "url": "https://www.weather.gov/safety/winter",
+    "authority": "National Weather Service / NOAA",
+    "title": "Winter Weather Safety"
+  },
+  {
+    "id": "nws-hurricane-safety",
+    "url": "https://www.weather.gov/safety/hurricane",
+    "authority": "National Weather Service / NOAA",
+    "title": "Hurricane Safety"
+  },
+  {
+    "id": "nws-rip-current-safety",
+    "url": "https://www.weather.gov/safety/ripcurrent",
+    "authority": "National Weather Service / NOAA",
+    "title": "Rip Current Safety"
+  },
+  {
+    "id": "nws-wildfire-safety",
+    "url": "https://www.weather.gov/safety/wildfire",
+    "authority": "National Weather Service / NOAA",
+    "title": "Wildfire Safety"
+  },
+  {
+    "id": "nws-tsunami-safety",
+    "url": "https://www.weather.gov/safety/tsunami",
+    "authority": "National Weather Service / NOAA",
+    "title": "Tsunami Safety"
   }
 ]

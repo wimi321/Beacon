@@ -10,7 +10,7 @@
 
 <p align="center">
   Beacon turns any Android phone into an offline emergency tool.<br>
-  Real AI inference. 14,229 expert knowledge entries. Zero cloud dependency.<br>
+  Real AI inference. 14,406 expert knowledge entries. Zero cloud dependency.<br>
   Built for earthquakes, wildfires, wilderness, and every moment when the network is gone.
 </p>
 
@@ -80,7 +80,7 @@ official Hugging Face URL if an earlier source is unavailable.
 
 📡 **Works When Networks Don't** — Designed for earthquakes, hurricanes, wildfires, and conflict zones. Beacon works in airplane mode, in basements, and off the grid.
 
-📚 **14,229 Expert Knowledge Entries** — Bundled offline from the US Army Survival Manual, WHO, CDC, Red Cross, NPS, Ready.gov, and more. Retrieved locally before every AI response.
+📚 **14,406 Expert Knowledge Entries** — Bundled offline from the US Army Survival Manual, WHO, CDC, Red Cross, NPS, Ready.gov, and more. Retrieved locally before every AI response.
 
 📸 **Visual Emergency Analysis** — Point your camera at an injury, a plant, or a hazard. The on-device model analyzes what it sees and provides guidance.
 
@@ -161,7 +161,7 @@ npm run competition:audit
 ## Knowledge Base
 
 > [!NOTE]
-> Beacon's knowledge base contains **6,302 source records** and **14,229 entries** compiled from authoritative emergency sources. All data is bundled in the app — no download or internet needed after install.
+> Beacon's knowledge base contains **6,332 source records** and **14,406 entries** compiled from authoritative emergency sources. All data is bundled in the app — no download or internet needed after install.
 
 Sources include:
 

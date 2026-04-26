@@ -31446,11 +31446,6 @@ export const OFFLINE_KNOWLEDGE_SOURCES = [
     "title": "About RSV | RSV | CDC"
   },
   {
-    "id": "cdc-az-lyme-about-about-southern-tick-associated-rash-illness-html",
-    "authority": "CDC",
-    "title": "Page Not Found | CDC"
-  },
-  {
     "id": "cdc-az-staph-food-poisoning-about-index-html",
     "authority": "CDC",
     "title": "About Staph Food Poisoning | Staph Food Poisoning | CDC"
@@ -31509,11 +31504,166 @@ export const OFFLINE_KNOWLEDGE_SOURCES = [
     "id": "cdc-az-welders-anthrax-about-index-html",
     "authority": "CDC",
     "title": "About Welder's Anthrax | Welder's Anthrax | CDC"
+  },
+  {
+    "id": "nps-hike-smart",
+    "authority": "National Park Service",
+    "title": "Hike Smart (U.S. National Park Service)"
+  },
+  {
+    "id": "nps-campfires",
+    "authority": "National Park Service",
+    "title": "Campfires (U.S. National Park Service)"
+  },
+  {
+    "id": "ready-hurricanes",
+    "authority": "Ready.gov",
+    "title": "Hurricanes | Ready.gov"
+  },
+  {
+    "id": "ready-tornadoes",
+    "authority": "Ready.gov",
+    "title": "Tornadoes | Ready.gov"
+  },
+  {
+    "id": "ready-winter-weather",
+    "authority": "Ready.gov",
+    "title": "Winter Weather | Ready.gov"
+  },
+  {
+    "id": "ready-drought",
+    "authority": "Ready.gov",
+    "title": "Drought | Ready.gov"
+  },
+  {
+    "id": "ready-landslides-debris-flow",
+    "authority": "Ready.gov",
+    "title": "Landslides &amp; Debris Flow | Ready.gov"
+  },
+  {
+    "id": "ready-volcanoes",
+    "authority": "Ready.gov",
+    "title": "Volcanoes | Ready.gov"
+  },
+  {
+    "id": "ready-tsunamis",
+    "authority": "Ready.gov",
+    "title": "Tsunamis | Ready.gov"
+  },
+  {
+    "id": "ready-home-fires",
+    "authority": "Ready.gov",
+    "title": "Home Fires | Ready.gov"
+  },
+  {
+    "id": "ready-avalanche",
+    "authority": "Ready.gov",
+    "title": "Avalanche | Ready.gov"
+  },
+  {
+    "id": "ready-severe-weather",
+    "authority": "Ready.gov",
+    "title": "Severe Weather | Ready.gov"
+  },
+  {
+    "id": "ready-space-weather",
+    "authority": "Ready.gov",
+    "title": "Space Weather | Ready.gov"
+  },
+  {
+    "id": "ready-household-chemical-emergencies",
+    "authority": "Ready.gov",
+    "title": "Household Chemical Emergencies | Ready.gov"
+  },
+  {
+    "id": "ready-alerts",
+    "authority": "Ready.gov",
+    "title": "Emergency Alerts | Ready.gov"
+  },
+  {
+    "id": "cdc-water-emergency-safe-water",
+    "authority": "CDC",
+    "title": "How to Make Water Safe in an Emergency | Water, Sanitation, and Hygiene (WASH)-related Emergencies and Outbreaks | CDC"
+  },
+  {
+    "id": "cdc-food-safe-after-emergency",
+    "authority": "CDC",
+    "title": "Keep Food Safe After a Disaster or Emergency | Food Safety | CDC"
+  },
+  {
+    "id": "cdc-natural-disasters-response",
+    "authority": "CDC",
+    "title": "What to Do to Prevent Getting Hurt or Sick After a Disaster | Natural Disasters | CDC"
+  },
+  {
+    "id": "cdc-natural-disasters-cleanup-safety",
+    "authority": "CDC",
+    "title": "Guidelines for Cleaning Safely After a Disaster | Natural Disasters | CDC"
+  },
+  {
+    "id": "cdc-natural-disasters-chemicals",
+    "authority": "CDC",
+    "title": "Guidelines for Protecting Yourself From Chemicals After a Disaster | Natural Disasters | CDC"
+  },
+  {
+    "id": "cdc-natural-disasters-power-outage",
+    "authority": "CDC",
+    "title": "What to Do to Protect Yourself During a Power Outage | Natural Disasters | CDC"
+  },
+  {
+    "id": "cdc-disaster-respiratory-cleanup",
+    "authority": "CDC",
+    "title": "What You Can Do to Protect Your Respiratory Health During Disaster Cleanup | Natural Disasters | CDC"
+  },
+  {
+    "id": "cdc-mold-cleanup-after-disasters",
+    "authority": "CDC",
+    "title": "Homeowners and Renters Guide to Mold Cleanup After Disasters | Mold | CDC"
+  },
+  {
+    "id": "cdc-infant-feeding-emergencies",
+    "authority": "CDC",
+    "title": "Special Considerations for Emergencies | Infant and Child Feeding in Emergencies | CDC"
+  },
+  {
+    "id": "cdc-children-school-preparedness",
+    "authority": "CDC",
+    "title": "Before, During, and After an Emergency | Children &amp; School Preparedness | CDC"
+  },
+  {
+    "id": "nws-tornado-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "Tornado Hazards"
+  },
+  {
+    "id": "nws-winter-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "Winter"
+  },
+  {
+    "id": "nws-hurricane-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "Hurricane Safety Tips and Resources"
+  },
+  {
+    "id": "nws-rip-current-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "How to Avoid Getting Caught in a Rip Current"
+  },
+  {
+    "id": "nws-wildfire-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "Wildfire Weather Safety"
+  },
+  {
+    "id": "nws-tsunami-safety",
+    "authority": "National Weather Service / NOAA",
+    "title": "Tsunami Safety"
   }
 ] as const;
 
 export const OFFLINE_KNOWLEDGE_STATS = {
   "version": 2,
-  "sourceCount": 6302,
-  "entryCount": 14229
+  "sourceCount": 6332,
+  "entryCount": 14406
 } as const;

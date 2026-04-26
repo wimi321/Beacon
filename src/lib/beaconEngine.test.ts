@@ -146,6 +146,54 @@ describe('beaconEngine', () => {
     expect(response.evidence.authoritative.some((item) => item.source.includes('Ready.gov'))).toBe(true);
   });
 
+  it('routes unsafe water questions to newly added CDC safe-water guidance', () => {
+    const response = inferTriageResponse({
+      userText: '野外和灾后都没有干净水，溪水能不能直接喝，怎么净水',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'session-engine-safe-water',
+    });
+
+    expect(response.isKnowledgeBacked).toBe(true);
+    expect(
+      response.evidence.authoritative.some((item) =>
+        /CDC|Water|净水|drinking water|safe water/i.test(`${item.source} ${item.title}`),
+      ),
+    ).toBe(true);
+  });
+
+  it('routes tornado questions to the added NWS or Ready.gov severe-weather guidance', () => {
+    const response = inferTriageResponse({
+      userText: '龙卷风警报响了，我在家里应该躲在哪里',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'session-engine-tornado',
+    });
+
+    expect(response.isKnowledgeBacked).toBe(true);
+    expect(
+      response.evidence.authoritative.some((item) =>
+        /National Weather Service|Ready\.gov|Tornado/i.test(`${item.source} ${item.title}`),
+      ),
+    ).toBe(true);
+  });
+
+  it('routes chemical spill questions to household chemical or hazmat civil-defense guidance', () => {
+    const response = inferTriageResponse({
+      userText: '家里化学品泄漏，有刺鼻气味，我应该开窗还是撤离',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'session-engine-chemical-spill',
+    });
+
+    expect(response.isKnowledgeBacked).toBe(true);
+    expect(
+      response.evidence.authoritative.some((item) =>
+        /Ready\.gov|CDC|chemical|hazmat/i.test(`${item.source} ${item.title}`),
+      ),
+    ).toBe(true);
+  });
+
   it('still returns AI guidance when evidence stays weak', () => {
     const response = inferTriageResponse({
       userText: 'qzmtvx blorf narpel zeek',

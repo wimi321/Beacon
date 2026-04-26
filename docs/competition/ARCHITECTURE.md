@@ -11,7 +11,7 @@ Beacon is designed as an Android-first, offline-first mobile app. The critical a
 | Android native | Kotlin | Model download/load, LiteRT-LM inference, streaming, diagnostics, image intake. |
 | Model runtime | Google AI Edge LiteRT-LM | On-device Gemma 4 E2B/E4B execution. |
 | Retrieval | Local JS/TS knowledge engine | Finds emergency/survival context before inference. |
-| Data | Bundled JSON knowledge base | 6,302 source records and 14,229 entries in the current development bundle. |
+| Data | Bundled JSON knowledge base | 6,332 source records and 14,406 entries in the current development bundle. |
 
 Android dependency proof:
 

@@ -64,7 +64,7 @@ Primary story:
 | Android installable APK | Ready for validation | Publish the latest arm64 release APK as demo file. |
 | Gemma 4 on-device path | Implemented | Android depends on `com.google.ai.edge.litertlm:litertlm-android`. Include runtime diagnostics in final video/writeup. |
 | Model download | Implemented | E2B/E4B download in-app with ordered mirrors. |
-| Offline knowledge | Implemented | 6,302 source records and 14,229 entries in the current bundle. |
+| Offline knowledge | Implemented | 6,332 source records and 14,406 entries in the current bundle. |
 | Multilingual UI | Implemented | 20 UI languages, with README demos in 10 locales. |
 | Visual help | Implemented | Camera/photo intake exists; final submission needs a clean recorded proof. |
 | Data licensing | Needs cleanup before final submission | Some medical sources require review or removal from the competition build. See [DATA_LICENSES.md](./DATA_LICENSES.md). |

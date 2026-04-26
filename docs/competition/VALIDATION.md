@@ -10,7 +10,7 @@ This file defines the evidence Beacon should produce before the Kaggle submissio
 | Android versionCode | `17` |
 | Default public APK mode | User downloads Gemma 4 in-app |
 | Main demo platform | Android arm64 |
-| Knowledge records | 6,302 sources / 14,229 entries |
+| Knowledge records | 6,332 sources / 14,406 entries |
 
 ## Automated Checks
 
