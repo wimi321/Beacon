@@ -7,7 +7,7 @@
 
 ## 发布签收快照
 
-- 当前发布候选：`v0.2.14`
+- 当前发布候选：`v0.2.15`
 - 当前产品策略：公开 APK 默认不内置 Gemma 权重，用户在 App 内下载 Gemma 4 E2B/E4B。
 - 已产出安装包：
   - Android APK：[app-release.apk](/Users/haoc/Developer/Beacon/android/app/build/outputs/apk/release/app-release.apk)

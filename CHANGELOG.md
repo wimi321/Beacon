@@ -2,6 +2,28 @@
 
 All notable changes to Beacon will be documented in this file.
 
+
+## v0.2.15 - 2026-04-26
+
+Competition-safe emergency knowledge expansion release.
+
+### Highlights
+
+- Adds 31 additional government/public emergency sources from Ready.gov, CDC, NWS/NOAA, and NPS
+- Expands offline coverage for tornadoes, hurricanes, winter weather, tsunamis, wildfires, household chemical incidents, safe water, food safety, power outages, disaster cleanup, mold cleanup, and hiking/campfire safety
+- Updates the bundled offline knowledge base to `6,332` source records and `14,406` entries
+- Expands the conservative competition-safe preview to `126` sources and `1,477` entries
+- Adds retrieval regression tests for safe water, tornado, and chemical spill prompts
+- Bumps Android to `versionCode 18` / `versionName 0.2.15`
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run competition:audit`
+- `npm run competition:knowledge:safe`
+- `npm run mobile:android:release:github`
+
 ## v0.2.14 - 2026-04-25
 
 Portrait-only mobile shell release focused on panic-proof ergonomics.
