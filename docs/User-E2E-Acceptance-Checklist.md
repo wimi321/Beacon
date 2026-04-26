@@ -7,7 +7,8 @@
 
 ## 发布签收快照
 
-- 当前发布候选：`v0.1.1`
+- 当前发布候选：`v0.2.14`
+- 当前产品策略：公开 APK 默认不内置 Gemma 权重，用户在 App 内下载 Gemma 4 E2B/E4B。
 - 已产出安装包：
   - Android APK：[app-release.apk](/Users/haoc/Developer/Beacon/android/app/build/outputs/apk/release/app-release.apk)
   - Android AAB：[app-release.aab](/Users/haoc/Developer/Beacon/android/app/build/outputs/bundle/release/app-release.aab)
@@ -17,17 +18,18 @@
   - Android 真机完整触控路径
   - iPhone 真机安装、权限、相机、返回手势、连续问答
 - 关联文档：
-  - 当前版本说明：[`docs/releases/v0.1.1.md`](./releases/v0.1.1.md)
+  - 比赛参赛包：[`docs/competition/README.md`](./competition/README.md)
   - 版本记录：[`CHANGELOG.md`](../CHANGELOG.md)
 
 ## 本轮已自动验证
 
-以下项目已在 2026-04-18 这一轮收尾中完成自动化或安装级验证：
+以下项目需要在每个发布候选上重新跑一次，结果以最新 CI 和真机证据为准：
 
-- 前端单测：`67 passed`
+- 前端单测：`npm test`
 - Web 构建：`npm run build`
 - 移动端同步：`npm run mobile:build`
-- Dart 分析与测试：`dart analyze`、`dart test`
+- 参赛审计：`npm run competition:audit`
+- 可选 Dart 分析与测试：`dart analyze`、`dart test`
 - Android：`testDebugUnitTest`、`testReleaseUnitTest`、`lintDebug`、`assembleDebug`、`assembleRelease`、`bundleRelease`
 - iOS：Debug Simulator build、Release device build
 - iOS 模拟器安装与冷启动首页烟测：

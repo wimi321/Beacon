@@ -139,6 +139,21 @@ Beacon 的策略不是“知识库没命中就装死”，而是：
 - 命不中时，仍然进行真实本地模型推理
 - 不允许前端假 AI 模板兜底
 
+参赛或公开评审版本需要单独做第三方全文来源许可审计，必要时切换到 competition-safe 知识库来源配置。详见 [`docs/competition/DATA_LICENSES.md`](./docs/competition/DATA_LICENSES.md)。
+
+## Gemma 4 Good Hackathon 参赛包
+
+Beacon 已开始按 [The Gemma 4 Good Hackathon](https://www.kaggle.com/competitions/gemma-4-good-hackathon) 的标准整理公开参赛材料，重点方向是 **Global Resilience**、**Safety & Trust**、**Digital Equity** 和 **LiteRT** 技术赛道。
+
+参赛材料入口：[`docs/competition`](./docs/competition/README.md)
+
+本地审计命令：
+
+```bash
+npm run competition:audit
+npm run competition:knowledge:safe
+```
+
 ## 仓库发布说明
 
 为了让公开仓库可以正常推送到 GitHub：

@@ -17,6 +17,8 @@
     "readme:demo:pt": "python3 scripts/build_readme_demo.py --locale pt --input docs/assets/beacon-home-android-pt.png --frames-dir docs/assets/.readme-demo-frames-pt --mp4 docs/assets/beacon-demo-hero-pt.mp4 --gif docs/assets/beacon-demo-hero-pt.gif --poster docs/assets/beacon-demo-hero-pt-poster.png",
     "readme:demo:ar": "python3 scripts/build_readme_demo.py --locale ar --input docs/assets/beacon-home-android-ar.png --frames-dir docs/assets/.readme-demo-frames-ar --mp4 docs/assets/beacon-demo-hero-ar.mp4 --gif docs/assets/beacon-demo-hero-ar.gif --poster docs/assets/beacon-demo-hero-ar-poster.png",
     "readme:demo:all-locales": "npm run readme:demo && npm run readme:demo:zh && npm run readme:demo:zh-tw && npm run readme:demo:ja && npm run readme:demo:ko && npm run readme:demo:es && npm run readme:demo:fr && npm run readme:demo:de && npm run readme:demo:pt && npm run readme:demo:ar",
+    "competition:audit": "node scripts/audit_competition_readiness.mjs",
+    "competition:knowledge:safe": "node scripts/build_competition_safe_knowledge.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",

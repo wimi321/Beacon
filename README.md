@@ -137,6 +137,27 @@ flowchart TD
 
 ---
 
+## Gemma 4 Good Hackathon
+
+Beacon is being prepared as a public-good submission for [The Gemma 4 Good Hackathon](https://www.kaggle.com/competitions/gemma-4-good-hackathon), with the strongest fit in **Global Resilience**, **Safety & Trust**, **Digital Equity**, and the **LiteRT** technology track.
+
+The judge-verifiable submission pack lives in [`docs/competition`](./docs/competition/README.md):
+
+- competition strategy and track fit
+- Kaggle writeup draft
+- 3-minute video script
+- architecture proof
+- real-device validation plan
+- data license review
+
+Run the local readiness audit:
+
+```bash
+npm run competition:audit
+```
+
+---
+
 ## Knowledge Base
 
 > [!NOTE]
@@ -153,6 +174,8 @@ Sources include:
 - **NHS / MedlinePlus / Merck Manual** — Medical references
 
 The knowledge base provides retrieval grounding. When retrieval misses a scenario, Beacon still performs real local model inference — it never falls back to template output.
+
+For public competition submissions, third-party full-text sources require a separate license review or a competition-safe source profile. See [`docs/competition/DATA_LICENSES.md`](./docs/competition/DATA_LICENSES.md).
 
 ---
 
@@ -246,7 +269,7 @@ npm run readme:demo         # Regenerate README demo assets
 ## Testing
 
 ```bash
-# Frontend (83 tests)
+# Frontend tests
 npm test
 
 # Android native
