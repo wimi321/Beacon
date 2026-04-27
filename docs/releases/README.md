@@ -4,13 +4,15 @@ This directory tracks release notes, shipping summaries, and sign-off references
 
 ## Latest release candidate
 
-- Current release candidate: [`v0.2.15`](./v0.2.15.md)
-- Multilingual release notes: [`v0.2.15.multilingual.md`](./v0.2.15.multilingual.md)
+- Current release candidate: [`v0.2.16`](./v0.2.16.md)
+- Multilingual release notes: [`v0.2.16.multilingual.md`](./v0.2.16.multilingual.md)
 - User acceptance checklist: [`../User-E2E-Acceptance-Checklist.md`](../User-E2E-Acceptance-Checklist.md)
 - Changelog: [`../../CHANGELOG.md`](../../CHANGELOG.md)
 
 ## Release history
 
+- [`v0.2.16`](./v0.2.16.md) / [`multilingual`](./v0.2.16.multilingual.md)  
+  Real-device visual rescue streaming and tap-only SOS semantics.
 - [`v0.2.15`](./v0.2.15.md) / [`multilingual`](./v0.2.15.multilingual.md)  
   Competition-safe emergency knowledge expansion packaged into the Android APK release path.
 - [`v0.1.1`](./v0.1.1.md)  

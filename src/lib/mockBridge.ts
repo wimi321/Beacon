@@ -47,10 +47,23 @@ class MockBeaconBridge implements BeaconBridge {
     return inferTriageResponse(request);
   }
 
+  private buildVisualAssistRequest(request: TriageRequest): TriageRequest {
+    return {
+      ...request,
+      userText:
+        request.userText.trim() ||
+        (request.imageBase64
+          ? 'What dangers do you see and what should I do next?'
+          : 'What visible details should I check and what should I do next?'),
+      categoryHint: request.categoryHint ?? translateMessage(this.lastLocale, 'action.visual_help'),
+    };
+  }
+
   async *triageStream(request: TriageRequest): AsyncIterable<StreamChunk> {
     this.lastLocale = normalizeLocale(request.locale);
+    const streamRequest = request.imageBase64 ? this.buildVisualAssistRequest(request) : request;
     await warmKnowledgeEngine();
-    const response = inferTriageResponse(request);
+    const response = inferTriageResponse(streamRequest);
     const tokens = splitStreamingTokens(response);
 
     for (const token of tokens) {
@@ -66,13 +79,7 @@ class MockBeaconBridge implements BeaconBridge {
   async analyzeVisual(request: TriageRequest): Promise<TriageResponse> {
     this.lastLocale = normalizeLocale(request.locale);
     await warmKnowledgeEngine();
-    return inferTriageResponse({
-      ...request,
-      userText:
-        request.userText.trim() ||
-        'What dangers do you see and what should I do next?',
-      categoryHint: request.categoryHint ?? translateMessage(this.lastLocale, 'action.visual_help'),
-    });
+    return inferTriageResponse(this.buildVisualAssistRequest(request));
   }
 
   async toggleSos(request: SosRequest): Promise<SosState> {

@@ -1335,6 +1335,7 @@ export default function App() {
       }
 
       inferenceRunId = beginInferenceRun();
+      const visualRunId = inferenceRunId;
       setIsStreaming(true);
 
       const request = attachTriageSession(
@@ -1351,14 +1352,100 @@ export default function App() {
         setTriageSession((current) => consumeTriageSessionReset(current));
       }
 
-      const response = await bridge.analyzeVisual(request);
-      if (!isInferenceRunActive(inferenceRunId)) {
+      const streamingMessageId = `stream-${createId('ai')}`;
+      let streamedText = '';
+      let finalResponse: TriageResponse | undefined;
+      let lastStreamUiFlushAt = 0;
+      let lastRenderedStreamText = '';
+
+      const flushStreamingMessage = (force = false): void => {
+        if (!isInferenceRunActive(visualRunId)) {
+          return;
+        }
+
+        const formattedText = formatModelTextForDisplay(streamedText);
+        if (!hasMeaningfulModelText(formattedText)) {
+          return;
+        }
+
+        const now = Date.now();
+        if (!force && now - lastStreamUiFlushAt < STREAM_UI_FLUSH_INTERVAL_MS) {
+          return;
+        }
+
+        if (!force && formattedText === lastRenderedStreamText) {
+          return;
+        }
+
+        lastStreamUiFlushAt = now;
+        lastRenderedStreamText = formattedText;
+
+        const partialResponse: TriageResponse = finalResponse ?? {
+          summary: formattedText,
+          steps: [],
+          disclaimer: '',
+          isKnowledgeBacked: false,
+          guidanceMode: 'grounded',
+          evidence: {
+            authoritative: [],
+            supporting: [],
+            matchedCategories: [],
+            queryTerms: [],
+          },
+          usedProfileName: activeModel?.name ?? 'Gemma 4 E2B',
+        };
+
+        setMessages((prev) => {
+          const next = [...prev];
+          const partialMessage = buildAiMessage(partialResponse, formattedText, {
+            isStreaming: true,
+          });
+          const streamingIndex = next.findIndex((message) => message.id === streamingMessageId);
+          if (streamingIndex >= 0) {
+            next[streamingIndex] = { ...next[streamingIndex], ...partialMessage, id: streamingMessageId };
+          } else {
+            next.push({ ...partialMessage, id: streamingMessageId });
+          }
+          return next;
+        });
+      };
+
+      for await (const chunk of bridge.triageStream(request)) {
+        if (!isInferenceRunActive(visualRunId)) {
+          break;
+        }
+
+        if (chunk.delta) {
+          streamedText += chunk.delta;
+          flushStreamingMessage();
+        }
+
+        if (chunk.final) {
+          finalResponse = chunk.final;
+          flushStreamingMessage(true);
+        }
+      }
+
+      if (!isInferenceRunActive(visualRunId)) {
         return;
       }
 
-      const text = formatResponseText(response);
-      setMessages((prev) => [...prev, buildAiMessage(response, text)]);
-      setStatusLine(response.isKnowledgeBacked ? t('status.visual_evidence') : t('status.model_responded'));
+      if (finalResponse) {
+        const response = finalResponse;
+        const text = formatResponseText(response, streamedText);
+        setMessages((prev) => {
+          const next = [...prev];
+          const finalMessage = buildAiMessage(response, text);
+          const streamingIndex = next.findIndex((message) => message.id === streamingMessageId);
+          if (streamingIndex >= 0) {
+            next[streamingIndex] = { ...finalMessage, id: createId('ai') };
+          } else {
+            next.push(finalMessage);
+          }
+          return next;
+        });
+        setStatusLine(response.isKnowledgeBacked ? t('status.visual_evidence') : t('status.model_responded'));
+      }
     } catch (error) {
       if (isCancelledCameraCapture(error)) {
         setStatusLine(modelLoadFailure ?? t('status.offline_ready'));

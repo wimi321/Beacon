@@ -189,11 +189,12 @@ class CapacitorBeaconBridge implements BeaconBridge {
   }
 
   async *triageStream(request: TriageRequest): AsyncIterable<StreamChunk> {
-    this.lastLocale = normalizeLocale(request.locale);
+    const streamRequest = request.imageBase64 ? this.buildVisualAssistRequest(request) : request;
+    this.lastLocale = normalizeLocale(streamRequest.locale);
     await safeImpact(ImpactStyle.Light);
     await warmKnowledgeEngine();
 
-    const evidence = retrieveEvidenceBundle(request);
+    const evidence = retrieveEvidenceBundle(streamRequest);
     const streamId = createStreamId();
     const queue: Array<{
       streamId: string;
@@ -221,13 +222,13 @@ class CapacitorBeaconBridge implements BeaconBridge {
       await NativeBeacon.triageStream({
         modelId: this.getActiveModelId(),
         streamId,
-        userText: request.userText,
-        categoryHint: request.categoryHint,
-        powerMode: request.powerMode,
-        imageBase64: request.imageBase64,
-        locale: request.locale,
-        sessionId: request.sessionId,
-        resetContext: request.resetContext,
+        userText: streamRequest.userText,
+        categoryHint: streamRequest.categoryHint,
+        powerMode: streamRequest.powerMode,
+        imageBase64: streamRequest.imageBase64,
+        locale: streamRequest.locale,
+        sessionId: streamRequest.sessionId,
+        resetContext: streamRequest.resetContext,
         groundingContext: buildGroundingContext(evidence),
         hasAuthoritativeEvidence: evidence.authoritative.length > 0,
       });

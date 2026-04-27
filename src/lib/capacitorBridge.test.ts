@@ -195,6 +195,30 @@ describe('CapacitorBeaconBridge', () => {
     );
   });
 
+  it('streams visual requests through native triageStream with the same image payload', async () => {
+    const bridge = createCapacitorBeaconBridge();
+    const chunks: string[] = [];
+
+    for await (const chunk of bridge.triageStream({
+      userText: '',
+      powerMode: 'normal',
+      locale: 'en',
+      sessionId: 'visual-stream-session',
+      imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+    })) {
+      chunks.push(chunk.delta);
+    }
+
+    expect(NativeBeacon.analyzeVisual).not.toHaveBeenCalled();
+    expect(NativeBeacon.triageStream).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userText: 'What dangers do you see and what should I do next?',
+        imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+      }),
+    );
+    expect(chunks).toContain('Keep firm pressure on the wound. ');
+  });
+
   it('preserves a user-written visual question instead of appending a synthetic fallback prompt', async () => {
     vi.mocked(NativeBeacon.analyzeVisual).mockResolvedValue({
       text: 'The snake is close.\n1. Back away slowly.',

@@ -774,6 +774,79 @@ describe('App', () => {
     expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 拍摄/)).toBeInTheDocument();
   });
 
+  it('streams visual guidance after an image is selected instead of waiting for a one-shot response', async () => {
+    let releaseFinal: (() => void) | undefined;
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.analyzeVisual = vi.fn(async () => {
+      throw new Error('Visual guidance should use triageStream for incremental output.');
+    });
+    mockBridge.triageStream = async function* (request) {
+      expect(request.imageBase64).toBe('ZmFrZS1pbWFnZS1ieXRlcw==');
+      yield { delta: '先看是否还在出血。' };
+      await new Promise<void>((resolve) => {
+        releaseFinal = resolve;
+      });
+      yield { delta: '\n继续直接按压。' };
+
+      const finalResponse: TriageResponse = {
+        summary: '先看是否还在出血。',
+        steps: ['继续直接按压。'],
+        disclaimer: '此回答由本地模型结合离线权威证据生成；恢复通信后仍建议尽快联系专业救援。',
+        isKnowledgeBacked: true,
+        guidanceMode: 'grounded',
+        evidence: {
+          authoritative: [
+            {
+              id: 'bleeding-control',
+              sourceId: 'stop-the-bleed',
+              title: 'Bleeding Control',
+              source: 'Stop the Bleed',
+              summary: 'Apply firm direct pressure.',
+              steps: ['Apply pressure'],
+              contraindications: [],
+              escalation: 'Call emergency services.',
+              strategy: 'directRule',
+              score: 1,
+            },
+          ],
+          supporting: [],
+          matchedCategories: [],
+          queryTerms: [],
+        },
+        usedProfileName: 'gemma-4-e2b-balanced',
+      };
+
+      yield { delta: '', done: true, final: finalResponse };
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
+    fireEvent.click(await screen.findByRole('button', { name: '从相册导入' }));
+
+    expect(await screen.findByText(/先看是否还在出血/)).toBeInTheDocument();
+    expect(screen.getByText(/正在生成建议/)).toBeInTheDocument();
+    expect(mockBridge.analyzeVisual).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(releaseFinal).toBeTypeOf('function');
+    });
+    releaseFinal?.();
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('继续直接按压');
+    });
+    await waitFor(() => {
+      expect(screen.queryByText(/正在生成建议/)).toBeNull();
+    });
+  });
+
   it('ignores swipes that do not start from the leading edge', async () => {
     const { container } = renderApp('zh-CN');
 

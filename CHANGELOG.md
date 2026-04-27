@@ -2,6 +2,24 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.16 - 2026-04-27
+
+Real-device visual rescue streaming release.
+
+### Highlights
+
+- Routes visual-help image answers through the real native `triageStream` path so photo-based guidance streams like normal emergency chat
+- Keeps captured photos visible inside the conversation while local Gemma guidance is generated
+- Updates SOS start copy across supported UI languages from slide/tap wording to explicit tap-only wording
+- Adds regression coverage for visual streaming and native image-stream request payloads
+- Bumps Android to `versionCode 19` / `versionName 0.2.16`
+
+### Verification
+
+- `npm test -- --run`
+- `npm run build`
+- `npm run mobile:android:release:github`
+- Android real-device install and smoke test on `25019PNF3C`
 
 ## v0.2.15 - 2026-04-26
 
