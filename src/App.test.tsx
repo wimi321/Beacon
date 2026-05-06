@@ -819,7 +819,7 @@ describe('App', () => {
     mockBridge.analyzeVisual = vi.fn(async () => {
       throw new Error('Visual guidance should use triageStream for incremental output.');
     });
-    mockBridge.triageStream = async function* (request) {
+    mockBridge.triageStream = vi.fn(async function* (request: TriageRequest) {
       expect(request.imageBase64).toBe('ZmFrZS1pbWFnZS1ieXRlcw==');
       yield { delta: '先看是否还在出血。' };
       await new Promise<void>((resolve) => {
@@ -856,7 +856,7 @@ describe('App', () => {
       };
 
       yield { delta: '', done: true, final: finalResponse };
-    };
+    });
     window.beaconBridge = mockBridge;
     window.localStorage.setItem('beacon_locale', 'zh-CN');
 
@@ -869,8 +869,11 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
     fireEvent.click(await screen.findByRole('button', { name: '从相册导入' }));
 
-    expect(await screen.findByText(/先看是否还在出血/, {}, { timeout: 5000 })).toBeInTheDocument();
-    expect(await screen.findByText(/正在生成建议/, {}, { timeout: 5000 })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockBridge.triageStream).toHaveBeenCalledTimes(1);
+      expect(document.body.textContent).toContain('先看是否还在出血');
+      expect(document.body.textContent).toContain('正在生成建议');
+    }, { timeout: 5000 });
     expect(mockBridge.analyzeVisual).not.toHaveBeenCalled();
 
     await waitFor(() => {
