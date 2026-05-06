@@ -553,6 +553,30 @@ button.status-badge {
   line-height: 1;
 }
 
+.panic-btn .icon-image {
+  width: 1.72rem;
+  height: 1.72rem;
+  object-fit: contain;
+  display: block;
+}
+
+.panic-btn-war {
+  grid-column: 1 / -1;
+  min-height: 3.5rem;
+  flex-direction: row;
+  gap: 0.62rem;
+  padding-block: 0.56rem;
+}
+
+.panic-btn-war .panic-icon-shell {
+  width: 2rem;
+  height: 2rem;
+}
+
+.panic-btn-war .panic-label {
+  width: auto;
+}
+
 .panic-label {
   width: 100%;
   min-width: 0;

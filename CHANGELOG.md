@@ -2,6 +2,29 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.17 - 2026-05-07
+
+War-crisis quick action and civil-defense grounding release.
+
+### Highlights
+
+- Adds a new `War Crisis` homepage panic action with a transparent Apple-style missile/shield icon
+- Adds the `war_crisis` canonical scenario and 20-language UI copy for the new action
+- Strengthens retrieval toward Ready.gov and CDC civil-defense guidance for conflict, radiation, biohazard, chemical exposure, cyberattack, outages, and shelter-in-place scenarios
+- Adds CDC nuclear-blast and radiation get-inside public guidance entries into the offline knowledge bundle
+- Documents why DFlash is research-only for Beacon's current mobile LiteRT-LM path
+- Bumps Android to `versionCode 20` / `versionName 0.2.17`
+
+### Verification
+
+- War-crisis icon transparency and small-size visual inspection
+- Local Web UI smoke check
+- `npm test -- --run`
+- `npm run build`
+- `npm run competition:audit`
+- `npm run mobile:android:release:github`
+- No Android real-device test in this cycle because no phone was available
+
 ## v0.2.16 - 2026-04-27
 
 Real-device visual rescue streaming release.

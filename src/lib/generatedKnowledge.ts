@@ -31659,11 +31659,21 @@ export const OFFLINE_KNOWLEDGE_SOURCES = [
     "id": "nws-tsunami-safety",
     "authority": "National Weather Service / NOAA",
     "title": "Tsunami Safety"
+  },
+  {
+    "id": "cdc-radiation-get-inside",
+    "authority": "CDC",
+    "title": "What to Do: Get Inside"
+  },
+  {
+    "id": "cdc-nuclear-blast-faq",
+    "authority": "CDC",
+    "title": "Nuclear Blasts: Frequently Asked Questions"
   }
 ] as const;
 
 export const OFFLINE_KNOWLEDGE_STATS = {
   "version": 2,
-  "sourceCount": 6332,
-  "entryCount": 14406
+  "sourceCount": 6334,
+  "entryCount": 14408
 } as const;

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { I18nProvider } from './i18n';
 import { createMockBeaconBridge } from './lib/mockBridge';
-import type { TriageResponse } from './lib/types';
+import type { TriageRequest, TriageResponse } from './lib/types';
 
 const cameraPluginState = vi.hoisted(() => ({
   getPhotoMock: vi.fn(async () => ({ base64String: 'ZmFrZS1pbWFnZS1ieXRlcw==' })),
@@ -146,6 +146,45 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: /Survis d'abord, réfléchis ensuite/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Perdu \/ Sans signal/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /先活下来，再想别的/i })).toBeNull();
+  });
+
+  it('shows the war crisis quick action and sends the canonical scenario hint', async () => {
+    const requests: TriageRequest[] = [];
+    const mockBridge = createMockBeaconBridge();
+    const response: TriageResponse = {
+      summary: 'Move to hard cover and stay away from windows.',
+      steps: ['Shelter in place until it is safer to move.'],
+      disclaimer: 'Local guidance only.',
+      isKnowledgeBacked: true,
+      guidanceMode: 'grounded',
+      evidence: {
+        authoritative: [],
+        supporting: [],
+        matchedCategories: ['国家级危机'],
+        queryTerms: ['war crisis'],
+      },
+      usedProfileName: 'gemma-4-e2b-balanced',
+    };
+    mockBridge.triageStream = async function* (request: TriageRequest) {
+      requests.push(request);
+      yield { delta: 'Move to hard cover. ' };
+      yield { delta: '', done: true, final: response };
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /战争危机/i }));
+
+    await waitFor(() => {
+      expect(requests[0]?.categoryHint).toBe('war_crisis');
+    });
+    expect(screen.getByText(/紧急救援向导: 战争危机/)).toBeInTheDocument();
   });
 
   it('keeps the home screen visible when boot only adds a localized battery warning', async () => {

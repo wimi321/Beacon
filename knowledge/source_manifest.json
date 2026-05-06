@@ -418,6 +418,18 @@
     "title": "Radiation Emergencies"
   },
   {
+    "id": "cdc-radiation-get-inside",
+    "url": "https://www.cdc.gov/radiation-emergencies/response/get-inside.html",
+    "authority": "CDC",
+    "title": "What to Do: Get Inside"
+  },
+  {
+    "id": "cdc-nuclear-blast-faq",
+    "url": "https://www.cdc.gov/radiation-emergencies/about/nuclear-blast-faq.html",
+    "authority": "CDC",
+    "title": "Nuclear Blasts: Frequently Asked Questions"
+  },
+  {
     "id": "cdc-radiation-self-decon",
     "url": "https://www.cdc.gov/radiation-emergencies/prevention/self-decontaminate.html",
     "authority": "CDC",

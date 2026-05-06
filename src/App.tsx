@@ -40,7 +40,8 @@ import {
   hasMeaningfulModelText,
 } from './lib/modelText';
 import { resolveLocaleCode, translateMessage } from './i18n/translate';
-import { CANONICAL_SCENARIO_HINTS } from './lib/scenarioHints';
+import { CANONICAL_SCENARIO_HINTS, type CanonicalScenarioHint } from './lib/scenarioHints';
+import warCrisisIcon from './assets/war-crisis-icon.png';
 
 function resolveBatteryWarning(
   status: BatteryStatus,
@@ -260,6 +261,14 @@ function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
+type QuickAction = {
+  label: string;
+  icon?: string;
+  iconImage?: string;
+  categoryHint: CanonicalScenarioHint;
+  userText: string;
+};
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -433,7 +442,7 @@ export default function App() {
   const { t, locale } = useI18n();
   const bridge = useMemo(() => getBeaconBridge(), []);
 
-  const QUICK_ACTIONS = useMemo(() => [
+  const QUICK_ACTIONS = useMemo<QuickAction[]>(() => [
     {
       label: t('panic.lost.label'),
       icon: '🧭',
@@ -457,6 +466,12 @@ export default function App() {
       icon: '🩸',
       categoryHint: CANONICAL_SCENARIO_HINTS.SEVERE_TRAUMA,
       userText: t('panic.trauma.text'),
+    },
+    {
+      label: t('panic.war.label'),
+      iconImage: warCrisisIcon,
+      categoryHint: CANONICAL_SCENARIO_HINTS.WAR_CRISIS,
+      userText: t('panic.war.text'),
     },
   ], [t]);
 
@@ -1687,12 +1702,16 @@ export default function App() {
               {QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.label}
-                  className="panic-btn"
+                  className={`panic-btn ${action.categoryHint === CANONICAL_SCENARIO_HINTS.WAR_CRISIS ? 'panic-btn-war' : ''}`}
                   disabled={isStreaming}
                   onClick={() => void handleQuickAction(action.label, action.categoryHint, action.userText)}
                 >
                   <span className="panic-icon-shell" aria-hidden="true">
-                    <span className="icon">{action.icon}</span>
+                    {action.iconImage ? (
+                      <img className="icon-image" src={action.iconImage} alt="" />
+                    ) : (
+                      <span className="icon">{action.icon}</span>
+                    )}
                   </span>
                   <span className="panic-label">{action.label}</span>
                 </button>

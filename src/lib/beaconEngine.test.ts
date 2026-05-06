@@ -146,6 +146,27 @@ describe('beaconEngine', () => {
     expect(response.evidence.authoritative.some((item) => item.source.includes('Ready.gov'))).toBe(true);
   });
 
+  it('routes war crisis quick actions to civil-defense and radiation guidance', () => {
+    const evidence = retrieveEvidenceBundle({
+      userText: messages.en['panic.war.text'] ?? 'War crisis, explosions, nuclear or biohazard danger.',
+      categoryHint: 'war_crisis',
+      powerMode: 'normal',
+      locale: 'en',
+      sessionId: 'session-engine-war-crisis',
+    });
+
+    expect(
+      evidence.authoritative.some((item) =>
+        /Ready\.gov|CDC/i.test(`${item.source} ${item.title}`),
+      ),
+    ).toBe(true);
+    expect(
+      evidence.authoritative.some((item) =>
+        /explosion|shelter|radiation|nuclear|biohazard|cyber/i.test(`${item.title} ${item.source} ${item.summary}`),
+      ),
+    ).toBe(true);
+  });
+
   it('routes unsafe water questions to newly added CDC safe-water guidance', () => {
     const response = inferTriageResponse({
       userText: '野外和灾后都没有干净水，溪水能不能直接喝，怎么净水',

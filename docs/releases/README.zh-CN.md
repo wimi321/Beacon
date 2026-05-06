@@ -4,13 +4,15 @@
 
 ## 当前发布候选
 
-- 当前版本说明：[`v0.2.16.zh-CN.md`](./v0.2.16.zh-CN.md)
-- 多语言发布说明：[`v0.2.16.multilingual.md`](./v0.2.16.multilingual.md)
+- 当前版本说明：[`v0.2.17.zh-CN.md`](./v0.2.17.zh-CN.md)
+- 多语言发布说明：[`v0.2.17.multilingual.md`](./v0.2.17.multilingual.md)
 - 用户视角验收清单：[`../User-E2E-Acceptance-Checklist.md`](../User-E2E-Acceptance-Checklist.md)
 - 版本记录：[`../../CHANGELOG.md`](../../CHANGELOG.md)
 
 ## 历史版本
 
+- [`v0.2.17`](./v0.2.17.md) / [`v0.2.17 中文版`](./v0.2.17.zh-CN.md) / [`多语言版`](./v0.2.17.multilingual.md)
+  新增战争危机首页入口、民防检索增强和 CDC 核爆/辐射知识补充。
 - [`v0.2.16`](./v0.2.16.md) / [`v0.2.16 中文版`](./v0.2.16.zh-CN.md) / [`多语言版`](./v0.2.16.multilingual.md)  
   安卓真机验证后的视觉求助流式输出与 SOS 点击语义修复。
 - [`v0.2.15`](./v0.2.15.md) / [`v0.2.15 中文版`](./v0.2.15.zh-CN.md) / [`多语言版`](./v0.2.15.multilingual.md)  

@@ -116,7 +116,19 @@ const semanticQueryRules: Array<{ pattern: RegExp; variants: string[] }> = [
   { pattern: /(跌倒|摔伤|fall injury|falls)/i, variants: ['falls', 'injury'] },
   {
     pattern: /(战争|戰爭|炮击|炮擊|轰炸|轟炸|爆炸|枪击|槍擊|active shooter|blast|explosion|war zone)/i,
-    variants: ['explosion safety', 'hard cover', 'shelter in place', 'crisis conflict'],
+    variants: [
+      'war crisis',
+      'civil defense',
+      'explosion safety',
+      'hard cover',
+      'shelter in place',
+      'public spaces',
+      'radiation emergency',
+      'biohazard',
+      'chemical exposure',
+      'cyberattack',
+      'power outage',
+    ],
   },
   {
     pattern: /(核战|核戰|核爆|辐射|輻射|脏弹|髒彈|dirty bomb|radiation|nuclear|fallout|radiological)/i,
@@ -329,7 +341,7 @@ function isCyberQuery(query: string): boolean {
 }
 
 function isConflictQuery(query: string): boolean {
-  return /(战争|戰爭|炮击|炮擊|轰炸|轟炸|爆炸|枪击|槍擊|空袭|空襲|war zone|blast|explosion|active shooter)/i.test(query);
+  return /(war_crisis|战争|戰爭|炮击|炮擊|轰炸|轟炸|爆炸|枪击|槍擊|空袭|空襲|war zone|blast|explosion|active shooter)/i.test(query);
 }
 
 function isConcreteEmergencyQuery(query: string): boolean {
@@ -389,6 +401,7 @@ function inferScenarioHint(
 
 function sourceIntentBoost(card: KnowledgeCard, request: TriageRequest): number {
   const query = `${request.categoryHint ?? ''} ${request.userText}`.toLowerCase();
+  const scenarioHint = normalizeScenarioHint(request.categoryHint);
   const sourceText = cardSourceText(card);
   let boost = 0;
 
@@ -483,6 +496,20 @@ function sourceIntentBoost(card: KnowledgeCard, request: TriageRequest): number 
 
   if (isConflictQuery(query) && /(crisis_conflict|explosion|hard cover|shelter in place|public-spaces|ready\.gov|radiation)/.test(sourceText)) {
     boost += 24;
+  }
+
+  if (scenarioHint === CANONICAL_SCENARIO_HINTS.WAR_CRISIS) {
+    if (
+      /(ready\.gov|cdc|crisis_conflict|crisis_radiation|crisis_bio|crisis_cyber|crisis_chemical|civil defense|explosion|shelter in place|public-spaces|radiation|nuclear|biohazard|hazmat|cyber|power outage)/.test(
+        sourceText,
+      )
+    ) {
+      boost += 34;
+    }
+
+    if (/(msd manual|merck manual|chemical-warfare|warfare agents)/.test(sourceText)) {
+      boost -= 12;
+    }
   }
 
   return boost;
