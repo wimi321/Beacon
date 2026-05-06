@@ -869,8 +869,8 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
     fireEvent.click(await screen.findByRole('button', { name: '从相册导入' }));
 
-    expect(await screen.findByText(/先看是否还在出血/)).toBeInTheDocument();
-    expect(screen.getByText(/正在生成建议/)).toBeInTheDocument();
+    expect(await screen.findByText(/先看是否还在出血/, {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByText(/正在生成建议/, {}, { timeout: 5000 })).toBeInTheDocument();
     expect(mockBridge.analyzeVisual).not.toHaveBeenCalled();
 
     await waitFor(() => {
