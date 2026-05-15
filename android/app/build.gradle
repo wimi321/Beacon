@@ -21,7 +21,9 @@ def arm64OnlyBuild = providers.gradleProperty('beaconArm64Only')
     .get()
 
 tasks.register('stageBundledGemmaE2B') {
-    inputs.file(bundledGemmaArtifact).optional()
+    if (bundleGemmaInApk) {
+        inputs.file(bundledGemmaArtifact)
+    }
     outputs.file(stagedBundledGemmaFile)
 
     doLast {
@@ -79,8 +81,8 @@ android {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20
-        versionName "0.2.17"
+        versionCode 21
+        versionName "0.2.18"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         if (arm64OnlyBuild) {
             ndk {
@@ -134,7 +136,7 @@ dependencies {
     implementation project(':capacitor-android')
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
     implementation "com.google.code.gson:gson:2.11.0"
-    implementation "com.google.ai.edge.litertlm:litertlm-android:0.10.0"
+    implementation "com.google.ai.edge.litertlm:litertlm-android:0.11.0"
     testImplementation "junit:junit:$junitVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }

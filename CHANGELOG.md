@@ -2,6 +2,23 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.18 - 2026-05-16
+
+Gemma 4 on-device load fix.
+
+### Highlights
+
+- Upgrades the Android LiteRT-LM runtime from `0.10.0` to `0.11.0`, which is the first stable release with full Gemma 4 `.litertlm` format support and Multi-token Prediction. Without this bump, downloading the Gemma 4 E2B model succeeded but `Engine.initialize()` rejected the new file with `Failed to load local model gemma-4-e2b`
+- Hardens the `stageBundledGemmaE2B` Gradle task input declaration so the standard `assembleRelease -PbeaconBundleGemmaInApk=false` path works under Gradle 8.14's stricter input validation
+- Regenerates `android/capacitor.settings.gradle` to point at npm-resolved Capacitor module paths so the Android project builds end-to-end with `npm ci`
+- Bumps Android to `versionCode 21` / `versionName 0.2.18`
+
+### Verification
+
+- `npm run build`
+- `./gradlew assembleRelease -PbeaconBundleGemmaInApk=false -PbeaconArm64Only=true`
+- Real-device install on Xiaomi (Android 16, arm64-v8a) — Gemma 4 E2B downloads and loads without the previous error
+
 ## v0.2.17 - 2026-05-07
 
 War-crisis quick action and civil-defense grounding release.

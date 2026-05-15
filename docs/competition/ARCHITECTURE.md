@@ -16,7 +16,7 @@ Beacon is designed as an Android-first, offline-first mobile app. The critical a
 Android dependency proof:
 
 ```gradle
-implementation "com.google.ai.edge.litertlm:litertlm-android:0.10.0"
+implementation "com.google.ai.edge.litertlm:litertlm-android:0.11.0"
 ```
 
 Model allowlist proof:
