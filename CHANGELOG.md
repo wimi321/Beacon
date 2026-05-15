@@ -2,6 +2,24 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.19 - 2026-05-16
+
+Model switch interaction polish.
+
+### Highlights
+
+- Tapping `Switch to This Model` on an already-downloaded model used to look frozen: no spinner, no status update, no disabled state, just a 5–30 second wait while the native LiteRT-LM engine reinitialized. Replaces the silent wait with explicit feedback — the tapped card flips to a `Switching…` chip with a spinner, the inline copy explains the load is in progress, the status line reads `Switching to {model}. Loading model into memory…`, and the unrelated model's button is disabled until the swap finishes
+- Adds three new translation keys (`model.switching`, `model.switching_hint`, `status.model_switching`) across all 20 supported UI languages, with diacritics for French/German and matching RTL copy for Arabic
+- Bumps Android to `versionCode 22` / `versionName 0.2.19`
+
+### Verification
+
+- `npx tsc --noEmit`
+- `npm test` — 97 tests passing
+- `npm run build`
+- `./gradlew assembleRelease -PbeaconBundleGemmaInApk=false -PbeaconArm64Only=true`
+- Real-device install on Xiaomi (Android 16, arm64-v8a)
+
 ## v0.2.18 - 2026-05-16
 
 Gemma 4 on-device load fix.

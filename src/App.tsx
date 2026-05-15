@@ -495,6 +495,7 @@ export default function App() {
   const [models, setModels] = useState<ModelDescriptor[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [modelLoadFailure, setModelLoadFailure] = useState<string | null>(null);
+  const [switchingModelId, setSwitchingModelId] = useState<string | null>(null);
   const [statusLine, setStatusLine] = useState(t('status.offline_ready'));
   const [triageSession, setTriageSession] = useState(createTriageSessionState);
   const [isRecoveringModel, setIsRecoveringModel] = useState(false);
@@ -1515,6 +1516,12 @@ export default function App() {
       return;
     }
 
+    if (switchingModelId !== null) {
+      return;
+    }
+
+    const modelName = targetModel?.name ?? modelId;
+
     try {
       setModelLoadFailure(null);
       syncRetryCountRef.current = 0;
@@ -1542,6 +1549,8 @@ export default function App() {
         setStatusLine(t('status.download_done', { modelId }));
       }
 
+      setSwitchingModelId(modelId);
+      setStatusLine(t('status.model_switching', { name: modelName }));
       const nextModels = await bridge.loadModel(modelId);
       modelsRef.current = nextModels;
       setModels(nextModels);
@@ -1559,6 +1568,8 @@ export default function App() {
       setModelLoadFailure(localizedFailure);
       setStatusLine(localizedFailure);
       setShowModelManager(true);
+    } finally {
+      setSwitchingModelId(null);
     }
   }
 
@@ -1916,8 +1927,12 @@ export default function App() {
                 <div className="model-onboarding-actions">
                   {[recommendedDownloadModel, alternateDownloadModel].filter((model): model is ModelDescriptor => model != null).map((model, index) => {
                     const progress = downloadProgress[model.id];
-                    const isBusy = isPreparingModel(model) || (progress != null && progress < 1);
-                    const actionLabel = model.isDownloaded ? t('model.switch_btn') : t('model.download_btn');
+                    const isSwitching = switchingModelId === model.id;
+                    const isOtherSwitching = switchingModelId !== null && switchingModelId !== model.id;
+                    const isBusy = isPreparingModel(model) || (progress != null && progress < 1) || isSwitching;
+                    const actionLabel = isSwitching
+                      ? t('model.switching')
+                      : (model.isDownloaded ? t('model.switch_btn') : t('model.download_btn'));
                     const progressPercent = Math.round((progress ?? 0) * 100);
 
                     return (
@@ -1926,7 +1941,7 @@ export default function App() {
                         type="button"
                         className={`model-onboarding-action ${index === 0 ? 'primary' : 'secondary'} ${isBusy ? 'downloading' : ''}`}
                         onClick={() => void handleDownloadModel(model.id)}
-                        disabled={isBusy}
+                        disabled={isBusy || isOtherSwitching}
                         aria-busy={isBusy}
                         aria-label={`${actionLabel} ${model.name}`}
                       >
@@ -1937,7 +1952,11 @@ export default function App() {
                         <span className="model-onboarding-action-meta">
                           {formatModelSizeLabel(model, t)}
                         </span>
-                        {isBusy && (
+                        {isSwitching ? (
+                          <span className="model-onboarding-action-progress" role="status" aria-live="polite">
+                            <span>{t('model.switching_hint')}</span>
+                          </span>
+                        ) : isBusy && (
                           <span className="model-onboarding-action-progress">
                             <span className="model-progress-track" aria-hidden="true">
                               <span
@@ -1965,7 +1984,7 @@ export default function App() {
               </p>
             ) : showModelDownloadGuide ? null : (
               models.map((model) => (
-                <div key={model.id} className={`model-card ${model.isLoaded ? 'loaded' : ''}`}>
+                <div key={model.id} className={`model-card ${model.isLoaded ? 'loaded' : ''} ${switchingModelId === model.id ? 'switching' : ''}`}>
                   <div className="model-card-copy">
                     <div className="model-card-heading">
                       <strong>{model.name}</strong>
@@ -1974,18 +1993,31 @@ export default function App() {
                       </span>
                     </div>
                     <p>
-                      {model.isLoaded
-                        ? t('model.loaded_tag')
-                        : model.isDownloaded
-                          ? t('model.switch_btn')
-                          : t('model.download_btn')}
+                      {switchingModelId === model.id
+                        ? t('model.switching_hint')
+                        : model.isLoaded
+                          ? t('model.loaded_tag')
+                          : model.isDownloaded
+                            ? t('model.switch_btn')
+                            : t('model.download_btn')}
                     </p>
                   </div>
                   <div className="model-actions">
                     {(() => {
                       const progress = downloadProgress[model.id];
+                      const isSwitching = switchingModelId === model.id;
+                      const isOtherSwitching = switchingModelId !== null && switchingModelId !== model.id;
                       const isBusy = isPreparingModel(model) || (progress != null && progress < 1);
                       const progressPercent = Math.round((progress ?? 0) * 100);
+
+                      if (isSwitching) {
+                        return (
+                          <div className="model-switching" role="status" aria-live="polite" aria-busy="true">
+                            <LoaderCircle size={14} className="spin" aria-hidden="true" />
+                            <span>{t('model.switching')}</span>
+                          </div>
+                        );
+                      }
 
                       if (model.isLoaded) {
                         return <span className="loaded-tag">{t('model.loaded_tag')}</span>;
@@ -2009,7 +2041,11 @@ export default function App() {
                       }
 
                       return (
-                        <button onClick={() => void handleDownloadModel(model.id)}>
+                        <button
+                          onClick={() => void handleDownloadModel(model.id)}
+                          disabled={isOtherSwitching}
+                          aria-busy={isOtherSwitching}
+                        >
                           <Download size={14} />
                           {model.isDownloaded ? t('model.switch_btn') : t('model.download_btn')}
                         </button>

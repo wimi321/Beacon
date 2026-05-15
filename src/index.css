@@ -1310,6 +1310,11 @@ html[dir="rtl"] .chat-input {
   background: rgba(125, 220, 139, 0.08);
 }
 
+.model-card.switching {
+  border-color: rgba(125, 215, 255, 0.32);
+  background: rgba(125, 215, 255, 0.08);
+}
+
 .model-card strong {
   display: block;
   margin-bottom: 0.25rem;
@@ -1368,6 +1373,26 @@ html[dir="rtl"] .chat-input {
 .download-progress {
   min-width: 8rem;
   max-width: 12rem;
+}
+
+.model-switching {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 215, 255, 0.32);
+  background: rgba(125, 215, 255, 0.10);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.model-actions button[disabled],
+.model-actions button[aria-busy='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 @media (max-width: 40rem) {
