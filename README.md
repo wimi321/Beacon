@@ -59,7 +59,10 @@
 
 <p>
   <a href="https://github.com/wimi321/Beacon/releases/latest"><img alt="Download APK" src="https://img.shields.io/badge/Download_APK-GitHub_Releases-16a34a?style=for-the-badge&logo=android"></a>
+  <a href="./docs/APP_STORE.md"><img alt="iOS App Store" src="https://img.shields.io/badge/iOS_App_Store-in_review-0a84ff?style=for-the-badge&logo=apple"></a>
 </p>
+
+**iOS:** Beacon Survival SOS has been submitted to Apple App Review. The first App Store build uses manual release after approval. See [App Store status](./docs/APP_STORE.md).
 
 Choose your model:
 

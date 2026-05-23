@@ -35,7 +35,8 @@
 
 ## 下载方式
 
-- 直接从 [GitHub Releases](https://github.com/wimi321/Beacon/releases) 下载最新 Android ARM64 安装包
+- Android：直接从 [GitHub Releases](https://github.com/wimi321/Beacon/releases) 下载最新 ARM64 安装包
+- iOS：已提交 Apple App Review，审核通过后手动发布，状态见 [App Store 状态](./docs/APP_STORE.md)
 - 首次打开 App 后进入 `设置与模型`
 - 优先下载 `Gemma 4 E2B` 作为推荐默认模型；如果设备更强、想要更高精度，可以再下载 `Gemma 4 E4B`
 
