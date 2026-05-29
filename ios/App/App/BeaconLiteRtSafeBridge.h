@@ -6,6 +6,7 @@ typedef struct LiteRtLmEngineSettings LiteRtLmEngineSettings;
 typedef struct LiteRtLmConversation LiteRtLmConversation;
 typedef struct LiteRtLmConversationConfig LiteRtLmConversationConfig;
 typedef struct LiteRtLmSessionConfig LiteRtLmSessionConfig;
+typedef struct LiteRtLmConversationOptionalArgs LiteRtLmConversationOptionalArgs;
 typedef void (*LiteRtLmStreamCallback)(
     void *_Nullable callback_data,
     const char *_Nullable chunk,

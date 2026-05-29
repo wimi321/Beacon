@@ -8,6 +8,7 @@ export type NativeTriageRequest = {
   categoryHint?: string;
   powerMode: string;
   imageBase64?: string;
+  imageUri?: string;
   locale?: string;
   sessionId: string;
   resetContext?: boolean;
@@ -39,7 +40,12 @@ export type NativeModelListResult = {
   models: Array<ModelDescriptor & { isDownloaded?: boolean }>;
 };
 
+export type NativeKnowledgeBundleResult = {
+  json: string;
+};
+
 export interface BeaconNativePlugin {
+  getOfflineKnowledgeBundle(): Promise<NativeKnowledgeBundleResult>;
   listModels(): Promise<NativeModelListResult>;
   loadModel(options: { modelId: string }): Promise<NativeModelListResult>;
   downloadModel(options: { modelId: string }): Promise<{ modelId: string; localPath: string; downloaded: boolean }>;

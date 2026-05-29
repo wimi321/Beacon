@@ -6,6 +6,9 @@ const INLINE_BULLET_ITEM_REGEX = /([^\n])[ \t]+([*-]\s+(?=(?:\*\*|[A-Za-z\u00C0-
 const STRONG_LABEL_BODY = '[^\\n*.。！？!?]{0,24}[:：][^\\n*.。！？!?]{0,12}';
 const INLINE_EMPHASIS_HEADING_REGEX = new RegExp(`([。！？!?；;])[ \\t]*(\\*\\*${STRONG_LABEL_BODY}\\*\\*)`, 'g');
 const TIGHT_STRONG_LABEL_REGEX = new RegExp(`(\\*\\*${STRONG_LABEL_BODY}\\*\\*)(?=\\S)`, 'g');
+const ORPHAN_TRAILING_LIST_NUMBER_REGEX = /([。.!?！？；;])[\t ]+(?:[1-9]\d?)\.?[\t ]*$/gm;
+const ORPHAN_STANDALONE_TRAILING_LIST_NUMBER_REGEX = /\n+[ \t]*(?:[1-9]\d?)\.?[ \t]*$/g;
+const TRAILING_INCOMPLETE_BLOCK_REGEX = /\n\n[ \t]*(?:(?:[1-9]\d?)\.\s+)?(?=[^。\n.!?！？；;]{12,140}$)(?=[^\n]*[\u3400-\u9fff])[^。\n.!?！？；;]{1,140}$/u;
 
 type TriageResponseWithRawText = TriageResponse & { rawText?: string };
 
@@ -52,8 +55,18 @@ function removeDisplayOnlyMarkdownEmphasis(value: string): string {
     .replace(/(\S)\*(?=$|[\s，,。.!?！？；;：:）)])/g, '$1');
 }
 
+function removeTrailingIncompleteBlock(value: string): string {
+  const trimmedEnd = value.replace(/[ \t]+$/gm, '');
+  if (/[。.!?！？；;）)\]】」』”"']$/.test(trimmedEnd.trimEnd())) {
+    return trimmedEnd;
+  }
+  return trimmedEnd.replace(TRAILING_INCOMPLETE_BLOCK_REGEX, '');
+}
+
 export function formatModelTextForDisplay(value?: string | null): string {
-  return removeDisplayOnlyMarkdownEmphasis(softenInlineMarkdownStructure(processModelResponse(value)));
+  return removeTrailingIncompleteBlock(removeDisplayOnlyMarkdownEmphasis(softenInlineMarkdownStructure(processModelResponse(value)))
+    .replace(ORPHAN_TRAILING_LIST_NUMBER_REGEX, '$1')
+    .replace(ORPHAN_STANDALONE_TRAILING_LIST_NUMBER_REGEX, ''));
 }
 
 export function splitModelResponseText(text: string): { summary: string; steps: string[] } {

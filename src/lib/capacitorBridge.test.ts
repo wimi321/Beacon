@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCapacitorBeaconBridge } from './capacitorBridge';
+import { retrieveEvidenceBundle } from './beaconEngine';
 import { NativeBeacon } from './nativeBeaconPlugin';
-import type { TriageResponse } from './types';
+import type { EvidenceBundle, TriageResponse } from './types';
 
 const nativeState = vi.hoisted(() => {
   let streamListener:
@@ -40,12 +41,6 @@ vi.mock('@capacitor/device', () => ({
   },
 }));
 
-vi.mock('@capacitor/geolocation', () => ({
-  Geolocation: {
-    getCurrentPosition: vi.fn(),
-  },
-}));
-
 vi.mock('@capacitor/haptics', () => ({
   ImpactStyle: {
     Light: 'LIGHT',
@@ -57,12 +52,6 @@ vi.mock('@capacitor/haptics', () => ({
   },
 }));
 
-vi.mock('@capacitor/network', () => ({
-  Network: {
-    getStatus: vi.fn(async () => ({ connected: false })),
-  },
-}));
-
 vi.mock('@capacitor/preferences', () => ({
   Preferences: {
     get: vi.fn(async () => ({ value: null })),
@@ -71,7 +60,11 @@ vi.mock('@capacitor/preferences', () => ({
 }));
 
 vi.mock('./beaconEngine', () => ({
-  buildGroundingContext: vi.fn(() => 'grounding-context'),
+  buildGroundingContext: vi.fn((evidence: EvidenceBundle) => (
+    evidence.authoritative.length > 0 || evidence.supporting.length > 0
+      ? 'grounding-context'
+      : ''
+  )),
   estimateSosState: vi.fn(),
   retrieveEvidenceBundle: vi.fn(() => ({
     authoritative: [
@@ -189,10 +182,14 @@ describe('CapacitorBeaconBridge', () => {
 
     expect(NativeBeacon.analyzeVisual).toHaveBeenCalledWith(
       expect.objectContaining({
-        userText: 'What dangers do you see and what should I do next?',
+        userText: '你看见了什么',
+        categoryHint: 'visual_help',
         imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+        groundingContext: '',
+        hasAuthoritativeEvidence: false,
       }),
     );
+    expect(retrieveEvidenceBundle).not.toHaveBeenCalled();
   });
 
   it('streams visual requests through native triageStream with the same image payload', async () => {
@@ -212,10 +209,14 @@ describe('CapacitorBeaconBridge', () => {
     expect(NativeBeacon.analyzeVisual).not.toHaveBeenCalled();
     expect(NativeBeacon.triageStream).toHaveBeenCalledWith(
       expect.objectContaining({
-        userText: 'What dangers do you see and what should I do next?',
+        userText: '你看见了什么',
+        categoryHint: 'visual_help',
         imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+        groundingContext: '',
+        hasAuthoritativeEvidence: false,
       }),
     );
+    expect(retrieveEvidenceBundle).not.toHaveBeenCalled();
     expect(chunks).toContain('Keep firm pressure on the wound. ');
   });
 
@@ -239,8 +240,24 @@ describe('CapacitorBeaconBridge', () => {
       expect.objectContaining({
         userText: 'Is this snake dangerous?',
         imageBase64: 'ZmFrZS1pbWFnZS1ieXRlcw==',
+        groundingContext: 'grounding-context',
+        hasAuthoritativeEvidence: true,
       }),
     );
+    expect(retrieveEvidenceBundle).toHaveBeenCalled();
+  });
+
+  it('rejects visual analysis when no image payload is provided', async () => {
+    const bridge = createCapacitorBeaconBridge();
+
+    await expect(bridge.analyzeVisual({
+      userText: '',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'visual-missing-image-session',
+    })).rejects.toThrow('No image provided for visual analysis.');
+
+    expect(NativeBeacon.analyzeVisual).not.toHaveBeenCalled();
   });
 
   it('localizes the bottom disclaimer instead of hardcoding Chinese', async () => {

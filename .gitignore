@@ -47,6 +47,7 @@ ios/archive*/
 ios/export*/
 ios/App/App/public/
 ios/App/Vendor/BeaconLiteRtLm.xcframework/
+ios/App/Vendor/CLiteRTLM.xcframework/
 ios/App/Vendor/litert_patch/
 ios/App/Vendor/litert_support_build/
 **/xcuserdata/

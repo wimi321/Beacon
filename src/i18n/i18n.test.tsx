@@ -46,7 +46,7 @@ describe('i18n Module', () => {
       </I18nProvider>
     );
     expect(screen.getByTestId('current-locale').textContent).toBe('en');
-    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon Node');
+    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon');
   });
 
   it('prefers localStorage over navigator', () => {
@@ -57,7 +57,7 @@ describe('i18n Module', () => {
       </I18nProvider>
     );
     expect(screen.getByTestId('current-locale').textContent).toBe('ko');
-    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon 노드');
+    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon');
   });
 
   it('can manually switch language and persist to storage', () => {
@@ -73,7 +73,7 @@ describe('i18n Module', () => {
     });
 
     expect(screen.getByTestId('current-locale').textContent).toBe('zh-CN');
-    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon 节点');
+    expect(screen.getByTestId('translated-title').textContent).toBe('Beacon');
     expect(localStorage.getItem('beacon_locale')).toBe('zh-CN');
   });
 

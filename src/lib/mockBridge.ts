@@ -21,6 +21,8 @@ import {
 import { translateMessage } from '../i18n/translate';
 
 const BATTERY_WARNING_CODE = 'battery.low_power_emergency' as const;
+const VISUAL_ASSIST_PROMPT = '你看见了什么';
+const VISUAL_IMAGE_REQUIRED_ERROR = 'No image provided for visual analysis.';
 
 function normalizeLocale(locale?: string): string {
   return locale?.trim() || 'en';
@@ -28,6 +30,10 @@ function normalizeLocale(locale?: string): string {
 
 function localizeBatteryWarning(locale: string): string {
   return translateMessage(locale, 'warning.battery_low');
+}
+
+function isVisualAssistRequest(request: TriageRequest): boolean {
+  return request.categoryHint === translateMessage('en', 'action.visual_help') || request.categoryHint === 'visual_help';
 }
 
 class MockBeaconBridge implements BeaconBridge {
@@ -48,20 +54,26 @@ class MockBeaconBridge implements BeaconBridge {
   }
 
   private buildVisualAssistRequest(request: TriageRequest): TriageRequest {
+    const imageBase64 = request.imageBase64?.trim();
+    const imageUri = request.imageUri?.trim();
+    if (!imageBase64 && !imageUri) {
+      throw new Error(VISUAL_IMAGE_REQUIRED_ERROR);
+    }
+
     return {
       ...request,
-      userText:
-        request.userText.trim() ||
-        (request.imageBase64
-          ? 'What dangers do you see and what should I do next?'
-          : 'What visible details should I check and what should I do next?'),
+      imageBase64,
+      imageUri,
+      userText: request.userText.trim() || VISUAL_ASSIST_PROMPT,
       categoryHint: request.categoryHint ?? translateMessage(this.lastLocale, 'action.visual_help'),
     };
   }
 
   async *triageStream(request: TriageRequest): AsyncIterable<StreamChunk> {
     this.lastLocale = normalizeLocale(request.locale);
-    const streamRequest = request.imageBase64 ? this.buildVisualAssistRequest(request) : request;
+    const streamRequest = request.imageBase64 || request.imageUri || isVisualAssistRequest(request)
+      ? this.buildVisualAssistRequest(request)
+      : request;
     await warmKnowledgeEngine();
     const response = inferTriageResponse(streamRequest);
     const tokens = splitStreamingTokens(response);

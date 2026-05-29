@@ -2,6 +2,7 @@
 #include "engine.h"
 
 #include <exception>
+#include <cstring>
 #include <new>
 
 static void BeaconLiteRtAssignError(NSString *_Nullable *_Nullable target, NSString *message) {
@@ -49,15 +50,29 @@ LiteRtLmConversationConfig *_Nullable BeaconLiteRtSafeConversationConfigCreate(
     const char *_Nullable messagesJson,
     BOOL enableConstrainedDecoding,
     NSString *_Nullable *_Nullable errorMessage) {
+    (void)engine;
     try {
-        return litert_lm_conversation_config_create(
-            engine,
-            sessionConfig,
-            systemMessageJson,
-            toolsJson,
-            messagesJson,
+        LiteRtLmConversationConfig *config = litert_lm_conversation_config_create();
+        if (config == NULL) {
+            return NULL;
+        }
+        if (sessionConfig != NULL) {
+            litert_lm_conversation_config_set_session_config(config, sessionConfig);
+        }
+        if (systemMessageJson != NULL && std::strlen(systemMessageJson) > 0) {
+            litert_lm_conversation_config_set_system_message(config, systemMessageJson);
+        }
+        if (toolsJson != NULL && std::strlen(toolsJson) > 0) {
+            litert_lm_conversation_config_set_tools(config, toolsJson);
+        }
+        if (messagesJson != NULL && std::strlen(messagesJson) > 0) {
+            litert_lm_conversation_config_set_messages(config, messagesJson);
+        }
+        litert_lm_conversation_config_set_enable_constrained_decoding(
+            config,
             enableConstrainedDecoding
         );
+        return config;
     } catch (const std::bad_alloc &exception) {
         BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
     } catch (const std::exception &exception) {
@@ -92,13 +107,19 @@ int BeaconLiteRtSafeConversationSendMessageStream(
     void *_Nullable callbackData,
     NSString *_Nullable *_Nullable errorMessage) {
     try {
-        return litert_lm_conversation_send_message_stream(
+        LiteRtLmConversationOptionalArgs *optionalArgs = litert_lm_conversation_optional_args_create();
+        int status = litert_lm_conversation_send_message_stream(
             conversation,
             messageJson,
             extraContext,
+            optionalArgs,
             callback,
             callbackData
         );
+        if (optionalArgs != NULL) {
+            litert_lm_conversation_optional_args_delete(optionalArgs);
+        }
+        return status;
     } catch (const std::bad_alloc &exception) {
         BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
     } catch (const std::exception &exception) {

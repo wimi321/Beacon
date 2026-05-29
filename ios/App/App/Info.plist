@@ -24,19 +24,22 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>Beacon 需要调用相机拍摄创口、环境和食物线索，供离线自救分析使用。</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Beacon 需要位置信息用于本地 SOS 广播和近场协作求救。</string>
+	<string>Beacon uses the camera to analyze wounds, hazards, and survival clues locally on your device. Beacon 需要调用相机在本机离线分析创口、环境和求生线索。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Beacon 可在必要时保存求生取证图像，帮助后续救援判断。</string>
+	<string>Beacon may save selected survival evidence images only when you choose to do so. Beacon 仅在你主动选择时保存求生取证图像。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Beacon uses selected photos only when you choose to import an image for local visual guidance. Beacon 仅在你主动从相册导入图片时读取所选照片，用于本机离线视觉求助。</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
+		<string>metal</string>
 	</array>
 	<key>UIRequiresFullScreen</key>
 	<true/>

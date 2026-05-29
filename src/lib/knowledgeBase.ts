@@ -1,4 +1,6 @@
+import { Capacitor } from '@capacitor/core';
 import type { RetrievedKnowledge } from './types';
+import { NativeBeacon } from './nativeBeaconPlugin';
 
 export type KnowledgeCard = {
   id: string;
@@ -42,6 +44,19 @@ function knowledgeUrl(): string {
   return `${base.endsWith('/') ? base : `${base}/`}knowledge/offline_knowledge.json`;
 }
 
+async function loadOfflineKnowledgePayload(): Promise<OfflineKnowledgePayload> {
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+    const result = await NativeBeacon.getOfflineKnowledgeBundle();
+    return JSON.parse(result.json) as OfflineKnowledgePayload;
+  }
+
+  const response = await fetch(knowledgeUrl(), { cache: 'force-cache' });
+  if (!response.ok) {
+    throw new Error(`Failed to load offline knowledge bundle: ${response.status} ${response.statusText}`);
+  }
+  return response.json() as Promise<OfflineKnowledgePayload>;
+}
+
 function normalizeCard(card: KnowledgeCard): KnowledgeCard {
   return {
     ...card,
@@ -58,13 +73,7 @@ export async function ensureKnowledgeBaseLoaded(): Promise<OfflineKnowledgePaylo
   }
 
   if (!loadPromise) {
-    loadPromise = fetch(knowledgeUrl(), { cache: 'force-cache' })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to load offline knowledge bundle: ${response.status} ${response.statusText}`);
-        }
-        return response.json() as Promise<OfflineKnowledgePayload>;
-      })
+    loadPromise = loadOfflineKnowledgePayload()
       .then((data) => {
         payload = {
           ...data,
@@ -116,6 +125,7 @@ export function knowledgeCardToRetrieved(card: KnowledgeCard, score: number, str
     sourceId: card.sourceId,
     title: card.title,
     source: card.source,
+    sourceUrl: card.sourceUrl,
     summary: card.summary,
     steps: [...card.steps],
     contraindications: [...card.contraindications],

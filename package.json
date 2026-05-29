@@ -1,7 +1,7 @@
 {
   "name": "beacon-frontend",
   "private": true,
-  "version": "0.2.19",
+  "version": "0.2.20",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -35,9 +35,7 @@
     "@capacitor/core": "^8.3.0",
     "@capacitor/device": "^8.0.2",
     "@capacitor/filesystem": "^8.1.2",
-    "@capacitor/geolocation": "^8.2.0",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
     "lucide-react": "^0.453.0",
     "react": "^18.3.1",

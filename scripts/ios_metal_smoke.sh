@@ -158,8 +158,22 @@ if [[ -z "$DEVICE_ID" ]]; then
       "$XCDEVICE_BIN" list 2>/dev/null | python3 -c '
 import json, sys
 devices = json.load(sys.stdin)
+allow_legacy = False
 for device in devices:
-    if device.get("platform") == "com.apple.platform.iphoneos" and device.get("available") and not device.get("simulator", False):
+    if device.get("platform") != "com.apple.platform.iphoneos":
+        continue
+    if not device.get("available") or device.get("simulator", False):
+        continue
+    model_code = device.get("modelCode", "")
+    if not model_code.startswith("iPhone"):
+        continue
+    try:
+        major = int(model_code.removeprefix("iPhone").split(",", 1)[0])
+    except Exception:
+        major = 0
+    # Beacon iOS E2B validation needs a modern iPhone class. Avoid silently
+    # using old low-memory devices or iPads as release evidence.
+    if major >= 15 or allow_legacy:
         print(device.get("identifier", ""))
         break
 ' || true
@@ -168,7 +182,7 @@ for device in devices:
 fi
 
 if [[ -z "$DEVICE_ID" ]]; then
-  echo "No paired iOS device is currently available. Connect and unlock an iPhone/iPad first." >&2
+  echo "No supported paired iPhone is currently available. Connect and unlock a modern iPhone, then rerun the smoke test." >&2
   exit 1
 fi
 

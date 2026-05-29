@@ -1,8 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Device } from '@capacitor/device';
-import { Geolocation } from '@capacitor/geolocation';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { Network } from '@capacitor/network';
 import { Preferences } from '@capacitor/preferences';
 import type {
   BatteryStatus,
@@ -37,10 +35,9 @@ const STORAGE_KEYS = {
 } as const;
 
 const BATTERY_WARNING_CODE = 'battery.low_power_emergency' as const;
-const VISUAL_ASSIST_CATEGORY =
-  'Visual Help / 视觉求助 / wound bleeding bite sting snake spider tick burn rash plant animal fracture poisoning';
-const VISUAL_ASSIST_PROMPT_WITH_IMAGE = 'What dangers do you see and what should I do next?';
-const VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE = 'What visible details should I check and what should I do next?';
+const VISUAL_ASSIST_CATEGORY = 'visual_help';
+const VISUAL_ASSIST_PROMPT = '你看见了什么';
+const VISUAL_IMAGE_REQUIRED_ERROR = 'No image provided for visual analysis.';
 
 function normalizeLocale(locale?: string): string {
   return locale?.trim() || 'en';
@@ -48,6 +45,37 @@ function normalizeLocale(locale?: string): string {
 
 function localizeBatteryWarning(locale: string): string {
   return translateMessage(locale, 'warning.battery_low');
+}
+
+function isVisualAssistRequest(request: TriageRequest): boolean {
+  return request.categoryHint === VISUAL_ASSIST_CATEGORY || request.categoryHint === 'visual_help';
+}
+
+function createEmptyEvidenceBundle(): EvidenceBundle {
+  return {
+    authoritative: [],
+    supporting: [],
+    matchedCategories: [],
+    queryTerms: [],
+  };
+}
+
+function hasImagePayload(request: TriageRequest): boolean {
+  return Boolean(request.imageBase64?.trim() || request.imageUri?.trim());
+}
+
+function isDefaultVisualInspectionRequest(request: TriageRequest): boolean {
+  return hasImagePayload(request)
+    && isVisualAssistRequest(request)
+    && request.userText.trim() === VISUAL_ASSIST_PROMPT;
+}
+
+function retrieveEvidenceForRequest(request: TriageRequest): EvidenceBundle {
+  // For the default "what do you see" visual turn, let the multimodal model inspect
+  // the image first instead of injecting unrelated wound/snake/tick snippets.
+  return isDefaultVisualInspectionRequest(request)
+    ? createEmptyEvidenceBundle()
+    : retrieveEvidenceBundle(request);
 }
 
 async function safeImpact(style: ImpactStyle): Promise<void> {
@@ -108,8 +136,6 @@ class CapacitorBeaconBridge implements BeaconBridge {
       this.sosState = storedSosState;
     }
 
-    await Network.getStatus().catch(() => null);
-
     const result = await NativeBeacon.listModels();
     this.models = result.models;
   }
@@ -144,13 +170,14 @@ class CapacitorBeaconBridge implements BeaconBridge {
     request: TriageRequest,
   ): Promise<TriageResponse> {
     await warmKnowledgeEngine();
-    const evidence = retrieveEvidenceBundle(request);
+    const evidence = retrieveEvidenceForRequest(request);
     const result = await (mode === 'visual' ? NativeBeacon.analyzeVisual : NativeBeacon.triage)({
       modelId: this.getActiveModelId(),
       userText: request.userText,
       categoryHint: request.categoryHint,
       powerMode: request.powerMode,
       imageBase64: request.imageBase64,
+      imageUri: request.imageUri,
       locale: request.locale,
       sessionId: request.sessionId,
       resetContext: request.resetContext,
@@ -166,16 +193,19 @@ class CapacitorBeaconBridge implements BeaconBridge {
 
   private buildVisualAssistRequest(request: TriageRequest): TriageRequest {
     const trimmedUserText = request.userText.trim();
+    const imageBase64 = request.imageBase64?.trim();
+    const imageUri = request.imageUri?.trim();
+
+    if (!imageBase64 && !imageUri) {
+      throw new Error(VISUAL_IMAGE_REQUIRED_ERROR);
+    }
 
     return {
       ...request,
       categoryHint: request.categoryHint ?? VISUAL_ASSIST_CATEGORY,
-      imageBase64: request.imageBase64,
-      userText:
-        trimmedUserText ||
-        (request.imageBase64
-          ? VISUAL_ASSIST_PROMPT_WITH_IMAGE
-          : VISUAL_ASSIST_PROMPT_WITHOUT_IMAGE),
+      imageBase64,
+      imageUri,
+      userText: trimmedUserText || VISUAL_ASSIST_PROMPT,
     };
   }
 
@@ -189,12 +219,14 @@ class CapacitorBeaconBridge implements BeaconBridge {
   }
 
   async *triageStream(request: TriageRequest): AsyncIterable<StreamChunk> {
-    const streamRequest = request.imageBase64 ? this.buildVisualAssistRequest(request) : request;
+    const streamRequest = request.imageBase64 || request.imageUri || isVisualAssistRequest(request)
+      ? this.buildVisualAssistRequest(request)
+      : request;
     this.lastLocale = normalizeLocale(streamRequest.locale);
     await safeImpact(ImpactStyle.Light);
     await warmKnowledgeEngine();
 
-    const evidence = retrieveEvidenceBundle(streamRequest);
+    const evidence = retrieveEvidenceForRequest(streamRequest);
     const streamId = createStreamId();
     const queue: Array<{
       streamId: string;
@@ -226,6 +258,7 @@ class CapacitorBeaconBridge implements BeaconBridge {
         categoryHint: streamRequest.categoryHint,
         powerMode: streamRequest.powerMode,
         imageBase64: streamRequest.imageBase64,
+        imageUri: streamRequest.imageUri,
         locale: streamRequest.locale,
         sessionId: streamRequest.sessionId,
         resetContext: streamRequest.resetContext,
@@ -296,27 +329,11 @@ class CapacitorBeaconBridge implements BeaconBridge {
     const next = estimateSosState(request.summary, !this.sosState.active);
     this.sosState = next;
 
-    const [position, networkStatus] = await Promise.all([
-      Geolocation.getCurrentPosition({
-        enableHighAccuracy: false,
-        maximumAge: 60_000,
-        timeout: 8_000,
-      }).catch(() => null),
-      Network.getStatus().catch(() => null),
-    ]);
-
     await writeJson(STORAGE_KEYS.sosState, this.sosState);
     await writeJson(STORAGE_KEYS.lastSosPacket, {
       summary: request.summary,
       locale: this.lastLocale,
-      location: position
-        ? {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          }
-        : null,
-      networkConnected: networkStatus?.connected ?? false,
+      networkConnected: false,
       updatedAt: new Date().toISOString(),
     });
 
@@ -327,7 +344,7 @@ class CapacitorBeaconBridge implements BeaconBridge {
   async getBatteryStatus(): Promise<BatteryStatus> {
     const battery = await Device.getBatteryInfo().catch(() => null);
     const levelRaw = battery?.batteryLevel;
-    const hasReportedLevel = typeof levelRaw === 'number' && !Number.isNaN(levelRaw);
+    const hasReportedLevel = typeof levelRaw === 'number' && Number.isFinite(levelRaw) && levelRaw > 0;
     const level =
       hasReportedLevel
         ? levelRaw > 1

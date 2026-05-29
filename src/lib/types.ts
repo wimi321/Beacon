@@ -35,6 +35,7 @@ export type RetrievedKnowledge = {
   sourceId: string;
   title: string;
   source: string;
+  sourceUrl?: string;
   summary: string;
   steps: string[];
   contraindications: string[];
@@ -55,6 +56,7 @@ export type TriageRequest = {
   categoryHint?: string;
   powerMode: PowerMode;
   imageBase64?: string;
+  imageUri?: string;
   locale?: string;
   sessionId: string;
   resetContext?: boolean;
@@ -143,6 +145,9 @@ export type RuntimeDiagnostics = {
   gpuBlockedReason?: string;
   supportedDeviceClass?: SupportedDeviceClass;
   preferredBackend?: PreferredBackend;
+  preparedImageWidth?: number;
+  preparedImageHeight?: number;
+  preparedImageBytes?: number;
 };
 
 export type ModelDescriptor = {

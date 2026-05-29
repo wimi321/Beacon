@@ -78,6 +78,7 @@ vi.mock('@capacitor/camera', () => ({
   },
   CameraResultType: {
     Base64: 'base64',
+    Uri: 'uri',
   },
   CameraSource: {
     Camera: 'camera',
@@ -239,18 +240,15 @@ describe('App', () => {
   it('opens model manager and shows loaded model', async () => {
     renderApp('zh-CN');
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
 
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
 
-  it('opens model manager from a touch-end activation on the settings button', async () => {
+  it('opens model manager from the status badge', async () => {
     renderApp('zh-CN');
 
-    fireEvent.touchEnd((await screen.findAllByRole('button', { name: /设置与模型/i }))[0], {
-      cancelable: true,
-      changedTouches: [{ clientX: 960, clientY: 2240 }],
-    });
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
 
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
@@ -336,10 +334,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /下载并切换 Gemma 4 E2B/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/模型切换完成/)).toBeInTheDocument();
+      expect(screen.getByText(/离线 AI 已就绪/)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /设置与模型/i }));
+    fireEvent.click(screen.getByRole('button', { name: /模型状态/i }));
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
   });
 
@@ -399,7 +397,7 @@ describe('App', () => {
       </I18nProvider>,
     );
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
     const resumeButton = await screen.findByRole('button', { name: /^下载并切换$/i });
 
     expect(screen.queryByText(/下载中 0%/)).toBeNull();
@@ -414,7 +412,7 @@ describe('App', () => {
   it('closes the model manager when swiping the sheet downward', async () => {
     const { container } = renderApp('zh-CN');
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
 
     const sheetHeader = container.querySelector('.model-panel-header');
@@ -475,7 +473,7 @@ describe('App', () => {
       </I18nProvider>,
     );
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
 
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
     expect(screen.queryByText('未加载模型')).toBeNull();
@@ -576,7 +574,7 @@ describe('App', () => {
       </I18nProvider>,
     );
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
 
     expect((await screen.findAllByText(/当前已加载/)).length).toBeGreaterThan(0);
     expect(screen.queryByText(/请先在设置中下载离线急救包/)).toBeNull();
@@ -615,7 +613,7 @@ describe('App', () => {
       </I18nProvider>,
     );
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /设置与模型/i }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /模型状态/i }))[0]);
 
     expect(await screen.findByText(/正在准备离线急救系统，请保持应用开启/)).toBeInTheDocument();
     expect(screen.queryByText('未加载模型')).toBeNull();
@@ -840,6 +838,7 @@ describe('App', () => {
               sourceId: 'stop-the-bleed',
               title: 'Bleeding Control',
               source: 'Stop the Bleed',
+              sourceUrl: 'https://www.stopthebleed.org/',
               summary: 'Apply firm direct pressure.',
               steps: ['Apply pressure'],
               contraindications: [],
@@ -893,7 +892,7 @@ describe('App', () => {
     const { container } = renderApp('zh-CN');
 
     fireEvent.click(await screen.findByRole('button', { name: /火场被困/i }));
-    expect(await screen.findByText(/Beacon 节点/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Beacon/i)).toBeInTheDocument();
 
     const appContainer = container.querySelector('.container');
     expect(appContainer).not.toBeNull();
@@ -910,7 +909,7 @@ describe('App', () => {
     });
 
     expect(screen.queryByRole('heading', { name: /先活下来，再想别的/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/Beacon 节点/i)).toBeInTheDocument();
+    expect(screen.getByText(/Beacon/i)).toBeInTheDocument();
   });
 
   it('stops auto-retrying model init after a hard native failure', async () => {
@@ -953,6 +952,32 @@ describe('App', () => {
     expect(loadAttempts).toBe(1);
   });
 
+  it('does not expose low-level LiteRT runtime errors in the chat UI', async () => {
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.initialize = async () => undefined;
+    mockBridge.triageStream = async function* () {
+      throw new Error('INTERNAL: signature=prefill_1024 mode=sync CompiledModel::Run failed: Failed to invoke the compiled model');
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'zh-CN');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    const chatInput = await screen.findByPlaceholderText('输入你现在的情况......');
+    fireEvent.change(chatInput, { target: { value: '手臂出血怎么办' } });
+    fireEvent.submit(chatInput.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('错误：生成建议失败，请重试');
+    }, { timeout: 4000 });
+    expect(document.body.textContent).not.toContain('CompiledModel::Run failed');
+    expect(document.body.textContent).not.toContain('signature=prefill');
+  });
+
   it('keeps the full streamed text and hides matched categories metadata', async () => {
     const mockBridge = createMockBeaconBridge();
     mockBridge.initialize = async () => undefined;
@@ -973,6 +998,7 @@ describe('App', () => {
               sourceId: 'ready-fire',
               title: 'Building Fire',
               source: 'Ready.gov',
+              sourceUrl: 'https://www.ready.gov/home-fires',
               summary: 'Fire emergency',
               steps: ['Stay low'],
               contraindications: [],
@@ -1004,8 +1030,126 @@ describe('App', () => {
 
     expect(await screen.findByText('先远离浓烟并压低身体移动。', {}, { timeout: 2000 })).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByText('权威来源')).toBeInTheDocument();
+      expect(screen.getByText(/权威指南认证/)).toBeInTheDocument();
     });
+    expect(screen.getByText('来源与引用')).toBeInTheDocument();
+    const sourceLink = screen.getByRole('link', { name: 'Building Fire' });
+    expect(sourceLink).toHaveAttribute('href', 'https://www.ready.gov/home-fires');
     expect(screen.queryByText('命中类别')).toBeNull();
+  });
+
+  it('shows fallback medical citations when an answer gives health guidance without retrieved evidence', async () => {
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.initialize = async () => undefined;
+    mockBridge.triageStream = async function* () {
+      const finalResponse: TriageResponse = {
+        summary: 'If the wound is bleeding, apply firm pressure with clean cloth.',
+        steps: ['Keep pressure steady and seek emergency care if bleeding does not stop.'],
+        disclaimer: 'Local guidance only.',
+        isKnowledgeBacked: false,
+        guidanceMode: 'grounded',
+        evidence: {
+          authoritative: [],
+          supporting: [],
+          matchedCategories: [],
+          queryTerms: [],
+        },
+        usedProfileName: 'gemma-4-e2b-balanced',
+      };
+
+      yield {
+        delta: 'If the wound is bleeding, apply firm pressure with clean cloth.',
+      };
+      yield {
+        delta: '',
+        done: true,
+        final: finalResponse,
+      };
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'en');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    const chatInput = await screen.findByPlaceholderText('Describe your current situation...');
+    fireEvent.change(chatInput, { target: { value: 'My arm wound is bleeding.' } });
+    fireEvent.submit(chatInput.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('apply firm pressure');
+    }, { timeout: 4000 });
+    expect(screen.getByText('Sources and citations')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'First Aid' })).toHaveAttribute(
+      'href',
+      'https://medlineplus.gov/firstaid.html',
+    );
+  });
+
+  it('adds clickable fallback citations when retrieved medical evidence has no source URL', async () => {
+    const mockBridge = createMockBeaconBridge();
+    mockBridge.initialize = async () => undefined;
+    mockBridge.triageStream = async function* () {
+      const finalResponse: TriageResponse = {
+        summary: 'For a burn, cool the area with running water and remove tight items.',
+        steps: ['Do not apply butter or ice directly to the burn.'],
+        disclaimer: 'Local guidance only.',
+        isKnowledgeBacked: true,
+        guidanceMode: 'grounded',
+        evidence: {
+          authoritative: [
+            {
+              id: 'offline-burn-card',
+              sourceId: 'offline-burn-card',
+              title: 'Burn first aid card',
+              source: 'Offline Medical Bundle',
+              summary: 'Burn care',
+              steps: ['Cool the burn'],
+              contraindications: ['Do not use ice'],
+              escalation: 'Seek emergency care for severe burns',
+              strategy: 'directRule',
+              score: 1,
+            },
+          ],
+          supporting: [],
+          matchedCategories: ['burn'],
+          queryTerms: ['burn'],
+        },
+        usedProfileName: 'gemma-4-e2b-balanced',
+      };
+
+      yield {
+        delta: 'For a burn, cool the area with running water and remove tight items.',
+      };
+      yield {
+        delta: '',
+        done: true,
+        final: finalResponse,
+      };
+    };
+    window.beaconBridge = mockBridge;
+    window.localStorage.setItem('beacon_locale', 'en');
+
+    render(
+      <I18nProvider>
+        <App />
+      </I18nProvider>,
+    );
+
+    const chatInput = await screen.findByPlaceholderText('Describe your current situation...');
+    fireEvent.change(chatInput, { target: { value: 'My hand has a burn injury.' } });
+    fireEvent.submit(chatInput.closest('form') as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('cool the area');
+    }, { timeout: 4000 });
+    expect(screen.getByText('Burn first aid card')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'First Aid' })).toHaveAttribute(
+      'href',
+      'https://medlineplus.gov/firstaid.html',
+    );
   });
 });

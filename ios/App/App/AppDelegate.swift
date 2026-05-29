@@ -29,43 +29,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func kickOffBeaconSmokeHarnessIfNeeded() {
-        let selector = NSSelectorFromString("kickOffLaunchSmokeTestIfRequested")
-        let candidateClassNames = [
-            "BeaconNativePlugin",
-            "App.BeaconNativePlugin"
-        ]
-        var auditEntries: [[String: Any]] = []
-
-        for className in candidateClassNames {
-            guard let pluginClass = NSClassFromString(className) else {
-                auditEntries.append([
-                    "className": className,
-                    "resolved": false
-                ])
-                continue
-            }
-            let pluginObject = pluginClass as AnyObject
-            let responds = pluginObject.responds(to: selector)
-            auditEntries.append([
-                "className": className,
-                "resolved": true,
-                "responds": responds
-            ])
-            if responds {
-                persistBeaconSmokeAudit([
-                    "stage": "selector-dispatched",
-                    "timestamp": ISO8601DateFormatter().string(from: Date()),
-                    "entries": auditEntries
-                ])
-                _ = pluginObject.perform(selector)
-                return
-            }
-        }
-
+        // Smoke tests should run through the registered Capacitor plugin instance.
+        // Creating a standalone native runner during app launch can race WebView
+        // bootstrap and initialize LiteRT twice on the same process.
         persistBeaconSmokeAudit([
-            "stage": "selector-not-dispatched",
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "entries": auditEntries
+            "stage": "deferred-to-capacitor-plugin",
+            "timestamp": ISO8601DateFormatter().string(from: Date())
         ])
     }
 

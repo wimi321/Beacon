@@ -67,6 +67,34 @@ describe('formatModelTextForDisplay', () => {
       '至少应携带以下装备： 导航工具、头灯或手电。\n• 保暖防雨层。\n• 急救包。 足够饮水和高热量食物。',
     );
   });
+
+  it('removes orphan trailing numbered-list markers from interrupted generation', () => {
+    expect(
+      formatModelTextForDisplay(
+        '4. 优先保障生存：优先建立保温、饮水、求救信号这三件事，然后再考虑短距离侦察。 5',
+      ),
+    ).toBe(
+      '4. 优先保障生存：优先建立保温、饮水、求救信号这三件事，然后再考虑短距离侦察。',
+    );
+  });
+
+  it('removes standalone trailing numbered-list markers before markdown rendering', () => {
+    expect(
+      formatModelTextForDisplay(
+        '1. 停下来。\n2. 保暖。\n3. 发信号。\n4. 等待救援。\n5',
+      ),
+    ).toBe('1. 停下来。\n2. 保暖。\n3. 发信号。\n4. 等待救援。');
+  });
+
+  it('removes a final incomplete block caused by output-token truncation', () => {
+    expect(
+      formatModelTextForDisplay(
+        '第一步：停下来，冷静思考。\n\n1. 自我评估：检查受伤和失温。\n\n第二步：优先处理生存需求。\n\n1. 保温：建立一个临时庇护所，防止体',
+      ),
+    ).toBe(
+      '第一步：停下来，冷静思考。\n\n1. 自我评估：检查受伤和失温。\n\n第二步：优先处理生存需求。',
+    );
+  });
 });
 
 describe('splitModelResponseText', () => {

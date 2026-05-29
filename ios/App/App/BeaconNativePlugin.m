@@ -1,11 +1,14 @@
 #import <Foundation/Foundation.h>
 #import <TargetConditionals.h>
 #import <dlfcn.h>
+#import <copyfile.h>
+#import <errno.h>
+#import <sys/clonefile.h>
 #import <UIKit/UIKit.h>
 #import <Capacitor/Capacitor.h>
 #import <Capacitor/CAPBridgedJSTypes.h>
 #import "BeaconLiteRtSafeBridge.h"
-@import BeaconLiteRtLm;
+#include "engine.h"
 @import Metal;
 
 static NSString * const kBeaconLoadedModelIdKey = @"beacon.native.loadedModelId";
@@ -41,8 +44,7 @@ static NSUInteger const kBeaconMaxRecentChatContextChars = 960;
 static NSUInteger const kBeaconMaxLastVisualContextChars = 260;
 static NSUInteger const kBeaconMaxRememberedUserTurnChars = 160;
 static NSUInteger const kBeaconMaxRememberedAssistantTurnChars = 260;
-static NSString * const kBeaconDefaultVisualPromptWithImage = @"What dangers do you see and what should I do next?";
-static NSString * const kBeaconDefaultVisualPromptWithoutImage = @"What visible details should I check and what should I do next?";
+static NSString * const kBeaconDefaultVisualPrompt = @"你看见了什么";
 static BOOL gBeaconSmokeRunClaimed = NO;
 static id gBeaconStandaloneSmokeRunner = nil;
 static void *gBeaconMetalAcceleratorHandle = NULL;
@@ -409,12 +411,12 @@ static NSString *BeaconOutputLanguageReminder(NSString *locale) {
     return [NSString stringWithFormat:@"Write the final answer only in %@. If retrieved knowledge is in another language, translate it into %@ before answering.", languageName, languageName];
 }
 
-static NSString *BeaconResolvedVisualUserText(NSString *userText, BOOL hasImage) {
+static NSString *BeaconResolvedVisualUserText(NSString *userText) {
     NSString *trimmed = BeaconTrimmedString(userText ?: @"");
     if (trimmed.length > 0) {
         return trimmed;
     }
-    return hasImage ? kBeaconDefaultVisualPromptWithImage : kBeaconDefaultVisualPromptWithoutImage;
+    return kBeaconDefaultVisualPrompt;
 }
 
 static NSString *BeaconCompactGroundingContext(NSString *groundingContext) {
@@ -469,17 +471,158 @@ static NSString *BeaconNormalizedBase64Blob(NSString *value) {
     return trimmed.length > 0 ? trimmed : nil;
 }
 
-static NSArray<NSDictionary *> *BeaconBuildConversationContent(NSString *prompt, NSString *imageBase64) {
+static NSString *BeaconPathFromCapacitorPortableURI(NSString *value) {
+    NSString *decoded = [value stringByRemovingPercentEncoding] ?: value;
+    NSArray<NSString *> *markers = @[@"/_capacitor_file_/", @"_capacitor_file_/"];
+    for (NSString *marker in markers) {
+        NSRange markerRange = [decoded rangeOfString:marker];
+        if (markerRange.location == NSNotFound) {
+            continue;
+        }
+        NSUInteger pathStart = markerRange.location + markerRange.length;
+        if (pathStart >= decoded.length) {
+            return nil;
+        }
+        NSString *path = [decoded substringFromIndex:pathStart];
+        if (![path hasPrefix:@"/"]) {
+            path = [@"/" stringByAppendingString:path];
+        }
+        return path.length > 1 ? path : nil;
+    }
+    return nil;
+}
+
+static NSString *BeaconImagePathFromURI(NSString *value) {
+    NSString *trimmed = BeaconTrimmedString(value ?: @"");
+    if (trimmed.length == 0) {
+        return nil;
+    }
+
+    NSURL *url = [NSURL URLWithString:trimmed];
+    if (url != nil && url.isFileURL) {
+        return url.path.length > 0 ? url.path : nil;
+    }
+    NSString *portablePath = BeaconPathFromCapacitorPortableURI(trimmed);
+    if (portablePath.length > 0) {
+        return portablePath;
+    }
+    if ([trimmed hasPrefix:@"/"]) {
+        return trimmed;
+    }
+    return nil;
+}
+
+static BOOL BeaconHasRawImagePayload(NSDictionary *request) {
+    NSString *rawBase64 = [request[@"imageBase64"] isKindOfClass:[NSString class]] ? BeaconTrimmedString(request[@"imageBase64"]) : @"";
+    NSString *rawURI = [request[@"imageUri"] isKindOfClass:[NSString class]] ? BeaconTrimmedString(request[@"imageUri"]) : @"";
+    return rawBase64.length > 0 || rawURI.length > 0;
+}
+
+static BOOL BeaconImageFileIsReadable(NSString *imagePath) {
+    BOOL isDirectory = NO;
+    return imagePath.length > 0
+        && [[NSFileManager defaultManager] fileExistsAtPath:imagePath isDirectory:&isDirectory]
+        && !isDirectory
+        && [[NSFileManager defaultManager] isReadableFileAtPath:imagePath];
+}
+
+static NSString *BeaconPrepareImageForVision(NSString *imagePath,
+                                             NSInteger *preparedWidth,
+                                             NSInteger *preparedHeight,
+                                             unsigned long long *preparedBytes,
+                                             NSError **error) {
+    UIImage *sourceImage = imagePath.length > 0 ? [UIImage imageWithContentsOfFile:imagePath] : nil;
+    if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
+        if (error != nil) {
+            *error = [NSError errorWithDomain:@"BeaconNative"
+                                         code:104
+                                     userInfo:@{NSLocalizedDescriptionKey: @"The selected image could not be decoded for visual analysis."}];
+        }
+        return nil;
+    }
+
+    CGFloat longestEdge = MAX(sourceImage.size.width, sourceImage.size.height);
+    CGFloat scale = longestEdge > 1024.0 ? (1024.0 / longestEdge) : 1.0;
+    CGSize targetSize = CGSizeMake(MAX(1.0, round(sourceImage.size.width * scale)),
+                                   MAX(1.0, round(sourceImage.size.height * scale)));
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+    format.scale = 1.0;
+    format.opaque = YES;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:targetSize format:format];
+    UIImage *preparedImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [[UIColor whiteColor] setFill];
+        UIRectFill(CGRectMake(0, 0, targetSize.width, targetSize.height));
+        [sourceImage drawInRect:CGRectMake(0, 0, targetSize.width, targetSize.height)];
+    }];
+
+    NSData *jpegData = UIImageJPEGRepresentation(preparedImage, 0.8);
+    if (jpegData.length == 0) {
+        if (error != nil) {
+            *error = [NSError errorWithDomain:@"BeaconNative"
+                                         code:104
+                                     userInfo:@{NSLocalizedDescriptionKey: @"The selected image could not be prepared for visual analysis."}];
+        }
+        return nil;
+    }
+
+    NSString *filename = [NSString stringWithFormat:@"beacon-vision-%@.jpg", [[NSUUID UUID] UUIDString]];
+    NSURL *url = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:filename];
+    NSError *writeError = nil;
+    if (![jpegData writeToURL:url options:NSDataWritingAtomic error:&writeError]) {
+        if (error != nil) {
+            *error = writeError ?: [NSError errorWithDomain:@"BeaconNative"
+                                                       code:104
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"The selected image could not be written for visual analysis."}];
+        }
+        return nil;
+    }
+
+    if (preparedWidth != NULL) {
+        *preparedWidth = (NSInteger)llround(targetSize.width);
+    }
+    if (preparedHeight != NULL) {
+        *preparedHeight = (NSInteger)llround(targetSize.height);
+    }
+    if (preparedBytes != NULL) {
+        *preparedBytes = (unsigned long long)jpegData.length;
+    }
+    return url.path;
+}
+
+static NSError *BeaconImagePayloadValidationError(NSDictionary *request, NSString *imagePath) {
+    if (imagePath.length > 0 && !BeaconImageFileIsReadable(imagePath)) {
+        return [NSError errorWithDomain:@"BeaconNative"
+                                   code:104
+                               userInfo:@{NSLocalizedDescriptionKey: @"The selected image file is not readable."}];
+    }
+
+    if (BeaconHasRawImagePayload(request) && imagePath.length == 0) {
+        return [NSError errorWithDomain:@"BeaconNative"
+                                   code:104
+                               userInfo:@{NSLocalizedDescriptionKey: @"No readable image was received for visual analysis."}];
+    }
+
+    return nil;
+}
+
+static NSArray<NSDictionary *> *BeaconBuildConversationContent(NSString *prompt, NSString *imageBase64, NSString *imagePath) {
     NSMutableArray<NSDictionary *> *content = [NSMutableArray array];
     NSString *safePrompt = prompt ?: @"";
-    if (imageBase64.length > 0) {
-        [content addObject:@{ @"type": @"image", @"blob": imageBase64 }];
-        if (safePrompt.length > 0) {
-            [content addObject:@{ @"type": @"text", @"text": safePrompt }];
-        }
+    if (safePrompt.length > 0) {
+        [content addObject:@{ @"type": @"text", @"text": safePrompt }];
+    }
+    if (imagePath.length > 0) {
+        [content addObject:@{ @"type": @"image", @"path": imagePath }];
         return content;
     }
-    [content addObject:@{ @"type": @"text", @"text": safePrompt }];
+    if (imageBase64.length > 0) {
+        [content addObject:@{ @"type": @"image", @"blob": imageBase64 }];
+        return content;
+    }
+    if (content.count == 0) {
+        [content addObject:@{ @"type": @"text", @"text": @"" }];
+    }
     return content;
 }
 
@@ -623,6 +766,60 @@ static BOOL BeaconRuntimeSymbolPresent(const char *symbolName) {
     return symbolName != NULL && dlsym(RTLD_DEFAULT, symbolName) != NULL;
 }
 
+static BOOL BeaconLiteRtCallEngineSettingsSetCString(
+    LiteRtLmEngineSettings *settings,
+    const char *symbolName,
+    const char *value
+) {
+    if (settings == NULL || symbolName == NULL || value == NULL) {
+        return NO;
+    }
+    typedef void (*Setter)(LiteRtLmEngineSettings *, const char *);
+    Setter setter = (Setter)dlsym(RTLD_DEFAULT, symbolName);
+    if (setter == NULL) {
+        BeaconNativeLog(@"LiteRT optional symbol unavailable: %s", symbolName);
+        return NO;
+    }
+    setter(settings, value);
+    return YES;
+}
+
+static BOOL BeaconLiteRtCallEngineSettingsSetInt(
+    LiteRtLmEngineSettings *settings,
+    const char *symbolName,
+    int value
+) {
+    if (settings == NULL || symbolName == NULL) {
+        return NO;
+    }
+    typedef void (*Setter)(LiteRtLmEngineSettings *, int);
+    Setter setter = (Setter)dlsym(RTLD_DEFAULT, symbolName);
+    if (setter == NULL) {
+        BeaconNativeLog(@"LiteRT optional symbol unavailable: %s", symbolName);
+        return NO;
+    }
+    setter(settings, value);
+    return YES;
+}
+
+static BOOL BeaconLiteRtCallSessionConfigSetBool(
+    LiteRtLmSessionConfig *config,
+    const char *symbolName,
+    bool value
+) {
+    if (config == NULL || symbolName == NULL) {
+        return NO;
+    }
+    typedef void (*Setter)(LiteRtLmSessionConfig *, bool);
+    Setter setter = (Setter)dlsym(RTLD_DEFAULT, symbolName);
+    if (setter == NULL) {
+        BeaconNativeLog(@"LiteRT optional symbol unavailable: %s", symbolName);
+        return NO;
+    }
+    setter(config, value);
+    return YES;
+}
+
 static BOOL BeaconBundleContainsLibraryNamed(NSString *libraryName) {
     if (libraryName.length == 0) {
         return NO;
@@ -673,6 +870,37 @@ static NSString *BeaconLiteRtRuntimeLibraryDirectory(void) {
         return [bundle.bundleURL.path stringByAppendingPathComponent:@"Frameworks"];
     }
     return nil;
+}
+
+static NSString *BeaconLiteRtMetalAcceleratorPath(void) {
+    NSString *runtimeLibraryDir = BeaconLiteRtRuntimeLibraryDirectory();
+    if (runtimeLibraryDir.length == 0) {
+        return nil;
+    }
+
+    NSString *frameworkPath = [[runtimeLibraryDir
+        stringByAppendingPathComponent:@"LiteRtMetalAccelerator.framework"]
+        stringByAppendingPathComponent:@"LiteRtMetalAccelerator"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:frameworkPath]) {
+        return frameworkPath;
+    }
+
+    NSString *legacyDylibPath = [runtimeLibraryDir stringByAppendingPathComponent:@"libLiteRtMetalAccelerator.dylib"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:legacyDylibPath]) {
+        return legacyDylibPath;
+    }
+    return frameworkPath;
+}
+
+static NSString *BeaconLiteRtDispatchLibraryDirectory(NSString *runtimeLibraryPath) {
+    if (runtimeLibraryPath.length == 0) {
+        return BeaconLiteRtRuntimeLibraryDirectory();
+    }
+    NSString *parent = [runtimeLibraryPath stringByDeletingLastPathComponent];
+    if ([parent.lastPathComponent hasSuffix:@".framework"]) {
+        return parent;
+    }
+    return BeaconLiteRtRuntimeLibraryDirectory();
 }
 
 static NSString *BeaconNormalizedRuntimeDispatchMode(NSString *rawMode) {
@@ -910,11 +1138,10 @@ static NSDictionary *BeaconLiteRtRuntimeAudit(void) {
     BOOL metalArgumentBufferSymbolPresent = BeaconRuntimeSymbolPresent("LrtSetGpuOptionsUseMetalArgumentBuffers");
     BOOL staticTopKMetalSamplerSymbolPresent = BeaconRuntimeSymbolPresent("LiteRtTopKMetalSampler_Create_Static");
     BOOL topKMetalSamplerDylibPresent = BeaconBundleContainsLibraryNamed(@"libLiteRtTopKMetalSampler.dylib");
+    BOOL metalAcceleratorFrameworkPresent = BeaconBundleContainsLibraryNamed(@"LiteRtMetalAccelerator");
     BOOL metalAcceleratorDylibPresent = BeaconBundleContainsLibraryNamed(@"libLiteRtMetalAccelerator.dylib");
     NSString *runtimeLibraryDir = BeaconLiteRtRuntimeLibraryDirectory();
-    NSString *expectedMetalAcceleratorPath = runtimeLibraryDir.length > 0
-        ? [runtimeLibraryDir stringByAppendingPathComponent:@"libLiteRtMetalAccelerator.dylib"]
-        : nil;
+    NSString *expectedMetalAcceleratorPath = BeaconLiteRtMetalAcceleratorPath();
     NSDictionary *metalAcceleratorProbe = BeaconDlopenProbe(expectedMetalAcceleratorPath);
     NSString *runtimeDispatchMode = BeaconLiteRtRuntimeDispatchMode();
 
@@ -925,6 +1152,7 @@ static NSDictionary *BeaconLiteRtRuntimeAudit(void) {
         @"metalArgumentBufferSymbolPresent": @(metalArgumentBufferSymbolPresent),
         @"staticTopKMetalSamplerSymbolPresent": @(staticTopKMetalSamplerSymbolPresent),
         @"topKMetalSamplerDylibPresent": @(topKMetalSamplerDylibPresent),
+        @"metalAcceleratorFrameworkPresent": @(metalAcceleratorFrameworkPresent),
         @"metalAcceleratorDylibPresent": @(metalAcceleratorDylibPresent),
         @"runtimeLibraryDir": runtimeLibraryDir ?: @"",
         @"expectedMetalAcceleratorPath": expectedMetalAcceleratorPath ?: @"",
@@ -988,6 +1216,10 @@ static NSString *BeaconBuildUserPrompt(NSString *locale,
     NSString *incident = BeaconTruncatedPreview(BeaconTrimmedString(userText ?: @""), 260);
     [sections addObject:[NSString stringWithFormat:@"USER_INPUT:\n%@", incident]];
     NSString *compactGrounding = BeaconCompactGroundingContext(groundingContext);
+    if (hasImage && compactGrounding.length == 0) {
+        [sections addObject:@"IMAGE_INPUT:\nAn image is attached. Describe only clearly visible objects, scene details, and obvious risks. Do not invent people, injuries, or hazards that are not visible. If an area is blurry, say it is blurry."];
+        return [sections componentsJoinedByString:@"\n"];
+    }
     NSString *knowledgeBase = compactGrounding.length > 0 ? compactGrounding : @"(none)";
     [sections addObject:[NSString stringWithFormat:@"KNOWLEDGE_BASE:\n%@", knowledgeBase]];
     return [sections componentsJoinedByString:@"\n"];
@@ -998,6 +1230,7 @@ static NSString *BeaconBuildUserPrompt(NSString *locale,
 @property(nonatomic, copy, readonly) NSString *assistantText;
 - (instancetype)initWithUserText:(NSString *)userText assistantText:(NSString *)assistantText;
 @end
+
 
 @implementation BeaconSessionMemoryTurn
 - (instancetype)initWithUserText:(NSString *)userText assistantText:(NSString *)assistantText {
@@ -1437,7 +1670,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     };
 }
 
-@interface BeaconNativePlugin : CAPPlugin <CAPBridgedPlugin, BeaconNativeStreamHandling>
+@interface BeaconNativePlugin : CAPPlugin <BeaconNativeStreamHandling>
 + (void)kickOffLaunchSmokeTestIfRequested;
 @end
 
@@ -1460,6 +1693,9 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     BOOL _loadedEngineRequiresVision;
     BOOL _activeConversationRequiresVision;
     NSDictionary *_lastRuntimeAudit;
+    NSInteger _lastPreparedImageWidth;
+    NSInteger _lastPreparedImageHeight;
+    unsigned long long _lastPreparedImageBytes;
     BeaconSessionMemory *_sessionMemory;
     LiteRtLmEngine *_engine;
     LiteRtLmConversation *_conversation;
@@ -1470,37 +1706,9 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
 }
 
 + (void)load {
-    if (!BeaconSmokeTestRequested()) {
-        return;
-    }
-
-    [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidFinishLaunchingNotification
-                                                      object:nil
-                                                       queue:[NSOperationQueue mainQueue]
-                                                  usingBlock:^(__unused NSNotification *note) {
-        [BeaconNativePlugin kickOffLaunchSmokeTestIfRequested];
-    }];
-}
-
-- (NSString *)identifier {
-    return @"BeaconNativePlugin";
-}
-
-- (NSString *)jsName {
-    return @"BeaconNative";
-}
-
-- (NSArray<CAPPluginMethod *> *)pluginMethods {
-    NSMutableArray<CAPPluginMethod *> *methods = [NSMutableArray new];
-    CAP_PLUGIN_METHOD(listModels, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(loadModel, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(downloadModel, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(triage, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(triageStream, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(cancelActiveInference, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(analyzeVisual, CAPPluginReturnPromise);
-    CAP_PLUGIN_METHOD(getRuntimeDiagnostics, CAPPluginReturnPromise);
-    return methods;
+    // Release smoke tests are scheduled from the registered Capacitor plugin
+    // instance. Avoid launching a second standalone LiteRT runner during app
+    // startup, which can race the WebView bridge and double-initialize runtime.
 }
 
 - (void)dealloc {
@@ -1587,6 +1795,27 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     return filtered.count > 0 ? filtered : @[ BeaconFallbackModelSpec() ];
 }
 
+- (void)getOfflineKnowledgeBundle:(CAPPluginCall *)call {
+    NSURL *knowledgeURL = [[NSBundle mainBundle] URLForResource:@"offline_knowledge"
+                                                  withExtension:@"json"
+                                                   subdirectory:@"public/knowledge"];
+    if (knowledgeURL == nil) {
+        [self rejectCall:call message:@"Bundled offline knowledge was not found." error:nil];
+        return;
+    }
+
+    NSError *error = nil;
+    NSString *json = [NSString stringWithContentsOfURL:knowledgeURL
+                                              encoding:NSUTF8StringEncoding
+                                                 error:&error];
+    if (json.length == 0) {
+        [self rejectCall:call message:(error.localizedDescription ?: @"Bundled offline knowledge is empty.") error:error];
+        return;
+    }
+
+    [call resolve:@{ @"json": json }];
+}
+
 - (NSDictionary *)modelSpecForId:(NSString *)modelId {
     for (NSDictionary *spec in _modelCatalog) {
         if ([spec[@"id"] isEqualToString:modelId]) {
@@ -1627,6 +1856,121 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
         return bundled;
     }
     return nil;
+}
+
+- (unsigned long long)fileSizeAtURL:(NSURL *)url {
+    if (url == nil || url.path.length == 0) {
+        return 0;
+    }
+    NSDictionary<NSFileAttributeKey, id> *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:nil];
+    return [attributes fileSize];
+}
+
+- (BOOL)modelFileAtURL:(NSURL *)url matchesExpectedSizeForSpec:(NSDictionary *)spec bundledURL:(NSURL *)bundledURL {
+    unsigned long long currentSize = [self fileSizeAtURL:url];
+    if (currentSize == 0) {
+        return NO;
+    }
+    unsigned long long bundledSize = [self fileSizeAtURL:bundledURL];
+    if (bundledSize > 0 && currentSize == bundledSize) {
+        return YES;
+    }
+
+    unsigned long long specSize = 0;
+    id sizeValue = spec[@"sizeInBytes"];
+    if ([sizeValue respondsToSelector:@selector(unsignedLongLongValue)]) {
+        specSize = [sizeValue unsignedLongLongValue];
+    }
+    if (specSize > 0 && currentSize == specSize) {
+        return YES;
+    }
+
+    BeaconNativeLog(@"runtime model size mismatch current=%llu bundled=%llu spec=%llu path=%@",
+                    currentSize,
+                    bundledSize,
+                    specSize,
+                    url.path ?: @"");
+    return bundledSize == 0 && specSize == 0;
+}
+
+- (NSURL *)writableRuntimeModelURLForSpec:(NSDictionary *)spec error:(NSError **)error {
+    NSURL *downloaded = [self downloadedModelURLForSpec:spec creatingParentIfNeeded:YES];
+    NSURL *bundled = [self bundledModelURLForSpec:spec];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    if (downloaded != nil
+        && [fileManager fileExistsAtPath:downloaded.path]
+        && [self modelFileAtURL:downloaded matchesExpectedSizeForSpec:spec bundledURL:bundled]) {
+        return downloaded;
+    }
+
+    if (bundled == nil || ![fileManager fileExistsAtPath:bundled.path]) {
+        if (error != nil) {
+            *error = [NSError errorWithDomain:@"BeaconNative"
+                                         code:101
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Gemma 4 E2B is not packaged into this iOS build."}];
+        }
+        return nil;
+    }
+
+    NSURL *directory = [downloaded URLByDeletingLastPathComponent];
+    [fileManager createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *temporary = [directory URLByAppendingPathComponent:[NSString stringWithFormat:@".%@.%@.tmp",
+                                                              downloaded.lastPathComponent ?: @"model",
+                                                              [[NSUUID UUID] UUIDString]]
+                                                  isDirectory:NO];
+    [fileManager removeItemAtURL:temporary error:nil];
+
+    int cloneResult = clonefile(bundled.path.fileSystemRepresentation,
+                                temporary.path.fileSystemRepresentation,
+                                0);
+    NSError *copyError = nil;
+    if (cloneResult != 0) {
+        BeaconNativeLog(@"APFS clone for bundled model failed errno=%d; falling back to file copy", errno);
+        if (![fileManager copyItemAtURL:bundled toURL:temporary error:&copyError]) {
+            if (error != nil) {
+                NSString *message = [NSString stringWithFormat:@"Failed to prepare writable Gemma 4 E2B model copy: %@",
+                                     copyError.localizedDescription ?: @"unknown error"];
+                *error = [NSError errorWithDomain:@"BeaconNative"
+                                             code:119
+                                         userInfo:@{NSLocalizedDescriptionKey: message}];
+            }
+            [fileManager removeItemAtURL:temporary error:nil];
+            return nil;
+        }
+    }
+
+    NSNumber *excludeFromBackup = @YES;
+    [temporary setResourceValue:excludeFromBackup forKey:NSURLIsExcludedFromBackupKey error:nil];
+    NSDictionary *attributes = @{ NSFileProtectionKey: NSFileProtectionCompleteUntilFirstUserAuthentication };
+    [fileManager setAttributes:attributes ofItemAtPath:temporary.path error:nil];
+
+    if (![self modelFileAtURL:temporary matchesExpectedSizeForSpec:spec bundledURL:bundled]) {
+        if (error != nil) {
+            *error = [NSError errorWithDomain:@"BeaconNative"
+                                         code:120
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Prepared Gemma 4 E2B runtime model failed size validation."}];
+        }
+        [fileManager removeItemAtURL:temporary error:nil];
+        return nil;
+    }
+
+    [fileManager removeItemAtURL:downloaded error:nil];
+    if (![fileManager moveItemAtURL:temporary toURL:downloaded error:&copyError]) {
+        if (error != nil) {
+            NSString *message = [NSString stringWithFormat:@"Failed to activate writable Gemma 4 E2B model: %@",
+                                 copyError.localizedDescription ?: @"unknown error"];
+            *error = [NSError errorWithDomain:@"BeaconNative"
+                                         code:121
+                                     userInfo:@{NSLocalizedDescriptionKey: message}];
+        }
+        [fileManager removeItemAtURL:temporary error:nil];
+        return nil;
+    }
+    [downloaded setResourceValue:excludeFromBackup forKey:NSURLIsExcludedFromBackupKey error:nil];
+    [fileManager setAttributes:attributes ofItemAtPath:downloaded.path error:nil];
+    BeaconNativeLog(@"prepared writable runtime model path=%@", downloaded.path ?: @"");
+    return downloaded;
 }
 
 - (NSString *)defaultAvailableModelId {
@@ -1685,7 +2029,14 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
         return @"cpu";
     }
     NSString *persisted = [self persistedPreferredBackendForModelId:modelId];
-    if (persisted.length > 0) {
+    NSString *supportedDeviceClass = [capability[@"supportedDeviceClass"] isKindOfClass:[NSString class]]
+        ? capability[@"supportedDeviceClass"]
+        : @"unknown";
+    if ([persisted isEqualToString:@"gpu"]) {
+        return persisted;
+    }
+    if ([persisted isEqualToString:@"cpu"]
+        && !BeaconSupportsReleasedGpuAutoForDeviceClass(supportedDeviceClass)) {
         return persisted;
     }
     return [BeaconPreferredBackendDirectiveForSpec(spec) isEqualToString:kBeaconPreferredBackendAutoReal]
@@ -1886,6 +2237,9 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     payload[@"isLoaded"] = @(_engine != NULL && _loadedModelId.length > 0);
     payload[@"activeBackend"] = _activeBackend ?: @"unknown";
     payload[@"activeVisionBackend"] = _activeVisionBackend ?: @"";
+    payload[@"preparedImageWidth"] = @(_lastPreparedImageWidth);
+    payload[@"preparedImageHeight"] = @(_lastPreparedImageHeight);
+    payload[@"preparedImageBytes"] = @(_lastPreparedImageBytes);
     payload[@"acceleratorFamily"] = [_activeBackend isEqualToString:@"gpu"] ? @"metal" : ([_activeBackend isEqualToString:@"cpu"] ? @"cpu" : @"unknown");
     payload[@"lastEngineAttempt"] = _activeEngineAttempt ?: @"";
     payload[@"lastEngineFailure"] = _lastEngineFailureMessage ?: @"";
@@ -2061,7 +2415,8 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                                      locale:(NSString *)locale
                                   powerMode:(NSString *)powerMode
                            groundingContext:(NSString *)groundingContext
-                                 imageBase64:(NSString *)imageBase64 {
+                                 imageBase64:(NSString *)imageBase64
+                                    imagePath:(NSString *)imagePath {
     BOOL hasGrounding = BeaconTrimmedString(groundingContext ?: @"").length > 0;
     NSMutableDictionary *payload = [@{
         @"modelId": _loadedModelId ?: @"",
@@ -2077,6 +2432,10 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     NSString *normalizedImage = BeaconNormalizedBase64Blob(imageBase64);
     if (normalizedImage.length > 0) {
         payload[@"imageBase64"] = normalizedImage;
+    }
+    NSString *normalizedImagePath = BeaconImagePathFromURI(imagePath);
+    if (normalizedImagePath.length > 0) {
+        payload[@"imageUri"] = normalizedImagePath;
     }
     return payload;
 }
@@ -2119,6 +2478,43 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     };
 }
 
+- (NSString *)writeSmokeVisualFixtureImage {
+    CGSize size = CGSizeMake(512, 512);
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size];
+    UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [[UIColor colorWithRed:0.96 green:0.97 blue:0.92 alpha:1.0] setFill];
+        UIRectFill(CGRectMake(0, 0, size.width, size.height));
+
+        [[UIColor colorWithRed:0.90 green:0.08 blue:0.08 alpha:1.0] setFill];
+        UIBezierPath *square = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(64, 72, 180, 180)
+                                                          cornerRadius:22];
+        [square fill];
+
+        [[UIColor colorWithRed:0.08 green:0.28 blue:0.92 alpha:1.0] setFill];
+        UIBezierPath *circle = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(276, 82, 172, 172)];
+        [circle fill];
+
+        [[UIColor colorWithRed:0.10 green:0.42 blue:0.18 alpha:1.0] setFill];
+        UIBezierPath *triangle = [UIBezierPath bezierPath];
+        [triangle moveToPoint:CGPointMake(256, 300)];
+        [triangle addLineToPoint:CGPointMake(128, 452)];
+        [triangle addLineToPoint:CGPointMake(384, 452)];
+        [triangle closePath];
+        [triangle fill];
+    }];
+
+    NSData *jpegData = UIImageJPEGRepresentation(image, 0.86);
+    if (jpegData.length == 0) {
+        return nil;
+    }
+
+    NSURL *url = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:@"beacon-smoke-visual-fixture.jpg"];
+    if (![jpegData writeToURL:url atomically:YES]) {
+        return nil;
+    }
+    return url.path;
+}
+
 - (void)runSmokeTests {
     NSString *traceToken = BeaconSmokeTraceToken();
     BeaconWriteSmokeProgress(@"smoke-tests-started", @{
@@ -2127,11 +2523,11 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     NSString *queryOverride = BeaconSmokeQueryOverride();
     NSString *firePrompt = BeaconTrimmedString(queryOverride ?: @"I am trapped in a building fire with thick smoke and limited visibility. What should I do first?");
     NSString *lostPrompt = @"I went back home and now I am lost in the mountains with no signal and sunset is coming. What should I do first?";
-    NSString *visualPrompt = @"Possible snakebite on my ankle.\nLook at this image and tell me what is dangerous and what to do next.";
-    NSString *visualImageBase64 = @"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO5W6ucAAAAASUVORK5CYII=";
+    NSString *visualPrompt = @"What do you see in this image? Mention the main colors and shapes.";
+    NSString *visualImagePath = [self writeSmokeVisualFixtureImage];
     NSString *fireGrounding = @"Source: Ready.gov Fire Survival\nActions:\n- Stay low under smoke and move to the nearest safe exit.\n- Cover nose and mouth with cloth if available.\n- Test doors for heat before opening.\nAvoid:\n- Do not use elevators.\nEscalate:\n- If trapped, seal the room, call or signal for rescue.";
     NSString *lostGrounding = @"Source: National Park Service Wilderness Travel Basics\nActions:\n- Stop moving, control panic, and stay near shelter before dark.\n- Put on extra insulation and protect from wind.\n- Mark your location and prepare visible signals.\nAvoid:\n- Do not keep wandering after losing the trail late in the day.\nEscalate:\n- If weather worsens or you cannot stay warm, signal for rescue immediately.";
-    NSString *visualGrounding = @"Source: CDC Outdoor Hazards + Merck Manual\nActions:\n- Check for worsening swelling, bleeding, color change, and breathing trouble.\n- Keep the limb still and remove tight jewelry.\n- Seek urgent rescue if signs of severe envenomation appear.\nAvoid:\n- Do not cut, suck, or apply ice to the wound.\nEscalate:\n- Immediate rescue is needed for trouble breathing, fainting, or rapidly spreading swelling.";
+    NSString *visualGrounding = @"Smoke test image contains simple colored shapes. The model should describe the image itself.";
 
     BeaconNativeLog(@"starting smoke tests; requestedQuery=%@", BeaconTruncatedPreview(firePrompt, 120));
 
@@ -2143,17 +2539,30 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                                                                                                      locale:@"en"
                                                                                                   powerMode:@"normal"
                                                                                             groundingContext:fireGrounding
-                                                                                                  imageBase64:nil]];
+                                                                                                  imageBase64:nil
+                                                                                                     imagePath:nil]];
     [checks addObject:fireCheck];
 
-    NSDictionary *visualCheck = [self runSmokeCheckNamed:@"visual.snakebite" request:[self smokeRequestWithUserText:visualPrompt
+    NSDictionary *rawVisualCheck = [self runSmokeCheckNamed:@"visual.shapes" request:[self smokeRequestWithUserText:visualPrompt
                                                                                                       categoryHint:@"Visual Help / 视觉求助 / wound bleeding bite sting snake spider tick burn rash plant animal fracture poisoning"
                                                                                                          sessionId:@"smoke-visual"
                                                                                                       resetContext:YES
                                                                                                             locale:@"en"
                                                                                                          powerMode:@"normal"
-                                                                                                  groundingContext:visualGrounding
-                                                                                                        imageBase64:visualImageBase64]];
+                                                                                                 groundingContext:visualGrounding
+                                                                                                       imageBase64:nil
+                                                                                                          imagePath:visualImagePath]];
+    NSMutableDictionary *visualCheck = [rawVisualCheck mutableCopy];
+    NSString *visualResponseForQuality = [visualCheck[@"responseText"] isKindOfClass:[NSString class]] ? visualCheck[@"responseText"] : @"";
+    NSString *lowerVisualResponse = [visualResponseForQuality lowercaseString];
+    BOOL visualLooksBlind = [lowerVisualResponse containsString:@"not provided"]
+        || [lowerVisualResponse containsString:@"cannot directly"]
+        || [lowerVisualResponse containsString:@"can't see"]
+        || [lowerVisualResponse containsString:@"cannot see"];
+    if (visualLooksBlind) {
+        visualCheck[@"ok"] = @NO;
+        visualCheck[@"error"] = @"Vision model responded as if no image was provided.";
+    }
     [checks addObject:visualCheck];
 
     NSDictionary *resetCheck = [self runSmokeCheckNamed:@"triage.reset.new-session" request:[self smokeRequestWithUserText:lostPrompt
@@ -2163,7 +2572,8 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                                                                                                                locale:@"en"
                                                                                                             powerMode:@"normal"
                                                                                                      groundingContext:lostGrounding
-                                                                                                           imageBase64:nil]];
+                                                                                                           imageBase64:nil
+                                                                                                              imagePath:nil]];
     [checks addObject:resetCheck];
 
     BOOL fireOk = [fireCheck[@"ok"] boolValue];
@@ -2228,9 +2638,9 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     }
 
     NSDictionary *spec = [self modelSpecForId:targetModelId];
-    NSURL *modelURL = spec != nil ? [self resolvedModelURLForSpec:spec] : nil;
+    NSURL *modelURL = spec != nil ? [self writableRuntimeModelURLForSpec:spec error:error] : nil;
     if (spec == nil || modelURL == nil) {
-        if (error != nil) {
+        if (error != nil && *error == nil) {
             *error = [NSError errorWithDomain:@"BeaconNative" code:101 userInfo:@{NSLocalizedDescriptionKey: @"Gemma 4 E2B is not packaged into this iOS build."}];
         }
         BeaconNativeLog(@"engine load failed: missing packaged model for %@", targetModelId);
@@ -2399,16 +2809,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                     @"parallel": @NO,
                     @"maxTokens": @1024,
                     @"activationDataType": @1,
-                    @"cacheMode": @"session-scoped"
-                },
-                @{
-                    @"backend": @"gpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"activationDataType": @0,
-                    @"cacheMode": @"default",
-                    @"samplerBackend": @"cpu"
+                    @"cacheMode": @"default"
                 }
             ];
         } else if (shouldTryGpuAuto) {
@@ -2419,89 +2820,11 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                     @"parallel": @NO,
                     @"maxTokens": @1024,
                     @"activationDataType": @1,
-                    @"cacheMode": @"session-scoped"
-                },
-                @{
-                    @"backend": @"gpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"activationDataType": @0,
-                    @"cacheMode": @"default",
-                    @"samplerBackend": @"cpu"
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @0
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024
+                    @"cacheMode": @"default"
                 }
             ];
         } else {
-            attempts = conservativeCpuProfile ? @[
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @0
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @1
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @512,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @0
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @512,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @1
-                }
-            ] : @[
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024,
-                    @"prefillChunkSize": @128,
-                    @"activationDataType": @0
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @NO,
-                    @"maxTokens": @1024
-                },
-                @{
-                    @"backend": @"cpu",
-                    @"visionBackend": @"cpu",
-                    @"parallel": @YES,
-                    @"maxTokens": @1024,
-                    @"prefillChunkSize": @128
-                }
-            ];
+            attempts = @[];
         }
     } else if (forceGpuOnly) {
         attempts = @[
@@ -2698,7 +3021,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     NSString *successfulAttempt = nil;
     NSMutableArray<NSString *> *attemptLogs = [NSMutableArray arrayWithCapacity:attempts.count];
     NSMutableArray<NSString *> *gpuFailureLogs = [NSMutableArray array];
-    litert_lm_set_min_log_level(0);
+    litert_lm_set_min_log_level(2);
     for (NSDictionary *attempt in attempts) {
         NSString *backend = [attempt[@"backend"] isKindOfClass:[NSString class]] ? attempt[@"backend"] : @"cpu";
         NSString *visionBackend = [attempt[@"visionBackend"] isKindOfClass:[NSString class]] ? attempt[@"visionBackend"] : nil;
@@ -2778,12 +3101,15 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
         NSString *cachePath = BeaconLiteRtCacheSpecifierForAttempt(modelURL, backend, attemptLabel, cacheModeOverride, &cacheMode);
         litert_lm_engine_settings_set_cache_dir(settings, cachePath.UTF8String);
         if (samplerBackend.length > 0) {
-            litert_lm_engine_settings_set_sampler_backend(settings, samplerBackend.UTF8String);
+            BeaconLiteRtCallEngineSettingsSetCString(
+                settings,
+                "litert_lm_engine_settings_set_sampler_backend",
+                samplerBackend.UTF8String
+            );
         }
         NSString *runtimeLibraryDir = BeaconLiteRtRuntimeLibraryDirectory();
-        NSString *runtimeLibraryPath = runtimeLibraryDir.length > 0
-            ? [runtimeLibraryDir stringByAppendingPathComponent:@"libLiteRtMetalAccelerator.dylib"]
-            : @"";
+        NSString *runtimeLibraryPath = BeaconLiteRtMetalAcceleratorPath() ?: @"";
+        NSString *dispatchLibraryDir = BeaconLiteRtDispatchLibraryDirectory(runtimeLibraryPath);
         NSDictionary *runtimeLibraryProbe = BeaconLiteRtShouldPreloadMetalAccelerator()
             ? BeaconEnsureMetalAcceleratorPreloaded(runtimeLibraryPath)
             : @{
@@ -2796,14 +3122,22 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                 @"preloaded": @NO,
                 @"error": @"skipped-by-runtime-dispatch-mode"
             };
-        if (runtimeLibraryDir.length > 0 && injectDispatchLibraryDir) {
-            litert_lm_engine_settings_set_dispatch_library_dir(settings, runtimeLibraryDir.UTF8String);
+        if (dispatchLibraryDir.length > 0 && injectDispatchLibraryDir) {
+            BeaconLiteRtCallEngineSettingsSetCString(
+                settings,
+                "litert_lm_engine_settings_set_dispatch_library_dir",
+                dispatchLibraryDir.UTF8String
+            );
         }
         litert_lm_engine_settings_enable_benchmark(settings);
         litert_lm_engine_settings_set_parallel_file_section_loading(settings, parallelFileLoading);
         litert_lm_engine_settings_set_max_num_tokens(settings, (int)maxTokens);
         if (requiresVision) {
-            litert_lm_engine_settings_set_max_num_images(settings, 1);
+            BeaconLiteRtCallEngineSettingsSetInt(
+                settings,
+                "litert_lm_engine_settings_set_max_num_images",
+                1
+            );
         }
         if (prefillChunkSize != nil && [backend isEqualToString:@"cpu"]) {
             litert_lm_engine_settings_set_prefill_chunk_size(settings, [prefillChunkSize intValue]);
@@ -2819,11 +3153,12 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
             @"runtimeDispatchMode": runtimeDispatchMode,
             @"runtimeLibraryDir": runtimeLibraryDir ?: @"",
             @"runtimeLibraryPath": runtimeLibraryPath,
+            @"dispatchLibraryDir": dispatchLibraryDir ?: @"",
             @"runtimeLibraryExists": runtimeLibraryProbe[@"exists"] ?: @NO,
             @"runtimeLibraryLoadable": runtimeLibraryProbe[@"loadable"] ?: @NO,
             @"runtimeLibraryLoadError": runtimeLibraryProbe[@"error"] ?: @"",
             @"runtimeLibraryPreloaded": runtimeLibraryProbe[@"preloaded"] ?: @NO,
-            @"dispatchLibraryDirInjected": @(runtimeLibraryDir.length > 0 && injectDispatchLibraryDir)
+            @"dispatchLibraryDirInjected": @(dispatchLibraryDir.length > 0 && injectDispatchLibraryDir)
         });
         NSString *safeEngineCreateError = nil;
         createdEngine = BeaconLiteRtSafeEngineCreate(settings, &safeEngineCreateError);
@@ -2962,7 +3297,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     }
 
     LiteRtLmSamplerParams samplerParams;
-    samplerParams.type = kTopP;
+    samplerParams.type = kLiteRtLmSamplerTypeTopP;
     BOOL doomsday = [powerMode isEqualToString:@"doomsday"];
     samplerParams.top_k = requiresVision ? (doomsday ? 32 : 40) : (doomsday ? 36 : 48);
     samplerParams.top_p = requiresVision ? (doomsday ? 0.88f : 0.90f) : (doomsday ? 0.90f : 0.92f);
@@ -2976,20 +3311,20 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     BOOL hasSessionMaxOutputTokensOverride = BeaconRequestedIntegerValue(kBeaconLiteRtSessionMaxOutputTokensEnvKey,
                                                                         @"sessionMaxOutputTokens",
                                                                         &requestedSessionMaxOutputTokens);
-    int sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 96 : 128;
+    int sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 256 : 384;
     if (requiresVision) {
-        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 64 : 80;
+        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 224 : 320;
     }
     if ([_activeBackend isEqualToString:@"cpu"]) {
-        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 80 : 96;
+        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 192 : 256;
         if (requiresVision) {
-            sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 56 : 72;
+            sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 160 : 224;
         }
     }
     if (conservativeCpuProfile) {
-        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 48 : 64;
+        sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 128 : 192;
         if (requiresVision) {
-            sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 48 : 64;
+            sessionMaxOutputTokens = [powerMode isEqualToString:@"doomsday"] ? 128 : 160;
         }
     }
     if (hasSessionMaxOutputTokensOverride && requestedSessionMaxOutputTokens > 0) {
@@ -2997,7 +3332,11 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     }
     litert_lm_session_config_set_max_output_tokens(sessionConfig, sessionMaxOutputTokens);
     if (requiresVision) {
-        litert_lm_session_config_set_vision_modality_enabled(sessionConfig, true);
+        BeaconLiteRtCallSessionConfigSetBool(
+            sessionConfig,
+            "litert_lm_session_config_set_vision_modality_enabled",
+            true
+        );
     }
 
     NSString *systemMessage = BeaconJSONString(@{ @"type": @"text", @"text": BeaconSystemInstruction() });
@@ -3056,9 +3395,50 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
     NSString *categoryHint = [request[@"categoryHint"] isKindOfClass:[NSString class]] ? request[@"categoryHint"] : nil;
     NSString *groundingContext = [request[@"groundingContext"] isKindOfClass:[NSString class]] ? request[@"groundingContext"] : nil;
     NSString *imageBase64 = BeaconNormalizedBase64Blob([request[@"imageBase64"] isKindOfClass:[NSString class]] ? request[@"imageBase64"] : nil);
+    NSString *imagePath = BeaconImagePathFromURI([request[@"imageUri"] isKindOfClass:[NSString class]] ? request[@"imageUri"] : nil);
     BOOL hasAuthoritativeEvidence = [request[@"hasAuthoritativeEvidence"] respondsToSelector:@selector(boolValue)] ? [request[@"hasAuthoritativeEvidence"] boolValue] : NO;
     BOOL resetContext = [request[@"resetContext"] respondsToSelector:@selector(boolValue)] ? [request[@"resetContext"] boolValue] : NO;
-    BOOL requiresVision = imageBase64.length > 0;
+    NSError *imageValidationError = imageBase64.length == 0 ? BeaconImagePayloadValidationError(request, imagePath) : nil;
+    if (imageValidationError != nil) {
+        if (error != nil) {
+            *error = imageValidationError;
+        }
+        BeaconNativeLog(@"inference rejected unreadable image session=%@ uri=%@ error=%@",
+                        sessionId,
+                        BeaconTruncatedPreview([request[@"imageUri"] isKindOfClass:[NSString class]] ? request[@"imageUri"] : @"", 160),
+                        imageValidationError.localizedDescription ?: @"");
+        return nil;
+    }
+    if (imagePath.length > 0) {
+        NSError *prepareError = nil;
+        NSInteger preparedWidth = 0;
+        NSInteger preparedHeight = 0;
+        unsigned long long preparedBytes = 0;
+        NSString *preparedImagePath = BeaconPrepareImageForVision(imagePath, &preparedWidth, &preparedHeight, &preparedBytes, &prepareError);
+        if (preparedImagePath.length == 0) {
+            if (error != nil) {
+                *error = prepareError ?: [NSError errorWithDomain:@"BeaconNative"
+                                                             code:104
+                                                         userInfo:@{NSLocalizedDescriptionKey: @"The selected image could not be prepared for visual analysis."}];
+            }
+            BeaconNativeLog(@"inference rejected unprepared image session=%@ path=%@ error=%@",
+                            sessionId,
+                            BeaconTruncatedPreview(imagePath, 160),
+                            prepareError.localizedDescription ?: @"unknown");
+            return nil;
+        }
+        imagePath = preparedImagePath;
+        _lastPreparedImageWidth = preparedWidth;
+        _lastPreparedImageHeight = preparedHeight;
+        _lastPreparedImageBytes = preparedBytes;
+        BeaconNativeLog(@"prepared vision image session=%@ path=%@ size=%ldx%ld bytes=%llu",
+                        sessionId,
+                        imagePath ?: @"",
+                        (long)preparedWidth,
+                        (long)preparedHeight,
+                        preparedBytes);
+    }
+    BOOL requiresVision = imageBase64.length > 0 || imagePath.length > 0;
     CFAbsoluteTime startedAt = CFAbsoluteTimeGetCurrent();
 
     BeaconNativeLog(@"inference start session=%@ locale=%@ category=%@ reset=%@ evidence=%@ image=%@ user=%@",
@@ -3129,7 +3509,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                                              shouldInjectPromptMemory ? promptMemory[@"lastVisualContext"] : nil);
     NSString *messageJSONString = BeaconJSONString(@{
         @"role": @"user",
-        @"content": BeaconBuildConversationContent(prompt, imageBase64)
+        @"content": BeaconBuildConversationContent(prompt, imageBase64, imagePath)
     });
     if (messageJSONString.length == 0) {
         if (error != nil) {
@@ -3340,9 +3720,54 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
         NSString *categoryHint = [request[@"categoryHint"] isKindOfClass:[NSString class]] ? request[@"categoryHint"] : nil;
         NSString *groundingContext = [request[@"groundingContext"] isKindOfClass:[NSString class]] ? request[@"groundingContext"] : nil;
         NSString *imageBase64 = BeaconNormalizedBase64Blob([request[@"imageBase64"] isKindOfClass:[NSString class]] ? request[@"imageBase64"] : nil);
+        NSString *imagePath = BeaconImagePathFromURI([request[@"imageUri"] isKindOfClass:[NSString class]] ? request[@"imageUri"] : nil);
         BOOL hasAuthoritativeEvidence = [request[@"hasAuthoritativeEvidence"] respondsToSelector:@selector(boolValue)] ? [request[@"hasAuthoritativeEvidence"] boolValue] : NO;
         BOOL resetContext = [request[@"resetContext"] respondsToSelector:@selector(boolValue)] ? [request[@"resetContext"] boolValue] : NO;
-        BOOL requiresVision = imageBase64.length > 0;
+        NSError *imageValidationError = imageBase64.length == 0 ? BeaconImagePayloadValidationError(request, imagePath) : nil;
+        if (imageValidationError != nil) {
+            BeaconNativeLog(@"stream rejected unreadable image stream=%@ session=%@ uri=%@ error=%@",
+                            streamId,
+                            sessionId,
+                            BeaconTruncatedPreview([request[@"imageUri"] isKindOfClass:[NSString class]] ? request[@"imageUri"] : @"", 160),
+                            imageValidationError.localizedDescription ?: @"");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self rejectCall:call message:imageValidationError.localizedDescription error:imageValidationError];
+            });
+            return;
+        }
+        if (imagePath.length > 0) {
+            NSError *prepareError = nil;
+            NSInteger preparedWidth = 0;
+            NSInteger preparedHeight = 0;
+            unsigned long long preparedBytes = 0;
+            NSString *preparedImagePath = BeaconPrepareImageForVision(imagePath, &preparedWidth, &preparedHeight, &preparedBytes, &prepareError);
+            if (preparedImagePath.length == 0) {
+                NSError *finalPrepareError = prepareError ?: [NSError errorWithDomain:@"BeaconNative"
+                                                                                 code:104
+                                                                             userInfo:@{NSLocalizedDescriptionKey: @"The selected image could not be prepared for visual analysis."}];
+                BeaconNativeLog(@"stream rejected unprepared image stream=%@ session=%@ path=%@ error=%@",
+                                streamId,
+                                sessionId,
+                                BeaconTruncatedPreview(imagePath, 160),
+                                finalPrepareError.localizedDescription ?: @"unknown");
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self rejectCall:call message:finalPrepareError.localizedDescription error:finalPrepareError];
+                });
+                return;
+            }
+            imagePath = preparedImagePath;
+            self->_lastPreparedImageWidth = preparedWidth;
+            self->_lastPreparedImageHeight = preparedHeight;
+            self->_lastPreparedImageBytes = preparedBytes;
+            BeaconNativeLog(@"prepared stream vision image stream=%@ session=%@ path=%@ size=%ldx%ld bytes=%llu",
+                            streamId,
+                            sessionId,
+                            imagePath ?: @"",
+                            (long)preparedWidth,
+                            (long)preparedHeight,
+                            preparedBytes);
+        }
+        BOOL requiresVision = imageBase64.length > 0 || imagePath.length > 0;
         CFAbsoluteTime startedAt = CFAbsoluteTimeGetCurrent();
 
         BeaconNativeLog(@"stream start stream=%@ session=%@ locale=%@ category=%@ reset=%@ evidence=%@ image=%@ user=%@",
@@ -3394,7 +3819,7 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
                                                  shouldInjectPromptMemory ? promptMemory[@"lastVisualContext"] : nil);
         NSString *messageJSONString = BeaconJSONString(@{
             @"role": @"user",
-            @"content": BeaconBuildConversationContent(prompt, imageBase64)
+            @"content": BeaconBuildConversationContent(prompt, imageBase64, imagePath)
         });
         if (messageJSONString.length == 0) {
             NSError *encodingError = [NSError errorWithDomain:@"BeaconNative"
@@ -3461,8 +3886,23 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
 - (void)analyzeVisual:(CAPPluginCall *)call {
     NSMutableDictionary *request = [NSMutableDictionary dictionaryWithDictionary:(call.options ?: @{})];
     NSString *imageBase64 = BeaconNormalizedBase64Blob([request[@"imageBase64"] isKindOfClass:[NSString class]] ? request[@"imageBase64"] : nil);
-    request[@"userText"] = BeaconResolvedVisualUserText([request[@"userText"] isKindOfClass:[NSString class]] ? request[@"userText"] : nil,
-                                                        imageBase64.length > 0);
+    NSString *imagePath = BeaconImagePathFromURI([request[@"imageUri"] isKindOfClass:[NSString class]] ? request[@"imageUri"] : nil);
+    NSError *imageValidationError = imageBase64.length == 0 ? BeaconImagePayloadValidationError(request, imagePath) : nil;
+    if (imageValidationError != nil) {
+        [self rejectCall:call message:imageValidationError.localizedDescription error:imageValidationError];
+        return;
+    }
+    if (imageBase64.length == 0 && imagePath.length == 0) {
+        [self rejectCall:call message:@"No image provided for visual analysis." error:nil];
+        return;
+    }
+    if (imageBase64.length > 0) {
+        request[@"imageBase64"] = imageBase64;
+    }
+    if (imagePath.length > 0) {
+        request[@"imageUri"] = imagePath;
+    }
+    request[@"userText"] = BeaconResolvedVisualUserText([request[@"userText"] isKindOfClass:[NSString class]] ? request[@"userText"] : nil);
     dispatch_async(_workerQueue, ^{
         NSError *error = nil;
         NSString *responseText = [self generateResponseForRequest:request error:&error];
@@ -3478,6 +3918,34 @@ static NSDictionary *BeaconFallbackModelSpec(void) {
             }];
         });
     });
+}
+
+@end
+@interface BeaconNativePlugin (CAPPluginCategory) <CAPBridgedPlugin>
+@end
+
+@implementation BeaconNativePlugin (CAPPluginCategory)
+
+- (NSString *)identifier {
+    return @"BeaconNativePlugin";
+}
+
+- (NSString *)jsName {
+    return @"BeaconNative";
+}
+
+- (NSArray<CAPPluginMethod *> *)pluginMethods {
+    NSMutableArray<CAPPluginMethod *> *methods = [NSMutableArray new];
+    CAP_PLUGIN_METHOD(getOfflineKnowledgeBundle, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(listModels, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(loadModel, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(downloadModel, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(triage, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(triageStream, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(cancelActiveInference, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(analyzeVisual, CAPPluginReturnPromise);
+    CAP_PLUGIN_METHOD(getRuntimeDiagnostics, CAPPluginReturnPromise);
+    return methods;
 }
 
 @end

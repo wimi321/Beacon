@@ -39,8 +39,7 @@ class BeaconNativePlugin : Plugin() {
     private val bundledModelsAssetDir = "models"
     private val progressNotifyStepBytes = 8L * 1024L * 1024L
     private val modelControlCharsRegex = Regex("[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]")
-    private val defaultVisualPromptWithImage = "What dangers do you see and what should I do next?"
-    private val defaultVisualPromptWithoutImage = "What visible details should I check and what should I do next?"
+    private val defaultVisualPrompt = "你看见了什么"
 
     private data class ModelSpec(
         val id: String,
@@ -515,9 +514,13 @@ class BeaconNativePlugin : Plugin() {
 
     @PluginMethod
     fun analyzeVisual(call: PluginCall) {
+        val imageBase64 = normalizeBase64Blob(call.getString("imageBase64"))
+        if (imageBase64.isNullOrBlank()) {
+            call.reject("No image provided for visual analysis.")
+            return
+        }
         val userText = resolveVisualUserText(
             userText = call.getString("userText"),
-            hasImage = !normalizeBase64Blob(call.getString("imageBase64")).isNullOrBlank(),
         )
 
         executor.execute {
@@ -536,7 +539,7 @@ class BeaconNativePlugin : Plugin() {
                     categoryHint = call.getString("categoryHint"),
                     groundingContext = call.getString("groundingContext"),
                     hasAuthoritativeEvidence = call.getBoolean("hasAuthoritativeEvidence", false) ?: false,
-                    imageBase64 = call.getString("imageBase64"),
+                    imageBase64 = imageBase64,
                 )
                 Log.i(
                     logTag,
@@ -929,16 +932,12 @@ class BeaconNativePlugin : Plugin() {
         )
     }
 
-    private fun resolveVisualUserText(userText: String?, hasImage: Boolean): String {
+    private fun resolveVisualUserText(userText: String?): String {
         val trimmed = userText?.trim().orEmpty()
         if (trimmed.isNotEmpty()) {
             return trimmed
         }
-        return if (hasImage) {
-            defaultVisualPromptWithImage
-        } else {
-            defaultVisualPromptWithoutImage
-        }
+        return defaultVisualPrompt
     }
 
     private fun prepareConversationSession(

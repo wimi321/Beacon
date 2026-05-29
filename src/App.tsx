@@ -5,14 +5,12 @@ import {
   Download,
   ImagePlus,
   LoaderCircle,
-  Settings,
   ShieldCheck,
   Zap,
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
-import { Network } from '@capacitor/network';
 import { getBeaconBridge } from './lib/runtime';
 import {
   attachTriageSession,
@@ -23,9 +21,11 @@ import {
 import type {
   BatteryStatus,
   BeaconMessage,
+  EvidenceBundle,
   ModelDownloadStatus,
   ModelDescriptor,
   PowerMode,
+  RetrievedKnowledge,
   TriageResponse,
 } from './lib/types';
 import { useI18n } from './i18n';
@@ -177,6 +177,23 @@ function buildPhotoDataUrl(base64: string, format: string | undefined): string {
   return `data:${normalizePhotoMimeType(format)};base64,${base64}`;
 }
 
+function preferNativeImageUri(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+}
+
+function resolvePhotoPreviewSrc(photo: { webPath?: string; path?: string; base64String?: string; format?: string }): string | undefined {
+  if (photo.webPath) return photo.webPath;
+  if (photo.path) return photo.path;
+  if (photo.base64String) return buildPhotoDataUrl(photo.base64String, photo.format);
+  return undefined;
+}
+
+function visualImageMissingMessage(locale: string): string {
+  return locale.toLowerCase().startsWith('zh')
+    ? '没有收到图片，请重新拍照或从相册选择。'
+    : 'No image received. Please take a photo or choose one from Photos.';
+}
+
 function formatDownloadEta(startTime: number | undefined, fraction: number): string {
   if (!startTime || fraction <= 0) return '';
   const elapsed = (Date.now() - startTime) / 1000;
@@ -257,6 +274,33 @@ function localizeModelLoadFailure(message: string, locale: string): string {
   return message || translateMessage(resolvedLocale, 'status.infer_failed');
 }
 
+function localizeInferenceFailure(message: string, locale: string): string {
+  const resolvedLocale = resolveLocaleCode(locale);
+  const normalizedMessage = message.toLowerCase();
+
+  if (
+    normalizedMessage.includes('no image provided')
+    || normalizedMessage.includes('no readable image')
+    || normalizedMessage.includes('selected image file is not readable')
+    || normalizedMessage.includes('image file is not readable')
+  ) {
+    return visualImageMissingMessage(resolvedLocale);
+  }
+
+  if (
+    normalizedMessage.includes('signature=prefill')
+    || normalizedMessage.includes('compiledmodel::run failed')
+    || normalizedMessage.includes('failed to invoke the compiled model')
+    || normalizedMessage.includes('litert-lm produced an empty response')
+    || normalizedMessage.includes('timed out before finishing')
+    || normalizedMessage.includes('could not start a response stream')
+  ) {
+    return translateMessage(resolvedLocale, 'status.infer_failed');
+  }
+
+  return localizeModelLoadFailure(message, locale);
+}
+
 function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
@@ -277,6 +321,10 @@ function sleep(ms: number): Promise<void> {
 
 function isNativeAndroidApp(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+}
+
+function isNativeIosApp(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 }
 
 function blurActiveTextInput(): void {
@@ -309,6 +357,80 @@ function buildAiMessage(
     evidence: response.evidence,
     disclaimer: response.disclaimer,
   };
+}
+
+type DisplayCitation = Pick<RetrievedKnowledge, 'id' | 'source' | 'sourceUrl' | 'title'>;
+
+const FALLBACK_MEDICAL_CITATIONS: DisplayCitation[] = [
+  {
+    id: 'fallback-medlineplus-first-aid',
+    title: 'First Aid',
+    source: 'MedlinePlus',
+    sourceUrl: 'https://medlineplus.gov/firstaid.html',
+  },
+  {
+    id: 'fallback-msd-emergency-priorities',
+    title: 'Emergency First Aid Priorities',
+    source: 'MSD Manual Consumer Version',
+    sourceUrl: 'https://www.msdmanuals.com/home/injuries-and-poisoning/first-aid/emergency-first-aid-priorities',
+  },
+  {
+    id: 'fallback-who-basic-emergency-care',
+    title: 'Basic Emergency Care: approach to the acutely ill and injured',
+    source: 'World Health Organization',
+    sourceUrl: 'https://www.who.int/publications-detail-redirect/basic-emergency-care-approach-to-the-acutely-ill-and-injured',
+  },
+];
+
+function isValidHttpUrl(value: string | undefined): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function isLikelyMedicalGuidance(text: string): boolean {
+  return /(first aid|medical|health|injur|wound|bleed|burn|fracture|poison|pain|breath|chok|stroke|heart|snake|spider|tick|hypothermia|heat stroke|fever|seizure|unconscious|急救|医疗|醫療|健康|受伤|受傷|创口|創口|伤口|傷口|出血|烧伤|燒傷|烫伤|燙傷|骨折|中毒|胸痛|呼吸|窒息|中风|中風|蛇咬|蜱虫|蜱蟲|失温|失溫|中暑|发烧|發燒|抽搐|昏迷)/i.test(text);
+}
+
+function collectEvidenceCitations(evidence: EvidenceBundle | undefined): DisplayCitation[] {
+  if (!evidence) return [];
+  const seen = new Set<string>();
+  const citations: DisplayCitation[] = [];
+
+  for (const item of [...evidence.authoritative, ...evidence.supporting]) {
+    const dedupeKey = `${item.sourceId}:${item.sourceUrl ?? item.source}:${item.title}`.toLowerCase();
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    citations.push(item);
+    if (citations.length >= 4) break;
+  }
+
+  return citations;
+}
+
+function collectMessageCitations(message: BeaconMessage): DisplayCitation[] {
+  const evidenceCitations = collectEvidenceCitations(message.evidence);
+  if (message.sender !== 'ai') {
+    return evidenceCitations;
+  }
+
+  if (!isLikelyMedicalGuidance(message.text)) {
+    return evidenceCitations;
+  }
+
+  if (evidenceCitations.some((citation) => isValidHttpUrl(citation.sourceUrl))) {
+    return evidenceCitations;
+  }
+
+  const seen = new Set(evidenceCitations.map((citation) => citation.id));
+  return [
+    ...evidenceCitations,
+    ...FALLBACK_MEDICAL_CITATIONS.filter((citation) => !seen.has(citation.id)),
+  ].slice(0, 4);
 }
 
 const SWIPE_BACK_EDGE_PX = 36;
@@ -488,8 +610,6 @@ export default function App() {
   const [showModelManager, setShowModelManager] = useState(false);
   const [showVisualPicker, setShowVisualPicker] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [sosActive, setSosActive] = useState(false);
-  const [nodesCount, setNodesCount] = useState(0);
   const [batteryStatus, setBatteryStatus] = useState<BatteryStatus | null>(null);
   const [powerMode, setPowerMode] = useState<PowerMode>('normal');
   const [models, setModels] = useState<ModelDescriptor[]>([]);
@@ -508,7 +628,6 @@ export default function App() {
   const bootPromiseRef = useRef<Promise<void> | null>(null);
   const swipeBackRef = useRef<SwipeBackState>(createSwipeBackState());
   const modelSheetDismissRef = useRef<SwipeBackState>(createSwipeBackState());
-  const modelManagerTouchAtRef = useRef(0);
   const modelManagerCloseTouchAtRef = useRef(0);
   const previousHashRef = useRef(hash);
   const activeInferenceRunRef = useRef(0);
@@ -518,6 +637,7 @@ export default function App() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [isSwitchingPowerMode, setIsSwitchingPowerMode] = useState(false);
+  const shouldExposeModelManager = !isNativeIosApp();
   const modelRequiredMessage = t('status.model_required');
   const modelPreparingMessage = t('status.model_preparing');
   const modelNotLoadedMessage = t('model.not_loaded');
@@ -552,6 +672,12 @@ export default function App() {
     setStatusLine(modelLoadFailure ?? t('status.offline_ready'));
   }
 
+  function requestModelManager(): void {
+    if (shouldExposeModelManager) {
+      setShowModelManager(true);
+    }
+  }
+
   useEffect(() => {
     const previousHash = previousHashRef.current;
     previousHashRef.current = hash;
@@ -576,12 +702,18 @@ export default function App() {
   }, [modelLoadFailure, t]);
 
   useEffect(() => {
-    let handle: { remove: () => Promise<void> } | undefined;
-    Network.getStatus().then((s) => setIsOnline(s.connected)).catch(() => {});
-    Network.addListener('networkStatusChange', (s) => {
-      setIsOnline(s.connected);
-    }).then((h) => { handle = h; });
-    return () => { void handle?.remove(); };
+    if (typeof window === 'undefined' || typeof window.navigator === 'undefined') {
+      return undefined;
+    }
+
+    const updateOnlineState = () => setIsOnline(window.navigator.onLine !== false);
+    updateOnlineState();
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+    return () => {
+      window.removeEventListener('online', updateOnlineState);
+      window.removeEventListener('offline', updateOnlineState);
+    };
   }, []);
 
   useEffect(() => {
@@ -610,7 +742,7 @@ export default function App() {
         if (shouldKeepWaitingForBundledModel(resolvedModels)) {
           setStatusLine(modelPreparingMessage);
         } else if (!hasDownloadedModel(resolvedModels)) {
-          setShowModelManager(true);
+          requestModelManager();
           setStatusLine(modelNotLoadedMessage);
         }
 
@@ -629,7 +761,7 @@ export default function App() {
         const message = extractErrorMessage(error) || t('status.infer_failed');
         const localizedFailure = localizeModelLoadFailure(message, locale);
         setModelLoadFailure(localizedFailure);
-        setShowModelManager(true);
+        requestModelManager();
         setMessages((prev) => [
           ...prev,
           { id: createId('system'), sender: 'system', text: t('error.generic', { message: localizedFailure }) },
@@ -695,7 +827,7 @@ export default function App() {
           setStatusLine(t('status.model_switched'));
           closeModelManager();
         } else if (!readyModel && nextModels.length > 0) {
-          setShowModelManager(true);
+          requestModelManager();
           setStatusLine(modelNotLoadedMessage);
         }
       } catch (error) {
@@ -705,7 +837,7 @@ export default function App() {
           if (shouldStopAutoModelRetry(message)) {
             stopAutoRetry = true;
             setModelLoadFailure(localizedFailure);
-            setShowModelManager(true);
+            requestModelManager();
             setStatusLine(localizedFailure);
           } else {
             setStatusLine(localizedFailure);
@@ -732,7 +864,7 @@ export default function App() {
         }, 1500);
       } else if (syncRetryCountRef.current >= 20 && !hasLoadedModel(modelsRef.current)) {
         setModelLoadFailure(t('status.model_sync_timeout'));
-        setShowModelManager(true);
+        requestModelManager();
       }
     };
 
@@ -858,7 +990,7 @@ export default function App() {
       : (isRecoveringModel || shouldKeepWaitingForBundledModel(modelsRef.current))
         ? modelPreparingMessage
         : modelRequiredMessage;
-    setShowModelManager(true);
+    requestModelManager();
     setStatusLine(systemMessage);
     setMessages((prev) => {
       if (prev.some((message) => message.sender === 'system' && message.text === systemMessage)) {
@@ -1250,7 +1382,7 @@ export default function App() {
       if (!isInferenceRunActive(inferenceRunId)) {
         return;
       }
-      const message = extractErrorMessage(error) || t('status.infer_failed');
+      const message = localizeInferenceFailure(extractErrorMessage(error) || t('status.infer_failed'), locale);
       setMessages((prev) => [
         ...prev,
         { id: createId('system'), sender: 'system', text: t('error.generic', { message: message }) },
@@ -1317,19 +1449,22 @@ export default function App() {
     try {
       setShowVisualPicker(false);
       setStatusLine(t('camera.capture_aria'));
+      const useImageUri = preferNativeImageUri();
       const photo = await CapacitorCamera.getPhoto({
         source,
-        resultType: CameraResultType.Base64,
-        quality: 72,
-        width: 1536,
-        height: 1536,
+        resultType: useImageUri ? CameraResultType.Uri : CameraResultType.Base64,
+        quality: 80,
+        width: 1024,
+        height: 1024,
         allowEditing: false,
         saveToGallery: false,
         correctOrientation: true,
       });
+      const imageUri = useImageUri ? (photo.path ?? photo.webPath)?.trim() : undefined;
       const imageBase64 = photo.base64String?.trim();
-      if (!imageBase64) {
-        throw new Error(t('status.infer_failed'));
+      const previewSrc = resolvePhotoPreviewSrc(photo);
+      if (!imageUri && !imageBase64) {
+        throw new Error(visualImageMissingMessage(locale));
       }
 
       if (hash !== '#/chat') navigate('#/chat');
@@ -1339,10 +1474,12 @@ export default function App() {
         text: `${t('action.visual_help')} - ${
           source === CameraSource.Photos ? t('action.import_photo') : t('camera.capture_aria')
         }`,
-        image: {
-          src: buildPhotoDataUrl(imageBase64, photo.format),
-          alt: t('action.visual_help'),
-        },
+        image: previewSrc
+          ? {
+              src: previewSrc,
+              alt: t('action.visual_help'),
+            }
+          : undefined,
       };
       setMessages((prev) => [...prev, imageMessage]);
 
@@ -1360,6 +1497,7 @@ export default function App() {
           categoryHint: CANONICAL_SCENARIO_HINTS.VISUAL_HELP,
           powerMode,
           imageBase64,
+          imageUri,
           locale,
         },
         triageSession,
@@ -1468,6 +1606,7 @@ export default function App() {
         return;
       }
       if (isCameraPermissionDenied(error)) {
+        setStatusLine(t('camera.permission_denied'));
         setMessages((prev) => [
           ...prev,
           { id: createId('system'), sender: 'system', text: t('camera.permission_denied') },
@@ -1477,7 +1616,8 @@ export default function App() {
       if (inferenceRunId !== null && !isInferenceRunActive(inferenceRunId)) {
         return;
       }
-      const message = extractErrorMessage(error) || t('status.infer_failed');
+      const message = localizeInferenceFailure(extractErrorMessage(error) || t('status.infer_failed'), locale);
+      setStatusLine(message);
       setMessages((prev) => [
         ...prev,
         { id: createId('system'), sender: 'system', text: t('error.generic', { message: message }) },
@@ -1488,15 +1628,6 @@ export default function App() {
         await refreshBattery();
       }
     }
-  }
-
-  async function handleToggleSos(): Promise<void> {
-    const latestAiMessage = [...messages].reverse().find((message) => message.sender === 'ai');
-    const summary = latestAiMessage?.text.split('\n')[0] ?? t('system.message_prefix');
-    const next = await bridge.toggleSos({ summary, locale });
-    setSosActive(next.active);
-    setNodesCount(next.connectedPeers);
-    setStatusLine(next.active ? t('status.sos_on') : t('status.sos_off'));
   }
 
   async function handleSwitchPowerMode(mode: PowerMode): Promise<void> {
@@ -1567,20 +1698,24 @@ export default function App() {
       });
       setModelLoadFailure(localizedFailure);
       setStatusLine(localizedFailure);
-      setShowModelManager(true);
+      requestModelManager();
     } finally {
       setSwitchingModelId(null);
     }
   }
 
   async function handleToggleModelManager(): Promise<void> {
+    if (!shouldExposeModelManager) {
+      return;
+    }
+
     if (showModelManager) {
       closeModelManager();
       return;
     }
 
     blurActiveTextInput();
-    setShowModelManager(true);
+    requestModelManager();
 
     if (isBootstrapping) {
       await waitForBootstrap();
@@ -1593,22 +1728,6 @@ export default function App() {
     } else if (modelsRef.current.some((model) => model.isDownloaded) && !modelsRef.current.some((model) => model.isLoaded)) {
       void reconcileModelState(modelsRef.current);
     }
-  }
-
-  function handleModelManagerButtonTouchEnd(event: ReactTouchEvent<HTMLButtonElement>): void {
-    modelManagerTouchAtRef.current = Date.now();
-    if (event.cancelable) {
-      event.preventDefault();
-    }
-    event.stopPropagation();
-    void handleToggleModelManager();
-  }
-
-  function handleModelManagerButtonClick(): void {
-    if (Date.now() - modelManagerTouchAtRef.current < 450) {
-      return;
-    }
-    void handleToggleModelManager();
   }
 
   function handleModelManagerCloseTouchEnd(event: ReactTouchEvent<HTMLButtonElement>): void {
@@ -1681,11 +1800,9 @@ export default function App() {
       <NavBar
         showBack={isChatView}
         onBack={isChatView ? handleClearChat : undefined}
-        sosActive={sosActive}
-        nodesCount={nodesCount}
         statusLine={isCancelling ? t('status.cancelling') : statusLine}
         isOnline={isOnline}
-        onStatusClick={() => void handleToggleModelManager()}
+        onStatusClick={shouldExposeModelManager ? () => void handleToggleModelManager() : undefined}
       />
 
       {batteryWarning && (
@@ -1761,22 +1878,40 @@ export default function App() {
                 ) : (
                   <div className="message-text">{message.text}</div>
                 )}
-                {message.evidence &&
-                  !message.isStreaming &&
-                  message.evidence.authoritative.length > 0 && (
-                    <div className="evidence-panel">
-                      <div className="evidence-row">
-                        <span className="evidence-label">{t('evidence.source')}</span>
-                        <div className="evidence-chips">
-                          {message.evidence.authoritative.map((item) => (
-                            <span key={item.id} className="evidence-chip authority">
-                              {item.source}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                {!message.isStreaming && (() => {
+                  const citations = collectMessageCitations(message);
+                  if (citations.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="citation-panel" aria-label={t('citations.title')}>
+                      <div className="citation-heading">{t('citations.title')}</div>
+                      <ol className="citation-list">
+                        {citations.map((citation) => {
+                          const label = citation.title || citation.source;
+                          const sourceUrl = isValidHttpUrl(citation.sourceUrl) ? citation.sourceUrl : undefined;
+
+                          return (
+                            <li key={`${citation.id}-${citation.sourceUrl ?? citation.source}`}>
+                              {sourceUrl ? (
+                                <a href={sourceUrl} target="_blank" rel="noreferrer">
+                                  {label}
+                                </a>
+                              ) : (
+                                <span>{label}</span>
+                              )}
+                              <small>
+                                {citation.source}
+                                {!sourceUrl ? ` · ${t('citations.url_unavailable')}` : ''}
+                              </small>
+                            </li>
+                          );
+                        })}
+                      </ol>
                     </div>
-                  )}
+                  );
+                })()}
                 {message.disclaimer && !message.isStreaming && (
                   <div className="message-disclaimer">{message.disclaimer}</div>
                 )}
@@ -1807,28 +1942,9 @@ export default function App() {
           </button>
         </form>
 
-        <div className="global-sos-section">
-          <button
-            className={`sos-btn ${sosActive ? 'active' : ''}`}
-            onClick={() => void handleToggleSos()}
-            aria-label={sosActive ? t('sos.stop') : t('sos.start')}
-          >
-            {sosActive ? t('sos.stop') : t('sos.start')}
-          </button>
-          <button
-            className="model-mgr-btn"
-            type="button"
-            onClick={handleModelManagerButtonClick}
-            onTouchEnd={handleModelManagerButtonTouchEnd}
-            aria-label={t('model.manage')}
-            title={t('model.manage')}
-          >
-            <Settings size={18} />
-          </button>
-        </div>
       </div>
 
-      {showModelManager && (
+      {showModelManager && shouldExposeModelManager && (
         <div
           className="sheet-backdrop"
           onClick={closeModelManager}
@@ -1868,7 +1984,7 @@ export default function App() {
         </section>
       )}
 
-      {showModelManager && (
+      {showModelManager && shouldExposeModelManager && (
         <section
           className={`model-panel ${isModelSheetDragging ? 'model-panel-dragging' : ''}`}
           style={{ '--sheet-dismiss-offset': `${modelSheetOffset}px` } as CSSProperties}
