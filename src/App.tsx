@@ -437,7 +437,6 @@ const SWIPE_BACK_EDGE_PX = 36;
 const SWIPE_BACK_TRIGGER_PX = 92;
 const SWIPE_BACK_DIRECTION_LOCK_PX = 10;
 const SWIPE_BACK_MAX_VERTICAL_DRIFT_PX = 72;
-const SWIPE_BACK_MAX_VISUAL_OFFSET_PX = 140;
 const SHEET_DISMISS_TRIGGER_PX = 116;
 const SHEET_DISMISS_DIRECTION_LOCK_PX = 10;
 const SHEET_DISMISS_MAX_HORIZONTAL_DRIFT_PX = 72;
@@ -619,8 +618,6 @@ export default function App() {
   const [statusLine, setStatusLine] = useState(t('status.offline_ready'));
   const [triageSession, setTriageSession] = useState(createTriageSessionState);
   const [isRecoveringModel, setIsRecoveringModel] = useState(false);
-  const [swipeBackOffset, setSwipeBackOffset] = useState(0);
-  const [isSwipeBackTracking, setIsSwipeBackTracking] = useState(false);
   const [modelSheetOffset, setModelSheetOffset] = useState(0);
   const [isModelSheetDragging, setIsModelSheetDragging] = useState(false);
   const chatAreaRef = useRef<HTMLDivElement | null>(null);
@@ -663,8 +660,6 @@ export default function App() {
     setShowVisualPicker(false);
     setTriageSession(resetTriageSessionState());
     setIsStreaming(false);
-    setSwipeBackOffset(0);
-    setIsSwipeBackTracking(false);
     setModelSheetOffset(0);
     setIsModelSheetDragging(false);
     swipeBackRef.current = createSwipeBackState();
@@ -1051,8 +1046,6 @@ export default function App() {
 
   function resetSwipeBackGesture(): void {
     swipeBackRef.current = createSwipeBackState();
-    setIsSwipeBackTracking(false);
-    setSwipeBackOffset(0);
   }
 
   function isLeadingEdgeTouch(clientX: number): boolean {
@@ -1144,11 +1137,9 @@ export default function App() {
       }
 
       swipeState.phase = 'dragging';
-      setIsSwipeBackTracking(true);
     }
 
     if (horizontalDistance <= 0) {
-      setSwipeBackOffset(0);
       swipeState.lastOffset = 0;
       return;
     }
@@ -1158,9 +1149,7 @@ export default function App() {
       return;
     }
 
-    const offset = Math.min(horizontalDistance, SWIPE_BACK_MAX_VISUAL_OFFSET_PX);
-    swipeState.lastOffset = offset;
-    setSwipeBackOffset(offset);
+    swipeState.lastOffset = horizontalDistance;
     if (event.cancelable) {
       event.preventDefault();
     }
@@ -1790,8 +1779,7 @@ export default function App() {
 
   return (
     <div
-      className={`container ${isSwipeBackTracking ? 'container-swipe-active' : ''}`}
-      style={{ '--swipe-back-offset': `${swipeBackOffset}px` } as CSSProperties}
+      className="container"
       onTouchStart={handleSwipeBackTouchStart}
       onTouchMove={handleSwipeBackTouchMove}
       onTouchEnd={handleSwipeBackTouchEnd}

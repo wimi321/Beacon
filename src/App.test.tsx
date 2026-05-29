@@ -720,6 +720,9 @@ describe('App', () => {
       touches: [{ clientX: 132, clientY: 188 }],
       cancelable: true,
     });
+    expect(appContainer).not.toHaveClass('container-swipe-active');
+    expect(appContainer?.getAttribute('style') ?? '').not.toContain('swipe-back-offset');
+
     fireEvent.touchEnd(appContainer as Element, {
       changedTouches: [{ clientX: 132, clientY: 188 }],
     });

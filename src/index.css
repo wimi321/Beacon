@@ -84,9 +84,8 @@ button {
     calc(1rem + env(safe-area-inset-left, 0px));
   position: relative;
   overflow: hidden;
-  transform: translate3d(var(--swipe-back-offset, 0px), 0, 0);
-  transition: transform 180ms ease-out;
-  will-change: transform;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
 }
 
 .container::before,
@@ -122,10 +121,6 @@ button {
 .container > * {
   position: relative;
   z-index: 1;
-}
-
-.container.container-swipe-active {
-  transition: none;
 }
 
 .header {
