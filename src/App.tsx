@@ -621,6 +621,7 @@ export default function App() {
   const [modelSheetOffset, setModelSheetOffset] = useState(0);
   const [isModelSheetDragging, setIsModelSheetDragging] = useState(false);
   const chatAreaRef = useRef<HTMLDivElement | null>(null);
+  const pendingRevealLatestAiRef = useRef(false);
   const modelsRef = useRef<ModelDescriptor[]>([]);
   const bootPromiseRef = useRef<Promise<void> | null>(null);
   const swipeBackRef = useRef<SwipeBackState>(createSwipeBackState());
@@ -879,10 +880,40 @@ export default function App() {
     };
   }, [bridge, isBootstrapping, locale, modelLoadFailure, modelNotLoadedMessage, modelPreparingMessage, modelRequiredMessage, t]);
 
+  function revealLatestAiMessageStart(): void {
+    const chatArea = chatAreaRef.current;
+    if (!chatArea) {
+      return;
+    }
+
+    const aiMessages = chatArea.querySelectorAll<HTMLElement>('.message.ai');
+    const latestAiMessage = aiMessages[aiMessages.length - 1];
+    if (!latestAiMessage) {
+      return;
+    }
+
+    const chatAreaRect = chatArea.getBoundingClientRect();
+    const latestMessageRect = latestAiMessage.getBoundingClientRect();
+    const targetTop = chatArea.scrollTop + latestMessageRect.top - chatAreaRect.top - 10;
+    const safeTargetTop = Math.max(0, targetTop);
+    if (typeof chatArea.scrollTo === 'function') {
+      chatArea.scrollTo({ top: safeTargetTop, behavior: 'auto' });
+      return;
+    }
+    chatArea.scrollTop = safeTargetTop;
+  }
+
   useEffect(() => {
     if (!chatAreaRef.current) {
       return;
     }
+
+    if (pendingRevealLatestAiRef.current && !isStreaming) {
+      pendingRevealLatestAiRef.current = false;
+      window.requestAnimationFrame(revealLatestAiMessageStart);
+      return;
+    }
+
     chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
   }, [messages, isStreaming]);
 
@@ -1350,6 +1381,7 @@ export default function App() {
       if (finalResponse) {
         const response = finalResponse;
         const finalText = formatResponseText(response, streamedText);
+        pendingRevealLatestAiRef.current = true;
 
         setMessages((prev) => {
           const next = [...prev];
@@ -1576,6 +1608,7 @@ export default function App() {
       if (finalResponse) {
         const response = finalResponse;
         const text = formatResponseText(response, streamedText);
+        pendingRevealLatestAiRef.current = true;
         setMessages((prev) => {
           const next = [...prev];
           const finalMessage = buildAiMessage(response, text);

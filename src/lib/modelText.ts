@@ -2,7 +2,7 @@ import type { TriageResponse } from './types';
 
 const CONTROL_CHARS_REGEX = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 const INLINE_NUMBERED_ITEM_REGEX = /([^\n])[ \t]+((?:[1-9]\d?)\.\s+(?=(?:\*\*|[A-Za-z\u00C0-\u024F\u0400-\u04FF\u0600-\u06FF\u0900-\u097F\u0E00-\u0E7F\u3040-\u30ff\u3400-\u9fff])))/gu;
-const INLINE_BULLET_ITEM_REGEX = /([^\n])[ \t]+([*-]\s+(?=(?:\*\*|[A-Za-z\u00C0-\u024F\u0400-\u04FF\u0600-\u06FF\u0900-\u097F\u0E00-\u0E7F\u3040-\u30ff\u3400-\u9fff])))/gu;
+const INLINE_BULLET_ITEM_REGEX = /([^\n])[ \t]+([•*-]\s+(?=(?:\*\*|[A-Za-z\u00C0-\u024F\u0400-\u04FF\u0600-\u06FF\u0900-\u097F\u0E00-\u0E7F\u3040-\u30ff\u3400-\u9fff])))/gu;
 const STRONG_LABEL_BODY = '[^\\n*.。！？!?]{0,24}[:：][^\\n*.。！？!?]{0,12}';
 const INLINE_EMPHASIS_HEADING_REGEX = new RegExp(`([。！？!?；;])[ \\t]*(\\*\\*${STRONG_LABEL_BODY}\\*\\*)`, 'g');
 const TIGHT_STRONG_LABEL_REGEX = new RegExp(`(\\*\\*${STRONG_LABEL_BODY}\\*\\*)(?=\\S)`, 'g');
@@ -35,11 +35,11 @@ export function hasMeaningfulModelText(value?: string | null): boolean {
 function softenInlineMarkdownStructure(value: string): string {
   return value
     .replace(/([:：])[ \t]*(1\.\s+)/g, '$1\n\n$2')
-    .replace(/([。！？.!?；;])[ \t]*((?:[1-9]\d?)\.\s+)/g, '$1\n$2')
-    .replace(/([:：])[ \t]*([*-]\s+)/g, '$1\n\n$2')
-    .replace(/([。！？.!?；;])[ \t]*([*-]\s+)/g, '$1\n$2')
-    .replace(INLINE_NUMBERED_ITEM_REGEX, '$1\n$2')
-    .replace(INLINE_BULLET_ITEM_REGEX, '$1\n$2')
+    .replace(/([。！？.!?；;])[ \t]*((?:[1-9]\d?)\.\s+)/g, '$1\n\n$2')
+    .replace(/([:：])[ \t]*([•*-]\s+)/g, '$1\n\n$2')
+    .replace(/([。！？.!?；;])[ \t]*([•*-]\s+)/g, '$1\n\n$2')
+    .replace(INLINE_NUMBERED_ITEM_REGEX, '$1\n\n$2')
+    .replace(INLINE_BULLET_ITEM_REGEX, '$1\n\n$2')
     .replace(INLINE_EMPHASIS_HEADING_REGEX, '$1\n\n$2')
     .replace(TIGHT_STRONG_LABEL_REGEX, '$1 ')
     .replace(/\n{3,}/g, '\n\n');
@@ -47,7 +47,7 @@ function softenInlineMarkdownStructure(value: string): string {
 
 function removeDisplayOnlyMarkdownEmphasis(value: string): string {
   return value
-    .replace(/(^|\n)[ \t]*[-*][ \t]+/g, '$1• ')
+    .replace(/(^|\n)[ \t]*[•*-][ \t]+/g, '$1- ')
     .replace(/\*\*([^*\n]+?)\*\*/g, '$1')
     .replace(/\*([^*\n]+?)\*/g, '$1')
     .replace(/\*\*/g, '')
