@@ -2,6 +2,12 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.23 - 2026-05-30
+
+- Fixed App Store Connect `ITMS-90433` by generating `SwiftSupport/iphoneos` from Xcode's original Swift runtime libraries instead of re-signed app-bundle copies.
+- Bumped iOS follow-up build to `0.2.23 (35)` and Android release metadata to `0.2.23`.
+- Kept v0.2.21/v0.2.22 runtime hardening and review-ready packaging intact.
+
 ## v0.2.21 - 2026-05-30
 
 iOS App Store follow-up release focused on safer local-model behavior and review-ready packaging.
