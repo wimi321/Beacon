@@ -35,14 +35,14 @@
 
 ## 下载方式
 
+- iPhone：已通过 Apple 审核并上架 App Store，直接安装 [Beacon Survival SOS](https://apps.apple.com/us/app/beacon-survival-sos/id6772494235)
 - Android：直接从 [GitHub Releases](https://github.com/wimi321/Beacon/releases) 下载最新 ARM64 安装包
-- iOS：已提交 Apple App Review，审核通过后手动发布，状态见 [App Store 状态](./docs/APP_STORE.md)
-- 首次打开 App 后进入 `设置与模型`
-- 优先下载 `Gemma 4 E2B` 作为推荐默认模型；如果设备更强、想要更高精度，可以再下载 `Gemma 4 E4B`
+- iOS App Store 版内置 Gemma 4 E2B，面向普通用户做成“安装即可用”的路径
+- Android 公开 APK 继续保持轻量，首次打开后进入 `设置与模型` 下载 `Gemma 4 E2B`；高性能设备也可以选择 `Gemma 4 E4B`
 
-这条发布链路已经改成“轻量 APK 先安装，Gemma 模型进 App 再下载”的方式，和官方轻量壳思路一致，不再把超大模型硬塞进 GitHub 安装包。
+Apple 的搜索索引和各地区商店可能在发布后 24 小时内逐步刷新。如果 App Store 里暂时搜不到，请优先使用上面的直达链接。
 
-模型下载支持断点续传和多镜像自动切换：优先使用国内更友好的 ModelScope CDN，然后回退到 `hf-mirror.com` 和 Hugging Face 官方源。
+Android 模型下载支持断点续传和多镜像自动切换：优先使用国内更友好的 ModelScope CDN，然后回退到 `hf-mirror.com` 和 Hugging Face 官方源。
 
 ## 多语言支持
 

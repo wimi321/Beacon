@@ -1,60 +1,57 @@
-# App Store Status
+# App Store Distribution
 
-Beacon's first iOS App Store submission was rejected and the project is being prepared for resubmission.
+Beacon Survival SOS has been approved for Apple App Store distribution.
 
 | Item | Status |
 | --- | --- |
 | App Store name | Beacon Survival SOS |
+| App Apple ID | `6772494235` |
+| App Store URL | <https://apps.apple.com/us/app/beacon-survival-sos/id6772494235> |
 | Bundle ID | `com.beacon.sos` |
-| Rejected version | `0.2.17` |
-| Rejected build | `18` |
-| Review date | 2026-05-26 |
-| Resubmission candidate | `0.2.20` build `27` |
-| Release mode | Manual release after Apple approval |
+| Distribution status | Approved for App Store distribution |
+| Release mode | Manual release / regional rollout through App Store Connect |
 | Price | Free |
 | Privacy label | No data collected |
+| Device family | iPhone |
+| iOS model policy | Bundled Gemma 4 E2B; no in-app model picker required for normal users |
 
-## Apple Review Issues
+> Apple search, App Store lookup APIs, and some regional storefronts can take up
+> to 24 hours to refresh after approval or manual release. If search does not
+> show the app yet, use the direct App Store URL above.
 
-- Guideline 4 - Design: the app UI was crowded/cut off on iPad Air 11-inch (M3), with bottom controls not visible.
-- Guideline 1.4.1 - Safety / Physical Harm: medical guidance did not expose citations that were easy for users to find.
+## Review Fixes Included
 
-## Resubmission Fixes
+The accepted App Store build includes the fixes prepared after Apple's initial review feedback:
 
-- iOS is now configured as an iPhone-only app (`UIDeviceFamily = [1]`) while still keeping the iPad compatibility presentation usable if Apple opens it on iPad.
-- The home screen bottom input and primary controls are visible in iPhone and iPad compatibility screenshots.
-- AI medical/safety answers now show a visible "Sources and citations" panel with source titles and URLs below the response.
-- If retrieved evidence is missing but the answer contains likely medical guidance, Beacon shows conservative fallback citations from MedlinePlus, MSD Manual, and WHO.
-- The removed SOS UI no longer requests location permission. The iOS build no longer includes `NSLocationWhenInUseUsageDescription`, and the Capacitor Geolocation plugin has been removed.
-- The iOS build no longer registers the Capacitor Network plugin, so Beacon does not proactively query wireless/cellular network state on launch.
-- Permission text is bilingual and scoped to camera/photo-library use for local visual help.
+- iPhone-first layout with iPad compatibility no longer exposing clipped bottom controls.
+- Visible citations below medical, safety, and emergency guidance where retrieval sources are available.
+- Camera and photo-library access limited to user-initiated Visual Help.
+- Removed the old SOS/location feature and the unused location permission.
+- Removed proactive network-state probing on launch.
+- Store-safe permission text for camera and photo-library access.
+- Bundled offline public-safety knowledge and on-device Gemma 4 E2B runtime for the iOS path.
 
-## Validation
+## User-Facing Positioning
 
-- `npm test -- --run`: 11 files, 101 tests passed.
-- `npm run build`: passed.
-- `npm run mobile:build`: passed; iOS/Android Capacitor sync now includes 6 plugins.
-- iOS generic Release build passed with Xcode store validation.
-- Built app contains bundled `gemma-4-E2B-it.litertlm` and `libLiteRtMetalAccelerator.dylib`.
-- iPhone 17 Pro simulator screenshot: `.artifacts/ios-review/iphone17pro-v020-current.png`.
-- iPad Air 11-inch compatibility screenshot: `.artifacts/ios-review/ipad-air-11-v020-compat.png`.
-- Modern iPhone true-device smoke is still blocked locally because the connected iPhone 15 Pro is visible to Xcode but marked unavailable.
+Beacon Survival SOS is an offline emergency guidance app. It does not require login, cloud inference, ads, or tracking. The iOS build bundles Gemma 4 E2B and the offline public-safety knowledge base so a user can install from the App Store and use the core emergency flow without downloading model weights separately.
 
-## Notes
+Android distribution continues through GitHub Releases. The Android APK remains lightweight and lets users download Gemma 4 E2B or E4B in-app with resumable mirror fallback.
 
-- The iOS build includes the local Gemma E2B profile and bundled public-safety knowledge used for App Store review.
-- Camera and photo-library permissions are used only for Visual Help, and images are processed locally on device.
-- Beacon does not require login, does not use cloud inference, and does not include ads or tracking.
-- Android distribution continues through GitHub Releases. The current Android release track may move faster than the App Store review track while Apple review is pending.
+## Validation Record
 
-## Suggested App Review Notes
+The App Store release line was prepared with the following gates during the v0.2.x submission cycle:
 
-Beacon Survival SOS is an offline emergency guidance app. It does not require login, cloud inference, ads, or tracking. The iOS build bundles Gemma E2B and the offline public-safety knowledge base.
+- Web test suite and production build.
+- Capacitor sync for Android and iOS shells.
+- iOS archive and App Store export/upload validation.
+- App Store Connect processing fixes for Swift support and embedded LiteRT runtime frameworks.
+- iPhone real-device smoke testing for launch, text chat, photo intake, citations, and navigation.
 
-Changes since the rejected 0.2.17 build:
+The latest repository release notes are tracked in [`docs/releases`](./releases/README.md).
 
-- Fixed iPad compatibility layout so bottom controls remain visible.
-- Set the iOS target family to iPhone only.
-- Added visible citations below medical and safety answers.
-- Removed the unused SOS/location feature and removed location permission.
-- Kept camera/photo access limited to user-initiated Visual Help, with image processing on device.
+## Maintenance Notes
+
+- Keep this page aligned with the App Store listing after each approved build.
+- Keep README download badges pointed at the stable App Store URL, not search results.
+- If Apple changes availability by region, document the affected storefronts here.
+- If the iOS model policy changes from bundled E2B to downloadable models, update the README install table and App Review notes together.

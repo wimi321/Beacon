@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Beacon turns any Android phone into an offline emergency tool.<br>
+  Beacon turns an iPhone or Android phone into an offline emergency tool.<br>
   Real AI inference. 14,406 expert knowledge entries. Zero cloud dependency.<br>
   Built for earthquakes, wildfires, wilderness, and every moment when the network is gone.
 </p>
@@ -55,23 +55,29 @@
 ## Download
 
 > [!TIP]
-> **Get started in 2 minutes:** Install APK → open *Settings & Models* → download **Gemma 4 E2B** (~2.6 GB) → fully offline.
+> **iPhone:** install from the App Store and start offline. **Android:** install APK → open *Settings & Models* → download **Gemma 4 E2B** (~2.6 GB) → fully offline.
 
 <p>
+  <a href="https://apps.apple.com/us/app/beacon-survival-sos/id6772494235"><img alt="Download on the App Store" src="https://img.shields.io/badge/Download_on_the_App_Store-Available-0a84ff?style=for-the-badge&logo=apple"></a>
   <a href="https://github.com/wimi321/Beacon/releases/latest"><img alt="Download APK" src="https://img.shields.io/badge/Download_APK-GitHub_Releases-16a34a?style=for-the-badge&logo=android"></a>
-  <a href="./docs/APP_STORE.md"><img alt="iOS App Store" src="https://img.shields.io/badge/iOS_App_Store-in_review-0a84ff?style=for-the-badge&logo=apple"></a>
+  <a href="./docs/APP_STORE.md"><img alt="App Store Status" src="https://img.shields.io/badge/App_Store-approved-111827?style=for-the-badge"></a>
 </p>
 
-**iOS:** Beacon Survival SOS has been submitted to Apple App Review. The first App Store build uses manual release after approval. See [App Store status](./docs/APP_STORE.md).
+**iOS:** [Beacon Survival SOS is approved for App Store distribution](https://apps.apple.com/us/app/beacon-survival-sos/id6772494235). Apple search and regional storefronts can take up to 24 hours to refresh after release, so the direct link is the most reliable entry point. See [App Store status](./docs/APP_STORE.md).
 
-Choose your model:
+| Platform | Install path | Model policy |
+| --- | --- | --- |
+| **iPhone** | [App Store](https://apps.apple.com/us/app/beacon-survival-sos/id6772494235) | Bundled Gemma 4 E2B for a no-setup emergency path |
+| **Android** | [GitHub Releases APK](https://github.com/wimi321/Beacon/releases/latest) | Lightweight APK; download Gemma 4 E2B/E4B in-app |
+
+Android model options:
 
 | Model | Size | Best for |
 | --- | --- | --- |
 | **Gemma 4 E2B** | ~2.6 GB | Fast setup, recommended for most devices |
 | **Gemma 4 E4B** | ~3.7 GB | Higher accuracy, needs more RAM |
 
-Model downloads are resumable and use an ordered mirror list. Beacon tries the
+Android model downloads are resumable and use an ordered mirror list. Beacon tries the
 China-friendly ModelScope CDN first, then falls back to `hf-mirror.com` and the
 official Hugging Face URL if an earlier source is unavailable.
 
@@ -79,7 +85,7 @@ official Hugging Face URL if an earlier source is unavailable.
 
 ## What Makes Beacon Different
 
-🧠 **Real On-Device AI** — Gemma 4 (2B / 4B parameters) runs entirely on your phone via Google's [LiteRT](https://ai.google.dev/edge/litert) runtime. No cloud, no API keys, no data leaves your device. Ever.
+🧠 **Real On-Device AI** — Gemma 4 runs entirely on your phone via Google's [LiteRT](https://ai.google.dev/edge/litert) runtime. The iOS App Store build bundles Gemma 4 E2B; Android can download E2B or E4B in-app. No cloud, no API keys, no data leaves your device. Ever.
 
 📡 **Works When Networks Don't** — Designed for earthquakes, hurricanes, wildfires, and conflict zones. Beacon works in airplane mode, in basements, and off the grid.
 
@@ -296,10 +302,11 @@ npx tsc --noEmit
 - [x] Session memory for continuous emergency conversations
 - [x] WCAG AA accessibility (focus indicators, reduced motion, contrast)
 - [x] Prompt injection defense with structural markers
+- [x] First iPhone App Store release
 - [ ] Mesh relay and peer-to-peer SOS propagation
 - [ ] iPhone release-device GPU path validation
 - [ ] Public benchmark and evaluation suite
-- [ ] Store-grade release packaging
+- [x] Store-grade release packaging
 
 ---
 
