@@ -2,6 +2,12 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.27 - 2026-05-30
+
+- Fixed App Store Connect `ITMS-90208` by aligning `GemmaModelConstraintProvider.framework` `MinimumOSVersion` with the LiteRT runtime binary minimum OS.
+- Raised the iOS deployment target to `iOS 26.2`, matching the bundled official Gemma constraint-provider runtime.
+- Kept the v0.2.26 framework packaging fix intact so no third-party non-Swift dylib is embedded loose at the app Frameworks top level.
+
 ## v0.2.26 - 2026-05-30
 
 - Fixed App Store Connect `ITMS-90429` by packaging Beacon's Gemma model constraint provider as `GemmaModelConstraintProvider.framework` instead of a loose top-level dylib.

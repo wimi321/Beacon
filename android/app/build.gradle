@@ -81,8 +81,8 @@ android {
         applicationId "com.beacon.sos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 29
-        versionName "0.2.26"
+        versionCode 30
+        versionName "0.2.27"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         if (arm64OnlyBuild) {
             ndk {

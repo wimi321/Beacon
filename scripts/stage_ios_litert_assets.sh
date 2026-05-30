@@ -48,6 +48,16 @@ else:
 PY
 }
 
+read_macho_min_os() {
+  binary_path="$1"
+  fallback="$2"
+  min_os="$(vtool -show-build "$binary_path" 2>/dev/null | awk '/minos/ { print $2; exit }')"
+  if [ -z "$min_os" ]; then
+    min_os="$fallback"
+  fi
+  printf '%s\n' "$min_os"
+}
+
 PROJECT_DIR="${PROJECT_DIR:?PROJECT_DIR is required}"
 TARGET_BUILD_DIR="${TARGET_BUILD_DIR:?TARGET_BUILD_DIR is required}"
 UNLOCALIZED_RESOURCES_FOLDER_PATH="${UNLOCALIZED_RESOURCES_FOLDER_PATH:?UNLOCALIZED_RESOURCES_FOLDER_PATH is required}"
@@ -117,6 +127,7 @@ mkdir -p "$GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR"
 cp -f "$GEMMA_CONSTRAINT_PROVIDER_SRC" "$GEMMA_CONSTRAINT_PROVIDER_DST"
 chmod 755 "$GEMMA_CONSTRAINT_PROVIDER_DST"
 install_name_tool -id "@rpath/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_NAME}/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE}" "$GEMMA_CONSTRAINT_PROVIDER_DST"
+GEMMA_CONSTRAINT_PROVIDER_MIN_OS="$(read_macho_min_os "$GEMMA_CONSTRAINT_PROVIDER_DST" "26.2")"
 cat > "${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -139,7 +150,7 @@ cat > "${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR}/Info.plist" <<EOF
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>MinimumOSVersion</key>
-  <string>15.0</string>
+  <string>${GEMMA_CONSTRAINT_PROVIDER_MIN_OS}</string>
 </dict>
 </plist>
 EOF
@@ -149,6 +160,7 @@ mkdir -p "$RUNTIME_FRAMEWORK_DIR"
 cp -f "$RUNTIME_SRC" "$RUNTIME_DST"
 chmod 755 "$RUNTIME_DST"
 install_name_tool -id "@rpath/${RUNTIME_FRAMEWORK_NAME}/${RUNTIME_FRAMEWORK_EXECUTABLE}" "$RUNTIME_DST"
+RUNTIME_MIN_OS="$(read_macho_min_os "$RUNTIME_DST" "14.0")"
 cat > "${RUNTIME_FRAMEWORK_DIR}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -171,7 +183,7 @@ cat > "${RUNTIME_FRAMEWORK_DIR}/Info.plist" <<EOF
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>MinimumOSVersion</key>
-  <string>15.0</string>
+  <string>${RUNTIME_MIN_OS}</string>
 </dict>
 </plist>
 EOF
