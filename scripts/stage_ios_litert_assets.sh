@@ -100,7 +100,11 @@ if [ ! -f "$GEMMA_CONSTRAINT_PROVIDER_SRC" ]; then
 fi
 
 RUNTIME_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
-GEMMA_CONSTRAINT_PROVIDER_DST="${RUNTIME_DIR}/libGemmaModelConstraintProvider.dylib"
+GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_NAME="GemmaModelConstraintProvider.framework"
+GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE="GemmaModelConstraintProvider"
+GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR="${RUNTIME_DIR}/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_NAME}"
+GEMMA_CONSTRAINT_PROVIDER_DST="${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR}/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE}"
+GEMMA_CONSTRAINT_PROVIDER_LEGACY_DST="${RUNTIME_DIR}/libGemmaModelConstraintProvider.dylib"
 RUNTIME_FRAMEWORK_NAME="LiteRtMetalAccelerator.framework"
 RUNTIME_FRAMEWORK_EXECUTABLE="LiteRtMetalAccelerator"
 RUNTIME_FRAMEWORK_DIR="${RUNTIME_DIR}/${RUNTIME_FRAMEWORK_NAME}"
@@ -108,8 +112,38 @@ RUNTIME_DST="${RUNTIME_FRAMEWORK_DIR}/${RUNTIME_FRAMEWORK_EXECUTABLE}"
 RUNTIME_LEGACY_DST="${RUNTIME_DIR}/libLiteRtMetalAccelerator.dylib"
 
 mkdir -p "$RUNTIME_DIR"
-copy_if_needed "$GEMMA_CONSTRAINT_PROVIDER_SRC" "$GEMMA_CONSTRAINT_PROVIDER_DST"
+rm -rf "$GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR"
+mkdir -p "$GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR"
+cp -f "$GEMMA_CONSTRAINT_PROVIDER_SRC" "$GEMMA_CONSTRAINT_PROVIDER_DST"
 chmod 755 "$GEMMA_CONSTRAINT_PROVIDER_DST"
+install_name_tool -id "@rpath/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_NAME}/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE}" "$GEMMA_CONSTRAINT_PROVIDER_DST"
+cat > "${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR}/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE}</string>
+  <key>CFBundleIdentifier</key>
+  <string>app.beacon.gemma-model-constraint-provider</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>GemmaModelConstraintProvider</string>
+  <key>CFBundlePackageType</key>
+  <string>FMWK</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>MinimumOSVersion</key>
+  <string>15.0</string>
+</dict>
+</plist>
+EOF
+
 rm -rf "$RUNTIME_FRAMEWORK_DIR"
 mkdir -p "$RUNTIME_FRAMEWORK_DIR"
 cp -f "$RUNTIME_SRC" "$RUNTIME_DST"
@@ -154,11 +188,16 @@ if [ ! -d "$CLITERT_SRC" ]; then
   exit 1
 fi
 rsync -a --delete "$CLITERT_SRC/" "$CLITERT_DST/"
+install_name_tool \
+  -change "@rpath/libGemmaModelConstraintProvider.dylib" \
+  "@rpath/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_NAME}/${GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_EXECUTABLE}" \
+  "${CLITERT_DST}/CLiteRTLM"
 
 # Older Beacon builds copied the Metal accelerator as a loose dylib. App Store
 # validation only accepts non-system dynamic libraries inside framework bundles,
 # so keep the accelerator in LiteRtMetalAccelerator.framework and remove stale
 # loose dylibs from the app bundle and resources.
+rm -f "$GEMMA_CONSTRAINT_PROVIDER_LEGACY_DST"
 rm -f "$RUNTIME_LEGACY_DST"
 rm -f "${RUNTIME_DIR}/libLiteRtGpuAccelerator.dylib"
 rm -f "${MODEL_DIR}/libLiteRtGpuAccelerator.dylib"
@@ -166,7 +205,7 @@ rm -f "${MODEL_DIR}/libLiteRtMetalAccelerator.dylib"
 
 if [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ]; then
   CODE_SIGN_IDENTITY_TO_USE="${EXPANDED_CODE_SIGN_IDENTITY:--}"
-  codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_DST"
+  codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$RUNTIME_FRAMEWORK_DIR"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$CLITERT_DST"
 fi

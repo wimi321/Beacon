@@ -204,7 +204,7 @@ describe('iOS native visual contract', () => {
     expect(body).toContain('litert_lm_engine_settings_set_litert_dispatch_lib_dir');
   });
 
-  it('stages the Gemma model constraint provider dylib required by the patched iOS LiteRT runtime', () => {
+  it('stages the Gemma model constraint provider as a framework for App Store validation', () => {
     const stageScript = readFileSync(
       join(process.cwd(), 'scripts/stage_ios_litert_assets.sh'),
       'utf8',
@@ -215,7 +215,11 @@ describe('iOS native visual contract', () => {
     );
 
     expect(stageScript).toContain('libGemmaModelConstraintProvider.dylib');
-    expect(stageScript).toContain('codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_DST"');
-    expect(projectFile).toContain('$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libGemmaModelConstraintProvider.dylib');
+    expect(stageScript).toContain('GemmaModelConstraintProvider.framework');
+    expect(stageScript).toContain('-change "@rpath/libGemmaModelConstraintProvider.dylib"');
+    expect(stageScript).toContain('codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_FRAMEWORK_DIR"');
+    expect(stageScript).toContain('rm -f "$GEMMA_CONSTRAINT_PROVIDER_LEGACY_DST"');
+    expect(projectFile).toContain('$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/GemmaModelConstraintProvider.framework/GemmaModelConstraintProvider');
+    expect(projectFile).not.toContain('$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libGemmaModelConstraintProvider.dylib');
   });
 });

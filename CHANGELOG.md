@@ -2,6 +2,12 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.26 - 2026-05-30
+
+- Fixed App Store Connect `ITMS-90429` by packaging Beacon's Gemma model constraint provider as `GemmaModelConstraintProvider.framework` instead of a loose top-level dylib.
+- Rewrites `CLiteRTLM.framework` at build time to link against the framework-packaged constraint provider.
+- Keeps third-party non-system dynamic libraries inside framework bundles while preserving Apple SwiftSupport handling.
+
 ## v0.2.25 - 2026-05-30
 
 - Fixed App Store Connect Swift runtime packaging by embedding matching Swift standard libraries in both `Payload/App.app/Frameworks` and `SwiftSupport/iphoneos`.
