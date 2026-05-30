@@ -2,6 +2,14 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.24 - 2026-05-30
+
+- Fixes App Store Connect `ITMS-90429` by removing Beacon's manual Swift standard-library staging and letting Xcode's official `CopySwiftLibs` pipeline decide whether Swift runtime files are required.
+- Keeps the exported iOS IPA free of mismatched `SwiftSupport` / `Payload/App.app/Frameworks/libswift*.dylib` entries for the iOS 15+ deployment path.
+- Bumps iOS to `0.2.24 (36)` and Android release metadata to `0.2.24`.
+- Keeps the approved App Store review fixes from recent builds: iPhone-only distribution, source citations for medical guidance, privacy purpose strings, portrait-only UI, and bundled Gemma 4 E2B.
+- Uploads iOS build `0.2.24 (36)` to App Store Connect for Apple processing.
+
 ## v0.2.23 - 2026-05-30
 
 - Fixed App Store Connect `ITMS-90433` by generating `SwiftSupport/iphoneos` from Xcode's original Swift runtime libraries instead of re-signed app-bundle copies.

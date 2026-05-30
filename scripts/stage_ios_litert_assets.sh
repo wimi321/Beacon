@@ -155,51 +155,6 @@ if [ ! -d "$CLITERT_SRC" ]; then
 fi
 rsync -a --delete "$CLITERT_SRC/" "$CLITERT_DST/"
 
-# App Store validation expects Swift runtime dylibs referenced by bundled
-# Swift-based frameworks to live inside Payload/App.app/Frameworks. Some
-# official LiteRT/Capacitor combinations do not trigger Xcode's automatic
-# Swift stdlib embedding reliably, so stage the exact runtime set explicitly
-# during the normal build phase before the app bundle is sealed.
-if [ "$PLATFORM_NAME" = "iphoneos" ]; then
-  SWIFT_STDLIB_DIR="${DT_TOOLCHAIN_DIR:-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain}/usr/lib/swift-5.0/iphoneos"
-  if [ ! -d "$SWIFT_STDLIB_DIR" ]; then
-    SWIFT_STDLIB_DIR="${DT_TOOLCHAIN_DIR:-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain}/usr/lib/swift/iphoneos"
-  fi
-  if [ ! -d "$SWIFT_STDLIB_DIR" ]; then
-    echo "error: Could not locate iPhoneOS Swift standard libraries under DT_TOOLCHAIN_DIR." >&2
-    exit 1
-  fi
-
-  SWIFT_DYLIBS="
-libswiftDarwin.dylib
-libswiftMetal.dylib
-libswiftCoreAudio.dylib
-libswiftsimd.dylib
-libswiftQuartzCore.dylib
-libswiftos.dylib
-libswiftObjectiveC.dylib
-libswiftDispatch.dylib
-libswiftCoreLocation.dylib
-libswiftCoreGraphics.dylib
-libswiftCoreFoundation.dylib
-libswiftUIKit.dylib
-libswiftCoreMedia.dylib
-libswiftAVFoundation.dylib
-libswiftCore.dylib
-libswiftFoundation.dylib
-libswiftCoreImage.dylib
-"
-  for dylib in $SWIFT_DYLIBS; do
-    SWIFT_SRC="${SWIFT_STDLIB_DIR}/${dylib}"
-    SWIFT_DST="${RUNTIME_DIR}/${dylib}"
-    if [ ! -f "$SWIFT_SRC" ]; then
-      echo "error: Missing Swift standard library: $SWIFT_SRC" >&2
-      exit 1
-    fi
-    copy_if_needed "$SWIFT_SRC" "$SWIFT_DST"
-  done
-fi
-
 # Older Beacon builds copied the Metal accelerator as a loose dylib. App Store
 # validation only accepts non-system dynamic libraries inside framework bundles,
 # so keep the accelerator in LiteRtMetalAccelerator.framework and remove stale
@@ -214,10 +169,4 @@ if [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ]; then
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_DST"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$RUNTIME_FRAMEWORK_DIR"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$CLITERT_DST"
-fi
-
-if [ "$PLATFORM_NAME" = "iphoneos" ] && [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
-  for dylib in $SWIFT_DYLIBS; do
-    codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --timestamp=none "${RUNTIME_DIR}/${dylib}"
-  done
 fi
