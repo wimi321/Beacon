@@ -11,6 +11,7 @@ export function LanguageSwitcher() {
     () => SUPPORTED_LANGUAGES.find((lang) => lang.code === locale) ?? SUPPORTED_LANGUAGES[0],
     [locale],
   );
+  const triggerLabel = `${t('language.selection')}: ${currentLanguage.nativeName}`;
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,7 +52,8 @@ export function LanguageSwitcher() {
       <button
         type="button"
         className="language-trigger"
-        aria-label={t('language.selection')}
+        aria-label={triggerLabel}
+        title={triggerLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((value) => !value)}

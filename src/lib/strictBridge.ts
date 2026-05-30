@@ -69,6 +69,12 @@ export function createStrictLocalModelBridge(): BeaconBridge {
         gpuBlockedReason: LOCAL_MODEL_ERROR,
         supportedDeviceClass: 'unknown',
         preferredBackend: 'unknown',
+        visionArtifactValid: false,
+        visionArtifactReason: LOCAL_MODEL_ERROR,
+        visionArtifactContract: 'missing',
+        visionInputMode: 'unknown',
+        visionEncoderSignature: '',
+        foundVisionSignatures: [],
       };
     },
     async listModels(): Promise<ModelDescriptor[]> {

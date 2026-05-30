@@ -220,6 +220,31 @@ describe('CapacitorBeaconBridge', () => {
     expect(chunks).toContain('Keep firm pressure on the wound. ');
   });
 
+  it('streams iOS visual requests with imageUri and does not synthesize a Base64 payload', async () => {
+    const bridge = createCapacitorBeaconBridge();
+
+    for await (const _chunk of bridge.triageStream({
+      userText: '',
+      powerMode: 'normal',
+      locale: 'zh-CN',
+      sessionId: 'visual-uri-session',
+      imageUri: '/private/var/mobile/Containers/Data/beacon-photo.jpg',
+    })) {
+      // Drain the stream so the bridge completes native request wiring.
+    }
+
+    expect(NativeBeacon.triageStream).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userText: '你看见了什么',
+        categoryHint: 'visual_help',
+        imageUri: '/private/var/mobile/Containers/Data/beacon-photo.jpg',
+        imageBase64: undefined,
+        groundingContext: '',
+        hasAuthoritativeEvidence: false,
+      }),
+    );
+  });
+
   it('preserves a user-written visual question instead of appending a synthetic fallback prompt', async () => {
     vi.mocked(NativeBeacon.analyzeVisual).mockResolvedValue({
       text: 'The snake is close.\n1. Back away slowly.',

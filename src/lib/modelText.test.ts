@@ -39,6 +39,17 @@ describe('processModelResponse', () => {
     const raw = '--- BEGIN EVIDENCE ---\nFM 21-76\n--- END EVIDENCE ---\nStay calm.';
     expect(processModelResponse(raw)).toBe('FM 21-76\nStay calm.');
   });
+
+  it('trims obvious repeated degeneration tails without replacing model content', () => {
+    const raw =
+      'Stay low under smoke. Cover your mouth if you can.\n\n### Immediate Actions:\n\n### Immediate Actions:\n\n### Immediate Actions:';
+
+    expect(processModelResponse(raw)).toBe('Stay low under smoke. Cover your mouth if you can.');
+  });
+
+  it('removes numeric runaway tails from interrupted local generation', () => {
+    expect(processModelResponse('Move to safety first. 333333333')).toBe('Move to safety first.');
+  });
 });
 
 describe('formatModelTextForDisplay', () => {

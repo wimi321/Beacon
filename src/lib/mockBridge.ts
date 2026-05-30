@@ -137,6 +137,12 @@ class MockBeaconBridge implements BeaconBridge {
       gpuBlockedReason: '',
       supportedDeviceClass: 'unknown',
       preferredBackend: 'unknown',
+      visionArtifactValid: true,
+      visionArtifactReason: 'Mock runtime accepts image payloads.',
+      visionArtifactContract: 'mock',
+      visionInputMode: 'imageUri',
+      visionEncoderSignature: 'mock',
+      foundVisionSignatures: ['mock'],
     };
   }
 

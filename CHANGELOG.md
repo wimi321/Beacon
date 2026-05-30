@@ -2,6 +2,25 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.21 - 2026-05-30
+
+iOS App Store follow-up release focused on safer local-model behavior and review-ready packaging.
+
+### Highlights
+
+- Hardens iOS LiteRT-LM loading with safer error capture, explicit runtime diagnostics, and bundled runtime constraint-provider staging
+- Adds iOS vision-artifact validation so Beacon does not pretend to analyze photos when the bundled Gemma 4 vision package is not iOS-validated
+- Improves local model output cleanup by trimming obvious repeated or degenerate tails before final display and session memory storage
+- Keeps the App Store build iPhone-first, portrait-only, and aligned with the approved privacy/purpose-string metadata
+- Adds real-device UI smoke coverage for home, quick actions, chat entry, language switching, visual picker entry, and leading-edge back navigation
+- Updates Android metadata to `versionCode 24` / `versionName 0.2.21`
+- Updates iOS metadata to `0.2.21` / build `33`
+
+### Verification
+
+- `npm test -- --run` — 127 tests passing
+- `npm run build`
+
 ## v0.2.19 - 2026-05-16
 
 Model switch interaction polish.

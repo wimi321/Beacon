@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-04-25",
+  "updatedAt": "2026-05-29",
   "refreshIntervalHours": 12,
   "remoteUrl": "",
   "models": [
@@ -11,7 +11,7 @@
       "fileName": "gemma-4-E2B-it.litertlm",
       "sizeLabel": "2B / Survival Baseline",
       "downloadUrl": "https://modelscope.cn/models/litert-community/gemma-4-E2B-it-litert-lm/resolve/master/gemma-4-E2B-it.litertlm",
-      "sizeInBytes": 2583085056,
+      "sizeInBytes": 2588147712,
       "defaultProfileName": "gemma-4-e2b-balanced",
       "recommendedFor": "Default offline triage on most phones.",
       "supportsImageInput": true,
@@ -32,7 +32,7 @@
       "fileName": "gemma-4-E4B-it.litertlm",
       "sizeLabel": "4B / High Precision",
       "downloadUrl": "https://modelscope.cn/models/litert-community/gemma-4-E4B-it-litert-lm/resolve/master/gemma-4-E4B-it.litertlm",
-      "sizeInBytes": 3654467584,
+      "sizeInBytes": 3659530240,
       "defaultProfileName": "gemma-4-e4b-expert",
       "recommendedFor": "Higher precision when thermal and battery headroom allow.",
       "supportsImageInput": true,

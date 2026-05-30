@@ -17,7 +17,7 @@ describe('LanguageSwitcher', () => {
   it('opens a custom language list with all supported languages', () => {
     renderLanguageSwitcher();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Language selection' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language selection/ }));
 
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(SUPPORTED_LANGUAGES.length);
@@ -26,13 +26,13 @@ describe('LanguageSwitcher', () => {
   it('has correct aria-label', () => {
     renderLanguageSwitcher();
 
-    expect(screen.getByLabelText('Language selection')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Language selection/)).toBeInTheDocument();
   });
 
   it('each option shows native language name', () => {
     renderLanguageSwitcher();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Language selection' }));
+    fireEvent.click(screen.getByRole('button', { name: /Language selection/ }));
 
     for (const lang of SUPPORTED_LANGUAGES) {
       expect(screen.getAllByText(lang.nativeName).length).toBeGreaterThan(0);

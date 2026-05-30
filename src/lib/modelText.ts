@@ -9,6 +9,22 @@ const TIGHT_STRONG_LABEL_REGEX = new RegExp(`(\\*\\*${STRONG_LABEL_BODY}\\*\\*)(
 const ORPHAN_TRAILING_LIST_NUMBER_REGEX = /([。.!?！？；;])[\t ]+(?:[1-9]\d?)\.?[\t ]*$/gm;
 const ORPHAN_STANDALONE_TRAILING_LIST_NUMBER_REGEX = /\n+[ \t]*(?:[1-9]\d?)\.?[ \t]*$/g;
 const TRAILING_INCOMPLETE_BLOCK_REGEX = /\n\n[ \t]*(?:(?:[1-9]\d?)\.\s+)?(?=[^。\n.!?！？；;]{12,140}$)(?=[^\n]*[\u3400-\u9fff])[^。\n.!?！？；;]{1,140}$/u;
+const READABLE_BOUNDARY_REGEX = /[。.!?！？；;\n]/g;
+const DEGENERATE_TAIL_MARKERS = [
+  '333333',
+  '222.',
+  'you should you should',
+  'youshouldyoushould',
+  '### immediate actions:\n\n### immediate actions',
+  'immediate actions:\n\n### immediate actions',
+  '### immediateactions:### immediateactions',
+  'is your primary concern is your primary',
+  'smoke contains the immediate action',
+  'smoke containsthe immediateaction',
+  'protectyour',
+  '* **cover your',
+  '###immediateactions',
+];
 
 type TriageResponseWithRawText = TriageResponse & { rawText?: string };
 
@@ -20,12 +36,12 @@ function extractRawResponseText(response: TriageResponse): string {
 const STRUCTURAL_MARKER_REGEX = /---\s*(?:BEGIN|END)\s+(?:USER MESSAGE|EVIDENCE)\s*---\n?/g;
 
 export function processModelResponse(value?: string | null): string {
-  return (value ?? '')
+  return trimDegenerateModelTail((value ?? '')
     .replace(/\\n/g, '\n')
     .replace(/\r\n?/g, '\n')
     .replace(/\$\s*\\?l?rightarrow\s*\$/gi, ' -> ')
     .replace(CONTROL_CHARS_REGEX, '')
-    .replace(STRUCTURAL_MARKER_REGEX, '');
+    .replace(STRUCTURAL_MARKER_REGEX, ''));
 }
 
 export function hasMeaningfulModelText(value?: string | null): boolean {
@@ -53,6 +69,50 @@ function removeDisplayOnlyMarkdownEmphasis(value: string): string {
     .replace(/\*\*/g, '')
     .replace(/(^|[ \t（(])\*(?=\S)/gm, '$1')
     .replace(/(\S)\*(?=$|[\s，,。.!?！？；;：:）)])/g, '$1');
+}
+
+function trimToReadableBoundary(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= 48) {
+    return trimmed;
+  }
+
+  let lastBoundary = -1;
+  for (const match of trimmed.matchAll(READABLE_BOUNDARY_REGEX)) {
+    if (match.index !== undefined && match.index >= 48) {
+      lastBoundary = match.index;
+    }
+  }
+
+  return lastBoundary >= 48 ? trimmed.slice(0, lastBoundary + 1).trim() : trimmed;
+}
+
+function trimDegenerateModelTail(value: string): string {
+  if (value.length === 0) {
+    return '';
+  }
+
+  const lower = value.toLowerCase();
+  let earliestCut = Number.POSITIVE_INFINITY;
+  for (const marker of DEGENERATE_TAIL_MARKERS) {
+    const index = lower.indexOf(marker);
+    if (index >= 48 && index < earliestCut) {
+      earliestCut = index;
+    }
+  }
+
+  if (Number.isFinite(earliestCut)) {
+    const trimmed = trimToReadableBoundary(value.slice(0, earliestCut));
+    if (trimmed.length >= 48) {
+      return trimmed;
+    }
+  }
+
+  const runawayTail = /([0-9A-Za-z])\1{4,}$/u.exec(value);
+  if (runawayTail?.index !== undefined) {
+    return trimToReadableBoundary(value.slice(0, runawayTail.index));
+  }
+  return value;
 }
 
 function removeTrailingIncompleteBlock(value: string): string {

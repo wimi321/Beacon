@@ -256,6 +256,29 @@ const MODEL_RUNTIME_INIT_MESSAGE: Record<string, string> = {
   uk: 'LiteRT-LM не зміг запустити Gemma 4 E2B на цьому iPhone. Автоматичні повторні спроби призупинено; спробуй ще раз вручну після зміни пристрою або умов виконання.',
 };
 
+const VISUAL_MODEL_UNAVAILABLE_MESSAGE: Record<string, string> = {
+  en: 'Photo analysis is not enabled in this iPhone build yet. Describe the scene in text; no image analysis was run.',
+  'zh-CN': '当前 iPhone 版暂未启用真实照片分析。请用文字描述现场；系统没有分析这张图片。',
+  'zh-TW': '目前 iPhone 版尚未啟用真實照片分析。請用文字描述現場；系統沒有分析這張圖片。',
+  ja: 'この iPhone 版では、まだ実際の写真解析は有効ではありません。状況を文字で説明してください。画像解析は実行されていません。',
+  ko: '현재 iPhone 버전에서는 실제 사진 분석이 아직 활성화되지 않았습니다. 상황을 글로 설명하세요. 이 이미지는 분석되지 않았습니다.',
+  es: 'El analisis de fotos aun no esta activado en esta version para iPhone. Describe la escena con texto; no se analizo la imagen.',
+  fr: 'L analyse photo n est pas encore activee dans cette version iPhone. Decris la scene par texte ; aucune image n a ete analysee.',
+  de: 'Die Fotoanalyse ist in dieser iPhone-Version noch nicht aktiviert. Beschreibe die Lage als Text; das Bild wurde nicht analysiert.',
+  pt: 'A analise de fotos ainda nao esta ativada nesta versao para iPhone. Descreva a cena por texto; a imagem nao foi analisada.',
+  ru: 'Анализ фото в этой версии для iPhone пока не включен. Опиши ситуацию текстом; изображение не анализировалось.',
+  ar: 'تحليل الصور غير مفعّل بعد في إصدار iPhone هذا. صِف المشهد بالنص؛ لم يتم تحليل الصورة.',
+  hi: 'इस iPhone build में फोटो विश्लेषण अभी सक्षम नहीं है। स्थिति को टेक्स्ट में लिखें; इस छवि का विश्लेषण नहीं किया गया।',
+  id: 'Analisis foto belum diaktifkan di versi iPhone ini. Jelaskan situasinya dengan teks; gambar ini tidak dianalisis.',
+  it: 'L analisi delle foto non e ancora attiva in questa versione iPhone. Descrivi la scena con testo; l immagine non e stata analizzata.',
+  tr: 'Bu iPhone surumunde fotograf analizi henuz etkin degil. Durumu metinle anlat; bu gorsel analiz edilmedi.',
+  vi: 'Phan tich anh chua duoc bat trong ban iPhone nay. Hay mo ta hien truong bang chu; anh nay chua duoc phan tich.',
+  th: 'รุ่น iPhone นี้ยังไม่ได้เปิดใช้การวิเคราะห์ภาพจริง โปรดอธิบายสถานการณ์เป็นข้อความ ระบบไม่ได้วิเคราะห์ภาพนี้',
+  nl: 'Fotoanalyse is nog niet ingeschakeld in deze iPhone-versie. Beschrijf de situatie in tekst; deze afbeelding is niet geanalyseerd.',
+  pl: 'Analiza zdjec nie jest jeszcze wlaczona w tej wersji na iPhone. Opisz sytuacje tekstem; obraz nie zostal przeanalizowany.',
+  uk: 'Аналіз фото у цій версії для iPhone ще не ввімкнено. Опиши ситуацію текстом; це зображення не аналізувалося.',
+};
+
 function localizeModelLoadFailure(message: string, locale: string): string {
   const resolvedLocale = resolveLocaleCode(locale);
   const normalizedMessage = message.toLowerCase();
@@ -285,6 +308,15 @@ function localizeInferenceFailure(message: string, locale: string): string {
     || normalizedMessage.includes('image file is not readable')
   ) {
     return visualImageMissingMessage(resolvedLocale);
+  }
+
+  if (
+    normalizedMessage.includes('visual model package unavailable')
+    || normalizedMessage.includes('vision artifact')
+    || normalizedMessage.includes('orca-compatible vision_2520')
+    || normalizedMessage.includes('supported image-file vision contract')
+  ) {
+    return VISUAL_MODEL_UNAVAILABLE_MESSAGE[resolvedLocale] ?? VISUAL_MODEL_UNAVAILABLE_MESSAGE.en;
   }
 
   if (
@@ -481,6 +513,14 @@ function hasDownloadedModel(models: ModelDescriptor[]): boolean {
 
 function hasLoadedModel(models: ModelDescriptor[]): boolean {
   return models.some((model) => model.isLoaded);
+}
+
+function getVisualUnavailableReason(model: ModelDescriptor | null | undefined): string | null {
+  if (!model) return null;
+  if (model.supportsVision === false || model.visionArtifactValid === false) {
+    return model.visionArtifactReason || 'Vision artifact is not iOS validated.';
+  }
+  return null;
 }
 
 function patchModelDownloadState(
@@ -921,6 +961,9 @@ export default function App() {
     () => models.find((model) => model.isLoaded) ?? null,
     [models],
   );
+  const visualUnavailableReason = useMemo(() => {
+    return getVisualUnavailableReason(activeModel);
+  }, [activeModel]);
   const recommendedDownloadModel = useMemo(
     () => chooseRecommendedDownloadModel(models),
     [models],
@@ -1460,11 +1503,28 @@ export default function App() {
 
   function openVisualPicker(): void {
     if (isStreaming) return;
+    if (isBootstrapping) {
+      setStatusLine(modelPreparingMessage);
+      return;
+    }
+    const currentVisualUnavailableReason = visualUnavailableReason
+      ?? getVisualUnavailableReason(modelsRef.current.find((model) => model.isLoaded));
+    if (currentVisualUnavailableReason) {
+      setStatusLine(localizeInferenceFailure(currentVisualUnavailableReason, locale));
+      return;
+    }
     setShowVisualPicker(true);
   }
 
   async function handleVisualAnalysis(source: CameraSource): Promise<void> {
     if (isStreaming) return;
+    const currentVisualUnavailableReason = visualUnavailableReason
+      ?? getVisualUnavailableReason(modelsRef.current.find((model) => model.isLoaded));
+    if (currentVisualUnavailableReason) {
+      setShowVisualPicker(false);
+      setStatusLine(localizeInferenceFailure(currentVisualUnavailableReason, locale));
+      return;
+    }
 
     let inferenceRunId: number | null = null;
     try {

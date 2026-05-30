@@ -3,7 +3,18 @@
 
 #include <exception>
 #include <cstring>
+#include <dlfcn.h>
 #include <new>
+
+typedef LiteRtLmEngine *_Nullable (*BeaconLiteRtEngineCreateWithErrorFn)(
+    const LiteRtLmEngineSettings *_Nullable settings,
+    char *_Nullable error_buffer,
+    size_t error_buffer_size);
+typedef LiteRtLmConversation *_Nullable (*BeaconLiteRtConversationCreateWithErrorFn)(
+    LiteRtLmEngine *_Nullable engine,
+    LiteRtLmConversationConfig *_Nullable config,
+    char *_Nullable error_buffer,
+    size_t error_buffer_size);
 
 static void BeaconLiteRtAssignError(NSString *_Nullable *_Nullable target, NSString *message) {
     if (target != NULL) {
@@ -31,6 +42,21 @@ LiteRtLmEngine *_Nullable BeaconLiteRtSafeEngineCreate(
     const LiteRtLmEngineSettings *_Nullable settings,
     NSString *_Nullable *_Nullable errorMessage) {
     try {
+        BeaconLiteRtEngineCreateWithErrorFn createWithError =
+            reinterpret_cast<BeaconLiteRtEngineCreateWithErrorFn>(
+                dlsym(RTLD_DEFAULT, "litert_lm_engine_create_with_error")
+            );
+        if (createWithError != nullptr) {
+            char errorBuffer[4096] = {0};
+            LiteRtLmEngine *engine = createWithError(settings, errorBuffer, sizeof(errorBuffer));
+            if (engine == nullptr && errorBuffer[0] != '\0') {
+                BeaconLiteRtAssignError(
+                    errorMessage,
+                    [NSString stringWithFormat:@"LiteRT-LM engine creation failed: %s", errorBuffer]
+                );
+            }
+            return engine;
+        }
         return litert_lm_engine_create(settings);
     } catch (const std::bad_alloc &exception) {
         BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
@@ -88,6 +114,26 @@ LiteRtLmConversation *_Nullable BeaconLiteRtSafeConversationCreate(
     LiteRtLmConversationConfig *_Nullable config,
     NSString *_Nullable *_Nullable errorMessage) {
     try {
+        BeaconLiteRtConversationCreateWithErrorFn createWithError =
+            reinterpret_cast<BeaconLiteRtConversationCreateWithErrorFn>(
+                dlsym(RTLD_DEFAULT, "litert_lm_conversation_create_with_error")
+            );
+        if (createWithError != nullptr) {
+            char errorBuffer[4096] = {0};
+            LiteRtLmConversation *conversation = createWithError(
+                engine,
+                config,
+                errorBuffer,
+                sizeof(errorBuffer)
+            );
+            if (conversation == nullptr && errorBuffer[0] != '\0') {
+                BeaconLiteRtAssignError(
+                    errorMessage,
+                    [NSString stringWithFormat:@"LiteRT-LM conversation creation failed: %s", errorBuffer]
+                );
+            }
+            return conversation;
+        }
         return litert_lm_conversation_create(engine, config);
     } catch (const std::bad_alloc &exception) {
         BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
@@ -99,15 +145,67 @@ LiteRtLmConversation *_Nullable BeaconLiteRtSafeConversationCreate(
     return NULL;
 }
 
+LiteRtLmSession *_Nullable BeaconLiteRtSafeEngineCreateSession(
+    LiteRtLmEngine *_Nullable engine,
+    LiteRtLmSessionConfig *_Nullable config,
+    NSString *_Nullable *_Nullable errorMessage) {
+    try {
+        return litert_lm_engine_create_session(engine, config);
+    } catch (const std::bad_alloc &exception) {
+        BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
+    } catch (const std::exception &exception) {
+        BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeStdException(exception));
+    } catch (...) {
+        BeaconLiteRtAssignError(errorMessage, @"LiteRT-LM text session creation crashed with a non-standard exception.");
+    }
+    return NULL;
+}
+
+int BeaconLiteRtSafeSessionGenerateTextStream(
+    LiteRtLmSession *_Nullable session,
+    const char *_Nullable inputText,
+    LiteRtLmStreamCallback _Nullable callback,
+    void *_Nullable callbackData,
+    NSString *_Nullable *_Nullable errorMessage) {
+    try {
+        if (inputText == NULL) {
+            BeaconLiteRtAssignError(errorMessage, @"LiteRT-LM text session received an empty prompt pointer.");
+            return -1;
+        }
+        LiteRtLmInputData input;
+        input.type = kLiteRtLmInputDataTypeText;
+        input.data = inputText;
+        input.size = std::strlen(inputText);
+        return litert_lm_session_generate_content_stream(
+            session,
+            &input,
+            1,
+            callback,
+            callbackData
+        );
+    } catch (const std::bad_alloc &exception) {
+        BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeBadAlloc(exception));
+    } catch (const std::exception &exception) {
+        BeaconLiteRtAssignError(errorMessage, BeaconLiteRtDescribeStdException(exception));
+    } catch (...) {
+        BeaconLiteRtAssignError(errorMessage, @"LiteRT-LM text streaming crashed with a non-standard exception.");
+    }
+    return -1;
+}
+
 int BeaconLiteRtSafeConversationSendMessageStream(
     LiteRtLmConversation *_Nullable conversation,
     const char *_Nullable messageJson,
     const char *_Nullable extraContext,
+    int visualTokenBudget,
     LiteRtLmStreamCallback _Nullable callback,
     void *_Nullable callbackData,
     NSString *_Nullable *_Nullable errorMessage) {
     try {
         LiteRtLmConversationOptionalArgs *optionalArgs = litert_lm_conversation_optional_args_create();
+        if (optionalArgs != NULL && visualTokenBudget > 0) {
+            litert_lm_conversation_optional_args_set_visual_token_budget(optionalArgs, visualTokenBudget);
+        }
         int status = litert_lm_conversation_send_message_stream(
             conversation,
             messageJson,

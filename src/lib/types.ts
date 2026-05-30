@@ -148,6 +148,13 @@ export type RuntimeDiagnostics = {
   preparedImageWidth?: number;
   preparedImageHeight?: number;
   preparedImageBytes?: number;
+  visionArtifactValid?: boolean;
+  visionArtifactReason?: string;
+  visionArtifactContract?: string;
+  visionArtifactIOSValidated?: boolean;
+  visionInputMode?: 'imageUri' | 'imageBase64' | 'unknown';
+  visionEncoderSignature?: string;
+  foundVisionSignatures?: string[];
 };
 
 export type ModelDescriptor = {
@@ -173,6 +180,11 @@ export type ModelDescriptor = {
   minCapabilityClass?: string;
   preferredBackend?: PreferredBackend;
   supportsVision?: boolean;
+  visionArtifactValid?: boolean;
+  visionArtifactReason?: string;
+  visionArtifactContract?: string;
+  visionArtifactIOSValidated?: boolean;
+  visionInputMode?: RuntimeDiagnostics['visionInputMode'];
   capabilityClass?: CapabilityClass;
   supportedDeviceClass?: SupportedDeviceClass;
 };

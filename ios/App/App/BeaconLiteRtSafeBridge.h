@@ -3,6 +3,7 @@
 
 typedef struct LiteRtLmEngine LiteRtLmEngine;
 typedef struct LiteRtLmEngineSettings LiteRtLmEngineSettings;
+typedef struct LiteRtLmSession LiteRtLmSession;
 typedef struct LiteRtLmConversation LiteRtLmConversation;
 typedef struct LiteRtLmConversationConfig LiteRtLmConversationConfig;
 typedef struct LiteRtLmSessionConfig LiteRtLmSessionConfig;
@@ -33,10 +34,23 @@ FOUNDATION_EXPORT LiteRtLmConversation *_Nullable BeaconLiteRtSafeConversationCr
     LiteRtLmConversationConfig *_Nullable config,
     NSString *_Nullable *_Nullable errorMessage);
 
+FOUNDATION_EXPORT LiteRtLmSession *_Nullable BeaconLiteRtSafeEngineCreateSession(
+    LiteRtLmEngine *_Nullable engine,
+    LiteRtLmSessionConfig *_Nullable config,
+    NSString *_Nullable *_Nullable errorMessage);
+
+FOUNDATION_EXPORT int BeaconLiteRtSafeSessionGenerateTextStream(
+    LiteRtLmSession *_Nullable session,
+    const char *_Nullable inputText,
+    LiteRtLmStreamCallback _Nullable callback,
+    void *_Nullable callbackData,
+    NSString *_Nullable *_Nullable errorMessage);
+
 FOUNDATION_EXPORT int BeaconLiteRtSafeConversationSendMessageStream(
     LiteRtLmConversation *_Nullable conversation,
     const char *_Nullable messageJson,
     const char *_Nullable extraContext,
+    int visualTokenBudget,
     LiteRtLmStreamCallback _Nullable callback,
     void *_Nullable callbackData,
     NSString *_Nullable *_Nullable errorMessage);

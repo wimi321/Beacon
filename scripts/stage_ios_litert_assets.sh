@@ -17,13 +17,55 @@ copy_if_needed() {
   fi
 }
 
+ensure_beacon_native_plugin_registration() {
+  config_path="$1"
+  if [ ! -f "$config_path" ]; then
+    echo "warning: capacitor.config.json not found at $config_path; BeaconNative registration not patched" >&2
+    return 0
+  fi
+
+  CONFIG_PATH="$config_path" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+config_path = Path(os.environ["CONFIG_PATH"])
+config = json.loads(config_path.read_text())
+package_classes = list(config.get("packageClassList") or [])
+changed = False
+
+for plugin_class in ("BeaconNativePlugin", "App.BeaconNativePlugin"):
+    if plugin_class not in package_classes:
+        package_classes.append(plugin_class)
+        changed = True
+
+if changed:
+    config["packageClassList"] = package_classes
+    config_path.write_text(json.dumps(config, indent="\t", ensure_ascii=False) + "\n")
+    print(f"note: Patched BeaconNative plugin registration in {config_path}")
+else:
+    print(f"note: BeaconNative plugin registration already present in {config_path}")
+PY
+}
+
 PROJECT_DIR="${PROJECT_DIR:?PROJECT_DIR is required}"
 TARGET_BUILD_DIR="${TARGET_BUILD_DIR:?TARGET_BUILD_DIR is required}"
 UNLOCALIZED_RESOURCES_FOLDER_PATH="${UNLOCALIZED_RESOURCES_FOLDER_PATH:?UNLOCALIZED_RESOURCES_FOLDER_PATH is required}"
 FRAMEWORKS_FOLDER_PATH="${FRAMEWORKS_FOLDER_PATH:-Frameworks}"
 PLATFORM_NAME="${PLATFORM_NAME:-iphoneos}"
 
-MODEL_SRC="${PROJECT_DIR}/../../.artifacts/gemma-4-E2B-it.litertlm"
+MODEL_SRC_DEFAULT="${PROJECT_DIR}/../../.artifacts/gemma-4-E2B-it.litertlm"
+MODEL_SRC_ORCA2520="${PROJECT_DIR}/../../.artifacts/models/gemma-4-E2B-it-orca2520.litertlm"
+MODEL_SRC="${BEACON_IOS_GEMMA_MODEL_SRC:-}"
+if [ -z "$MODEL_SRC" ]; then
+  if [ -f "$MODEL_SRC_DEFAULT" ]; then
+    MODEL_SRC="$MODEL_SRC_DEFAULT"
+    echo "note: Using official Gemma 4 E2B LiteRT-LM artifact for iOS: $MODEL_SRC"
+  elif [ -f "$MODEL_SRC_ORCA2520" ]; then
+    MODEL_SRC="$MODEL_SRC_ORCA2520"
+    echo "note: Official Gemma 4 E2B artifact not found; using ORCA-style vision_2520 artifact: $MODEL_SRC"
+  fi
+fi
 MODEL_DIR="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/models"
 MODEL_DST="${MODEL_DIR}/gemma-4-E2B-it.litertlm"
 
@@ -35,6 +77,12 @@ fi
 mkdir -p "$MODEL_DIR"
 copy_if_needed "$MODEL_SRC" "$MODEL_DST"
 
+# `npx cap sync ios` regenerates capacitor.config.json and can drop local,
+# app-owned plugins that are not installed as npm Capacitor packages. Patch the
+# already-copied resource inside the app bundle on every Xcode build so the
+# JavaScript bridge always sees the real iOS BeaconNative implementation.
+ensure_beacon_native_plugin_registration "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/capacitor.config.json"
+
 RUNTIME_VARIANT="ios-arm64"
 if [ "$PLATFORM_NAME" = "iphonesimulator" ]; then
   RUNTIME_VARIANT="ios-arm64-simulator"
@@ -45,8 +93,14 @@ if [ ! -f "$RUNTIME_SRC" ]; then
   echo "error: Missing LiteRT Metal accelerator runtime at $RUNTIME_SRC" >&2
   exit 1
 fi
+GEMMA_CONSTRAINT_PROVIDER_SRC="${PROJECT_DIR}/Vendor/LiteRtRuntime/${RUNTIME_VARIANT}/libGemmaModelConstraintProvider.dylib"
+if [ ! -f "$GEMMA_CONSTRAINT_PROVIDER_SRC" ]; then
+  echo "error: Missing Gemma model constraint provider runtime at $GEMMA_CONSTRAINT_PROVIDER_SRC" >&2
+  exit 1
+fi
 
 RUNTIME_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
+GEMMA_CONSTRAINT_PROVIDER_DST="${RUNTIME_DIR}/libGemmaModelConstraintProvider.dylib"
 RUNTIME_FRAMEWORK_NAME="LiteRtMetalAccelerator.framework"
 RUNTIME_FRAMEWORK_EXECUTABLE="LiteRtMetalAccelerator"
 RUNTIME_FRAMEWORK_DIR="${RUNTIME_DIR}/${RUNTIME_FRAMEWORK_NAME}"
@@ -54,6 +108,8 @@ RUNTIME_DST="${RUNTIME_FRAMEWORK_DIR}/${RUNTIME_FRAMEWORK_EXECUTABLE}"
 RUNTIME_LEGACY_DST="${RUNTIME_DIR}/libLiteRtMetalAccelerator.dylib"
 
 mkdir -p "$RUNTIME_DIR"
+copy_if_needed "$GEMMA_CONSTRAINT_PROVIDER_SRC" "$GEMMA_CONSTRAINT_PROVIDER_DST"
+chmod 755 "$GEMMA_CONSTRAINT_PROVIDER_DST"
 rm -rf "$RUNTIME_FRAMEWORK_DIR"
 mkdir -p "$RUNTIME_FRAMEWORK_DIR"
 cp -f "$RUNTIME_SRC" "$RUNTIME_DST"
@@ -155,6 +211,7 @@ rm -f "${MODEL_DIR}/libLiteRtMetalAccelerator.dylib"
 
 if [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ]; then
   CODE_SIGN_IDENTITY_TO_USE="${EXPANDED_CODE_SIGN_IDENTITY:--}"
+  codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$GEMMA_CONSTRAINT_PROVIDER_DST"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$RUNTIME_FRAMEWORK_DIR"
   codesign --force --sign "$CODE_SIGN_IDENTITY_TO_USE" --timestamp=none "$CLITERT_DST"
 fi

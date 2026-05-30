@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { I18nProvider } from './i18n';
 import { createMockBeaconBridge } from './lib/mockBridge';
-import type { TriageRequest, TriageResponse } from './lib/types';
+import type { BeaconBridge } from './lib/beaconBridge';
+import type { ModelDescriptor, TriageRequest, TriageResponse } from './lib/types';
 
 const cameraPluginState = vi.hoisted(() => ({
   getPhotoMock: vi.fn(async () => ({ base64String: 'ZmFrZS1pbWFnZS1ieXRlcw==' })),
@@ -106,14 +107,23 @@ vi.mock('@capacitor/app', () => ({
   },
 }));
 
-function renderApp(locale: string = 'zh-CN') {
+function renderApp(locale: string = 'zh-CN', bridge: BeaconBridge = createMockBeaconBridge()) {
   window.localStorage.setItem('beacon_locale', locale);
-  window.beaconBridge = createMockBeaconBridge();
+  window.beaconBridge = bridge;
   return render(
     <I18nProvider>
       <App />
     </I18nProvider>,
   );
+}
+
+async function waitForMockBootToSettle(): Promise<void> {
+  // The mock bridge intentionally simulates a short native warm-up. Visual flows
+  // should be tested after that boot window, matching how a user sees the app.
+  await new Promise((resolve) => setTimeout(resolve, 140));
+  await waitFor(() => {
+    expect(screen.queryByText(/正在准备离线急救系统，请保持应用开启/)).not.toBeInTheDocument();
+  });
 }
 
 describe('App', () => {
@@ -774,14 +784,15 @@ describe('App', () => {
 
   it('opens a clear visual picker and calls native camera or album explicitly', async () => {
     renderApp('zh-CN');
+    await waitForMockBootToSettle();
 
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
 
-    expect(await screen.findByRole('button', { name: '拍摄' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '从相册导入' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '拍照' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '从相册选择' })).toBeInTheDocument();
     expect(cameraPluginState.getPhotoMock).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: '从相册导入' }));
+    fireEvent.click(screen.getByRole('button', { name: '从相册选择' }));
 
     await waitFor(() => {
       expect(cameraPluginState.getPhotoMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -792,15 +803,48 @@ describe('App', () => {
 
     const uploadedPreview = await screen.findByRole('img', { name: /视觉求助/i });
     expect(uploadedPreview).toHaveAttribute('src', 'data:image/jpeg;base64,ZmFrZS1pbWFnZS1ieXRlcw==');
-    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 从相册导入/)).toBeInTheDocument();
+    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 从相册选择/)).toBeInTheDocument();
     expect(screen.queryByText(/请将创口、不明植物或动物置于框内/)).not.toBeInTheDocument();
+  });
+
+  it('blocks visual capture before camera opens when the iOS vision artifact is not validated', async () => {
+    const mockBridge = createMockBeaconBridge();
+    const invalidVisionModels: ModelDescriptor[] = [{
+      id: 'gemma-4-e2b',
+      tier: 'e2b',
+      name: 'Gemma 4 E2B',
+      localPath: 'models/gemma-4-e2b.litertlm',
+      sizeLabel: '2B / Survival Baseline',
+      isLoaded: true,
+      isDownloaded: true,
+      supportsImageInput: false,
+      supportsVision: false,
+      visionArtifactValid: false,
+      visionArtifactReason: 'Gemma 4 official-tiered vision artifact is not iOS Metal validated in Beacon.',
+      visionArtifactContract: 'official-tiered',
+      downloadStatus: 'succeeded',
+    }];
+    mockBridge.listModels = vi.fn(async () => invalidVisionModels);
+    renderApp('zh-CN', mockBridge);
+
+    await waitFor(() => {
+      expect(mockBridge.listModels).toHaveBeenCalled();
+    });
+    await waitForMockBootToSettle();
+
+    fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
+
+    expect(await screen.findByText(/暂未启用真实照片分析/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '拍照' })).not.toBeInTheDocument();
+    expect(cameraPluginState.getPhotoMock).not.toHaveBeenCalled();
   });
 
   it('renders a captured camera photo inside the chat before visual analysis finishes', async () => {
     renderApp('zh-CN');
+    await waitForMockBootToSettle();
 
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
-    fireEvent.click(await screen.findByRole('button', { name: '拍摄' }));
+    fireEvent.click(await screen.findByRole('button', { name: '拍照' }));
 
     await waitFor(() => {
       expect(cameraPluginState.getPhotoMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -811,7 +855,7 @@ describe('App', () => {
 
     const capturedPreview = await screen.findByRole('img', { name: /视觉求助/i });
     expect(capturedPreview).toHaveAttribute('src', 'data:image/jpeg;base64,ZmFrZS1pbWFnZS1ieXRlcw==');
-    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 拍摄/)).toBeInTheDocument();
+    expect(screen.getByText(/视觉求助 \/ 拍摄创口 - 拍照/)).toBeInTheDocument();
   });
 
   it('streams visual guidance after an image is selected instead of waiting for a one-shot response', async () => {
@@ -867,9 +911,10 @@ describe('App', () => {
         <App />
       </I18nProvider>,
     );
+    await waitForMockBootToSettle();
 
     fireEvent.click(await screen.findByRole('button', { name: /视觉求助|拍摄创口/i }));
-    fireEvent.click(await screen.findByRole('button', { name: '从相册导入' }));
+    fireEvent.click(await screen.findByRole('button', { name: '从相册选择' }));
 
     await waitFor(() => {
       expect(mockBridge.triageStream).toHaveBeenCalledTimes(1);
