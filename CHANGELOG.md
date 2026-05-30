@@ -2,6 +2,12 @@
 
 All notable changes to Beacon will be documented in this file.
 
+## v0.2.25 - 2026-05-30
+
+- Fixed App Store Connect Swift runtime packaging by embedding matching Swift standard libraries in both `Payload/App.app/Frameworks` and `SwiftSupport/iphoneos`.
+- Kept v0.2.24 app behavior unchanged while correcting the iOS distribution package structure required for Apple processing.
+- Published aligned Android and iOS release artifacts from the same source revision.
+
 ## v0.2.24 - 2026-05-30
 
 - Fixes App Store Connect `ITMS-90429` by removing Beacon's manual Swift standard-library staging and letting Xcode's official `CopySwiftLibs` pipeline decide whether Swift runtime files are required.
