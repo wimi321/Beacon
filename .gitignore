@@ -57,6 +57,11 @@ ios/App/Vendor/litert_support_build/
 # Environment
 .env
 .env.*
+fastlane/AuthKey_*.p8
+fastlane/AuthKey_*.json
+fastlane/*.p8
+fastlane/*api_key*.json
+fastlane/report.xml
 
 # Large raw source captures used to build the offline bundle
 knowledge/raw/

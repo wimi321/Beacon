@@ -7,6 +7,7 @@ Beacon Survival SOS has been approved for Apple App Store distribution.
 | App Store name | Beacon Survival SOS |
 | App Apple ID | `6772494235` |
 | App Store URL | <https://apps.apple.com/us/app/beacon-survival-sos/id6772494235> |
+| China mainland URL | <https://apps.apple.com/cn/app/beacon-survival-sos/id6772494235> |
 | Bundle ID | `com.beacon.sos` |
 | Distribution status | Approved for App Store distribution |
 | Release mode | Manual release / regional rollout through App Store Connect |
@@ -37,6 +38,25 @@ Beacon Survival SOS is an offline emergency guidance app. It does not require lo
 
 Android distribution continues through GitHub Releases. The Android APK remains lightweight and lets users download Gemma 4 E2B or E4B in-app with resumable mirror fallback.
 
+## Regional Storefront Localization
+
+App Store Connect can present localized metadata and screenshots per supported storefront language. Beacon keeps a reproducible localization package under [`docs/app-store`](./app-store/README.md):
+
+- `zh-Hans` for China mainland and Simplified Chinese storefronts.
+- `zh-Hant` for Traditional Chinese storefronts.
+- `en-US` for the U.S. listing.
+- Additional localized listings for Japanese, Korean, Spanish, French, German, Portuguese, Russian, Arabic, Hindi, Indonesian, Italian, Turkish, Vietnamese, Thai, Dutch, Polish, and Ukrainian.
+
+Generate and validate the package with:
+
+```bash
+npm run appstore:metadata
+npm run appstore:screenshots
+npm run appstore:validate:screenshots
+```
+
+Upload-ready localized screenshots are generated in `.artifacts/app-store-localization-package/screenshots/<apple-locale>/iphone-6.3/`. The repository intentionally does not commit those large generated images.
+
 ## Validation Record
 
 The App Store release line was prepared with the following gates during the v0.2.x submission cycle:
@@ -55,3 +75,4 @@ The latest repository release notes are tracked in [`docs/releases`](./releases/
 - Keep README download badges pointed at the stable App Store URL, not search results.
 - If Apple changes availability by region, document the affected storefronts here.
 - If the iOS model policy changes from bundled E2B to downloadable models, update the README install table and App Review notes together.
+- When updating App Store metadata, regenerate the localization package so China, U.S., and other storefronts stay aligned with the app's 20-language UI.

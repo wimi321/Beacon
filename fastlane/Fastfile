@@ -1,0 +1,109 @@
+# Beacon App Store Connect automation.
+# Keep credentials outside the repository. Prefer FASTLANE_APP_STORE_CONNECT_API_KEY_PATH.
+
+require "shellwords"
+
+opt_out_usage
+default_platform(:ios)
+
+APP_IDENTIFIER = "com.beacon.sos"
+REPO_ROOT = File.expand_path("..", __dir__)
+FASTLANE_DELIVER_ROOT = File.join(REPO_ROOT, ".artifacts/fastlane-deliver")
+
+def repo_sh(command)
+  sh("cd #{REPO_ROOT.shellescape} && #{command}")
+end
+
+platform :ios do
+  desc "Generate fastlane deliver metadata/screenshots from Beacon localized App Store assets"
+  lane :prepare_appstore_localizations do |options|
+    version = options[:version] || "0.2.28"
+    repo_sh("python3 scripts/generate_app_store_localizations.py --metadata --version #{version}")
+    repo_sh("python3 scripts/export_fastlane_deliver.py --version #{version}")
+  end
+
+  desc "Validate generated fastlane deliver folders before talking to App Store Connect"
+  lane :validate_appstore_localizations do |options|
+    version = options[:version] || "0.2.28"
+    prepare_appstore_localizations(version: version)
+    repo_sh("python3 scripts/validate_app_store_localizations.py")
+    repo_sh("python3 scripts/validate_app_store_localizations.py --screenshots")
+  end
+
+  desc "Upload localized metadata and screenshots to the editable App Store version"
+  lane :upload_appstore_localizations do |options|
+    version = options[:version] || "0.2.28"
+    validate_appstore_localizations(version: version)
+
+    api_key_path = ENV["FASTLANE_APP_STORE_CONNECT_API_KEY_PATH"]
+    deliver_options = {
+      app_identifier: APP_IDENTIFIER,
+      app_version: version,
+      metadata_path: "#{FASTLANE_DELIVER_ROOT}/metadata",
+      screenshots_path: "#{FASTLANE_DELIVER_ROOT}/screenshots",
+      skip_binary_upload: true,
+      skip_metadata: false,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      force: true
+    }
+    deliver_options[:api_key_path] = api_key_path if api_key_path && !api_key_path.empty?
+
+    deliver(deliver_options)
+  end
+
+  desc "Upload only localized screenshots to the editable App Store version"
+  lane :upload_appstore_screenshots do |options|
+    version = options[:version] || "0.2.28"
+    prepare_appstore_localizations(version: version)
+
+    api_key_path = ENV["FASTLANE_APP_STORE_CONNECT_API_KEY_PATH"]
+    deliver_options = {
+      app_identifier: APP_IDENTIFIER,
+      app_version: version,
+      metadata_path: "#{FASTLANE_DELIVER_ROOT}/metadata",
+      screenshots_path: "#{FASTLANE_DELIVER_ROOT}/screenshots",
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      screenshot_processing_timeout: 180,
+      force: true
+    }
+    deliver_options[:api_key_path] = api_key_path if api_key_path && !api_key_path.empty?
+
+    deliver(deliver_options)
+  end
+
+  desc "Submit the prepared App Store version after metadata/screenshots have been uploaded and a build is selected"
+  lane :submit_appstore_version do |options|
+    version = options[:version] || "0.2.28"
+    build_number = options[:build_number]
+    UI.user_error!("Pass build_number:<number> for the build already uploaded to App Store Connect") unless build_number
+
+    api_key_path = ENV["FASTLANE_APP_STORE_CONNECT_API_KEY_PATH"]
+    deliver_options = {
+      app_identifier: APP_IDENTIFIER,
+      app_version: version,
+      build_number: build_number,
+      metadata_path: "#{FASTLANE_DELIVER_ROOT}/metadata",
+      screenshots_path: "#{FASTLANE_DELIVER_ROOT}/screenshots",
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: true,
+      automatic_release: false,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false
+      }
+    }
+    deliver_options[:api_key_path] = api_key_path if api_key_path && !api_key_path.empty?
+
+    deliver(deliver_options)
+  end
+end
